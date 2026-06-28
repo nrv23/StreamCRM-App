@@ -1,0 +1,16 @@
+services:
+  postgres-projects:
+    image: postgres:18
+    container_name: postgres-projects
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: streamCRMServerAdmin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_projects_data:/var/lib/postgresql
+
+volumes:
+  postgres_projects_data:

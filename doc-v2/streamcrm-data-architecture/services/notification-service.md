@@ -1,0 +1,162 @@
+# Notification Service
+
+## Base de datos
+
+`notification_db`
+
+## Responsabilidad
+
+Gestionar notificaciones internas, WebSocket, email y entregas.
+
+## Tablas
+
+- notifications
+- notification_deliveries
+- notification_templates
+- outbox_events
+
+## SQL inicial
+
+```sql
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY,
+  user_id UUID NULL,
+  title VARCHAR(200) NOT NULL,
+  message TEXT NOT NULL,
+  type VARCHAR(50) NOT NULL DEFAULT 'info',
+  status VARCHAR(30) NOT NULL DEFAULT 'pending',
+  metadata JSONB NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  read_at TIMESTAMP NULL,
+  CHECK (type IN ('info', 'success', 'warning', 'error')),
+  CHECK (status IN ('pending', 'sent', 'read', 'failed'))
+);
+
+CREATE TABLE notification_deliveries (
+  id UUID PRIMARY KEY,
+  notification_id UUID NOT NULL REFERENCES notifications(id),
+  channel VARCHAR(50) NOT NULL,
+  status VARCHAR(30) NOT NULL DEFAULT 'pending',
+  error_message TEXT NULL,
+  sent_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  CHECK (channel IN ('websocket', 'email')),
+  CHECK (status IN ('pending', 'sent', 'failed'))
+);
+
+CREATE TABLE notification_templates (
+  id UUID PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  channel VARCHAR(50) NOT NULL,
+  subject VARCHAR(255) NULL,
+  body TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_notifications_user_status ON notifications(user_id, status);
+```
+
+
+## Transactional Outbox
+
+Cada servicio tiene su propia tabla `outbox_events`.
+
+```sql
+CREATE TABLE outbox_events (
+  id UUID PRIMARY KEY,
+  event_name VARCHAR(150) NOT NULL,
+  aggregate_id UUID NOT NULL,
+  aggregate_type VARCHAR(100) NOT NULL,
+  payload JSONB NOT NULL,
+  headers JSONB NULL,
+  status VARCHAR(30) NOT NULL DEFAULT 'pending',
+  retry_count INT NOT NULL DEFAULT 0,
+  error_message TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  published_at TIMESTAMP NULL
+);
+
+CREATE INDEX idx_outbox_events_status_created_at
+ON outbox_events(status, created_at);
+```
+
+### Propósito
+
+Evitar el problema de guardar datos en PostgreSQL pero fallar al publicar el evento en RabbitMQ.
+
+Flujo recomendado:
+
+```text
+BEGIN
+  INSERT/UPDATE entidad de negocio
+  INSERT outbox_events
+COMMIT
+
+Outbox Publisher
+  -> lee eventos pending
+  -> publica en RabbitMQ
+  -> marca published
+```
+
+
+## Relaciones
+
+```text
+notifications 1:N notification_deliveries
+```
+
+## Eventos publicados
+
+- notification.created
+- notification.sent
+- notification.failed
+- notification.read
+
+## Eventos consumidos
+
+- campaign.completed
+- campaign.failed
+- report.generated
+- report.failed
+- ticket.assigned
+- import.customer.batch.completed
+
+## APIs
+
+```http
+GET  /api/v1/notifications
+POST /api/v1/notifications/:id/read
+GET  /api/v1/notifications/unread-count
+```
+
+## Redis Pub/Sub
+
+Canales:
+
+```text
+ws:user:{userId}
+ws:campaign:{campaignId}
+ws:import:{batchId}
+```
+
+## Circuit Breaker
+
+Aplicable a:
+
+- Email provider.
+- WebSocket gateway si se separa.
+- External messaging APIs.
+
+Estados:
+
+- closed.
+- open.
+- half_open.
+
+## Patrones
+
+- Observer.
+- Circuit Breaker.
+- Retry.
+- Outbox.
+- Pub/Sub.
