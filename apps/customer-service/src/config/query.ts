@@ -1,14 +1,12 @@
-import { QueryResult, QueryResultRow } from "pg";
-import { pool } from "./pool.ts";
-
+import type { QueryResultRow } from "pg";
+import { pool } from "./pool.js";
 
 export class Database {
-
     static async query<T extends QueryResultRow>(
         text: string,
         params?: unknown[],
-    ): Promise<QueryResult<T>> {
-        return pool.query<T>(text, params);
+    ): Promise<T[]> {
+        const result = await pool.query<T>(text, params);
+        return result.rows;
     }
 }
-

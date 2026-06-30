@@ -1,11 +1,11 @@
 import crypto from "node:crypto";
-import { Customer } from "../../domain/entities/customer.entity";
-import { CustomerRepository } from "../../domain/repositories/customer.repository";
-import { CustomerAlreadyExistsError } from "../../domain/errors/customer.errors";
-import { CreateCustomerDto } from "../dto/create-customer.dto";
+import { Customer } from "../../domain/entities/customer.entity.js";
+import { CustomerRepository } from "../../domain/repositories/customer.repository.js";
+import { CustomerAlreadyExistsError } from "../../domain/errors/customer.errors.js";
+import { CreateCustomerDto } from "../dto/create-customer.dto.js";
 
 export class CreateCustomerUseCase {
-  constructor(private readonly customerRepository: CustomerRepository) {}
+  constructor(private readonly customerRepository: CustomerRepository) { }
 
   async execute(dto: CreateCustomerDto): Promise<Customer> {
     if (dto.email) {
@@ -20,9 +20,9 @@ export class CreateCustomerUseCase {
       id: crypto.randomUUID(),
       firstName: dto.firstName,
       lastName: dto.lastName,
-      email: dto.email,
-      phone: dto.phone,
-      country: dto.country,
+      email: dto.email ?? null,
+      phone: dto.phone ?? null,
+      country: dto.country ?? null,
     });
 
     await this.customerRepository.save(customer);

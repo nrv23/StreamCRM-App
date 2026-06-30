@@ -1,5 +1,8 @@
-import { Customer } from "../../domain/entities/customer.entity";
-import { CustomerRepository } from "../../domain/repositories/customer.repository";
+
+import { Database } from "../../../../config/query.js";
+import { Customer } from "../../domain/entities/customer.entity.js";
+import { CustomerRepository } from "../../domain/repositories/customer.repository.js";
+import { INow } from "../../interfaces/now.js";
 
 export class PostgresCustomerRepository implements CustomerRepository {
   async save(customer: Customer): Promise<void> {
@@ -17,5 +20,10 @@ export class PostgresCustomerRepository implements CustomerRepository {
     // Aquí va el SELECT por email.
     console.log("Finding customer by email", email);
     return null;
+  }
+
+  async testQuery(params: any = []) {
+    const result = await Database.query<INow>("SELECT NOW() AS now", params);
+    return result[0] || null;
   }
 }

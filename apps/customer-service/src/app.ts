@@ -1,7 +1,7 @@
-import express from "express";
-import { customerRoutes } from "./modules/customers";
+import express, { Application } from "express";
+import { customerRoutes } from "./modules/customers/index.js";
 
-export function createApp() {
+export function createApp(): Application {
   const app = express();
 
   app.use(express.json());

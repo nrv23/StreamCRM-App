@@ -1,8 +1,9 @@
-import { createApp } from "./app";
+import { createApp } from "./app.js";
+import { env } from "./config/env.js";
 
 async function bootstrap() {
   const app = createApp();
-  const port = Number(process.env.PORT ?? 3001);
+  const port = Number(env.server_port);
 
   app.listen(port, () => {
     console.log(`Customer Service running on port ${port}`);

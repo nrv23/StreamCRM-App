@@ -1,1 +1,1 @@
-export { customerRoutes } from "./customer.module";
+export { customerRoutes } from "./customer.module.js";
