@@ -22,56 +22,77 @@ Gestionar usuarios, roles, permisos, sesiones y refresh tokens.
 
 ```sql
 CREATE TABLE users (
-  id UUID PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
+  external_id UUID NOT NULL UNIQUE,
+
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
+
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(100) NOT NULL,
+
   status VARCHAR(30) NOT NULL DEFAULT 'active',
+
   created_at TIMESTAMP NOT NULL DEFAULT now(),
   updated_at TIMESTAMP NOT NULL DEFAULT now(),
+
   CHECK (status IN ('active', 'inactive', 'blocked'))
 );
 
 CREATE TABLE roles (
-  id UUID PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
+
   name VARCHAR(100) NOT NULL UNIQUE,
   description TEXT NULL,
+
   created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE permissions (
-  id UUID PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
+
   code VARCHAR(150) NOT NULL UNIQUE,
   description TEXT NULL,
+
   created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE user_roles (
-  user_id UUID NOT NULL REFERENCES users(id),
-  role_id UUID NOT NULL REFERENCES roles(id),
+  user_id INT NOT NULL REFERENCES users(id),
+  role_id INT NOT NULL REFERENCES roles(id),
+
   created_at TIMESTAMP NOT NULL DEFAULT now(),
+
   PRIMARY KEY (user_id, role_id)
 );
 
 CREATE TABLE role_permissions (
-  role_id UUID NOT NULL REFERENCES roles(id),
-  permission_id UUID NOT NULL REFERENCES permissions(id),
+  role_id INT NOT NULL REFERENCES roles(id),
+  permission_id INT NOT NULL REFERENCES permissions(id),
+
   created_at TIMESTAMP NOT NULL DEFAULT now(),
+
   PRIMARY KEY (role_id, permission_id)
 );
 
 CREATE TABLE refresh_tokens (
-  id UUID PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES users(id),
+  id SERIAL PRIMARY KEY,
+
+  user_id INT NOT NULL REFERENCES users(id),
+
   token_hash TEXT NOT NULL,
   revoked_at TIMESTAMP NULL,
   expires_at TIMESTAMP NOT NULL,
+
   created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
-CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
+CREATE INDEX idx_refresh_tokens_user_id
+ON refresh_tokens(user_id);
+
+CREATE INDEX idx_refresh_tokens_expires_at
+ON refresh_tokens(expires_at);
+
 ```
 
 
@@ -81,17 +102,25 @@ Cada servicio tiene su propia tabla `outbox_events`.
 
 ```sql
 CREATE TABLE outbox_events (
-  id UUID PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
+
+  event_id UUID NOT NULL UNIQUE,
   event_name VARCHAR(150) NOT NULL,
-  aggregate_id UUID NOT NULL,
+
+  aggregate_id INT NOT NULL,
   aggregate_type VARCHAR(100) NOT NULL,
+
   payload JSONB NOT NULL,
   headers JSONB NULL,
+
   status VARCHAR(30) NOT NULL DEFAULT 'pending',
   retry_count INT NOT NULL DEFAULT 0,
   error_message TEXT NULL,
+
   created_at TIMESTAMP NOT NULL DEFAULT now(),
-  published_at TIMESTAMP NULL
+  published_at TIMESTAMP NULL,
+
+  CHECK (status IN ('pending', 'published', 'failed'))
 );
 
 CREATE INDEX idx_outbox_events_status_created_at

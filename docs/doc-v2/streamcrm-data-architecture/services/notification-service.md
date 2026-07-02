@@ -19,41 +19,64 @@ Gestionar notificaciones internas, WebSocket, email y entregas.
 
 ```sql
 CREATE TABLE notifications (
-  id UUID PRIMARY KEY,
-  user_id UUID NULL,
+  id SERIAL PRIMARY KEY,
+  external_id UUID NOT NULL UNIQUE,
+
+  user_id INT NULL,
+
   title VARCHAR(200) NOT NULL,
   message TEXT NOT NULL,
+
   type VARCHAR(50) NOT NULL DEFAULT 'info',
   status VARCHAR(30) NOT NULL DEFAULT 'pending',
+
   metadata JSONB NULL,
+
   created_at TIMESTAMP NOT NULL DEFAULT now(),
   read_at TIMESTAMP NULL,
+
   CHECK (type IN ('info', 'success', 'warning', 'error')),
   CHECK (status IN ('pending', 'sent', 'read', 'failed'))
 );
 
+CREATE INDEX idx_notifications_external_id
+ON notifications(external_id);
+
+CREATE INDEX idx_notifications_user_status
+ON notifications(user_id, status);
 CREATE TABLE notification_deliveries (
-  id UUID PRIMARY KEY,
-  notification_id UUID NOT NULL REFERENCES notifications(id),
+  id SERIAL PRIMARY KEY,
+
+  notification_id INT NOT NULL REFERENCES notifications(id),
+
   channel VARCHAR(50) NOT NULL,
   status VARCHAR(30) NOT NULL DEFAULT 'pending',
+
   error_message TEXT NULL,
+
   sent_at TIMESTAMP NULL,
   created_at TIMESTAMP NOT NULL DEFAULT now(),
+
   CHECK (channel IN ('websocket', 'email')),
   CHECK (status IN ('pending', 'sent', 'failed'))
 );
 
+CREATE INDEX idx_notification_deliveries_notification_id
+ON notification_deliveries(notification_id);
 CREATE TABLE notification_templates (
-  id UUID PRIMARY KEY,
-  name VARCHAR(150) NOT NULL,
+  id SERIAL PRIMARY KEY,
+
+  name VARCHAR(150) NOT NULL UNIQUE,
+
   channel VARCHAR(50) NOT NULL,
+
   subject VARCHAR(255) NULL,
   body TEXT NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT now()
-);
 
-CREATE INDEX idx_notifications_user_status ON notifications(user_id, status);
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+
+  CHECK (channel IN ('websocket', 'email'))
+);
 ```
 
 
@@ -63,17 +86,26 @@ Cada servicio tiene su propia tabla `outbox_events`.
 
 ```sql
 CREATE TABLE outbox_events (
-  id UUID PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
+
+  event_id UUID NOT NULL UNIQUE,
+
   event_name VARCHAR(150) NOT NULL,
-  aggregate_id UUID NOT NULL,
+
+  aggregate_id INT NOT NULL,
   aggregate_type VARCHAR(100) NOT NULL,
+
   payload JSONB NOT NULL,
   headers JSONB NULL,
+
   status VARCHAR(30) NOT NULL DEFAULT 'pending',
   retry_count INT NOT NULL DEFAULT 0,
   error_message TEXT NULL,
+
   created_at TIMESTAMP NOT NULL DEFAULT now(),
-  published_at TIMESTAMP NULL
+  published_at TIMESTAMP NULL,
+
+  CHECK (status IN ('pending', 'published', 'failed'))
 );
 
 CREATE INDEX idx_outbox_events_status_created_at

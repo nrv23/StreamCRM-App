@@ -20,51 +20,82 @@ Gestionar tickets de soporte, asignaciones, comentarios e historial.
 
 ```sql
 CREATE TABLE tickets (
-  id UUID PRIMARY KEY,
-  customer_id UUID NOT NULL,
+  id SERIAL PRIMARY KEY,
+
+  customer_id INT NOT NULL,
+
   customer_name_snapshot VARCHAR(200) NULL,
   customer_email_snapshot VARCHAR(255) NULL,
+
   title VARCHAR(200) NOT NULL,
   description TEXT NOT NULL,
+
   status VARCHAR(30) NOT NULL DEFAULT 'open',
   priority VARCHAR(30) NOT NULL DEFAULT 'medium',
-  created_by UUID NOT NULL,
-  assigned_to UUID NULL,
+
+  created_by_user_id INT NOT NULL,
+  assigned_to_user_id INT NULL,
+
   created_at TIMESTAMP NOT NULL DEFAULT now(),
   updated_at TIMESTAMP NOT NULL DEFAULT now(),
   closed_at TIMESTAMP NULL,
+
   CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
   CHECK (priority IN ('low', 'medium', 'high', 'urgent'))
 );
 
+CREATE INDEX idx_tickets_status
+ON tickets(status);
+
+CREATE INDEX idx_tickets_assigned_to
+ON tickets(assigned_to_user_id);
+
+CREATE INDEX idx_tickets_customer_id
+ON tickets(customer_id);
 CREATE TABLE ticket_comments (
-  id UUID PRIMARY KEY,
-  ticket_id UUID NOT NULL REFERENCES tickets(id),
-  user_id UUID NOT NULL,
+  id SERIAL PRIMARY KEY,
+
+  ticket_id INT NOT NULL REFERENCES tickets(id),
+
+  user_id INT NOT NULL,
+
   comment TEXT NOT NULL,
+
   created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
+CREATE INDEX idx_ticket_comments_ticket_id
+ON ticket_comments(ticket_id);
 CREATE TABLE ticket_assignments (
-  id UUID PRIMARY KEY,
-  ticket_id UUID NOT NULL REFERENCES tickets(id),
-  assigned_to UUID NOT NULL,
-  assigned_by UUID NOT NULL,
+  id SERIAL PRIMARY KEY,
+
+  ticket_id INT NOT NULL REFERENCES tickets(id),
+
+  assigned_to_user_id INT NOT NULL,
+  assigned_by_user_id INT NOT NULL,
+
   created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
+CREATE INDEX idx_ticket_assignments_ticket_id
+ON ticket_assignments(ticket_id);
 CREATE TABLE ticket_status_history (
-  id UUID PRIMARY KEY,
-  ticket_id UUID NOT NULL REFERENCES tickets(id),
+  id SERIAL PRIMARY KEY,
+
+  ticket_id INT NOT NULL REFERENCES tickets(id),
+
   previous_status VARCHAR(30) NULL,
   new_status VARCHAR(30) NOT NULL,
-  changed_by UUID NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT now()
+
+  changed_by_user_id INT NOT NULL,
+
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+
+  CHECK (new_status IN ('open', 'in_progress', 'resolved', 'closed'))
 );
 
-CREATE INDEX idx_tickets_status ON tickets(status);
-CREATE INDEX idx_tickets_assigned_to ON tickets(assigned_to);
-CREATE INDEX idx_tickets_customer_id ON tickets(customer_id);
+CREATE INDEX idx_ticket_status_history_ticket_id
+ON ticket_status_history(ticket_id);
 ```
 
 
@@ -74,21 +105,35 @@ Cada servicio tiene su propia tabla `outbox_events`.
 
 ```sql
 CREATE TABLE outbox_events (
-  id UUID PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
+
+  event_id UUID NOT NULL UNIQUE,
   event_name VARCHAR(150) NOT NULL,
-  aggregate_id UUID NOT NULL,
+
+  aggregate_id INT NOT NULL,
   aggregate_type VARCHAR(100) NOT NULL,
+
   payload JSONB NOT NULL,
   headers JSONB NULL,
+
   status VARCHAR(30) NOT NULL DEFAULT 'pending',
   retry_count INT NOT NULL DEFAULT 0,
   error_message TEXT NULL,
+
   created_at TIMESTAMP NOT NULL DEFAULT now(),
-  published_at TIMESTAMP NULL
+  published_at TIMESTAMP NULL,
+
+  CHECK (status IN ('pending', 'published', 'failed'))
 );
 
 CREATE INDEX idx_outbox_events_status_created_at
 ON outbox_events(status, created_at);
+
+CREATE INDEX idx_outbox_events_event_id
+ON outbox_events(event_id);
+
+CREATE INDEX idx_outbox_events_aggregate
+ON outbox_events(aggregate_type, aggregate_id);
 ```
 
 ### Propósito
