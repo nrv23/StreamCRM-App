@@ -11,3 +11,10 @@ export class CustomerAlreadyExistsError extends Error {
     this.name = "CustomerAlreadyExistsError";
   }
 }
+
+export class CustomeInvalidDataError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CustomeInvalidDataError";
+  }
+}

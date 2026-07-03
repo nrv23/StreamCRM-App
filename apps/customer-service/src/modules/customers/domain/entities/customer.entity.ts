@@ -1,14 +1,4 @@
-export type CustomerStatus = "active" | "inactive" | "blocked";
-
-type CreateCustomerProps = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email?: string | null;
-  phone?: string | null;
-  country?: string | null;
-  status?: CustomerStatus;
-};
+import { CustomerStatus } from "../dtos/shared/customerStatus.type.js";
 
 export class Customer {
   private constructor(
@@ -19,41 +9,19 @@ export class Customer {
     public phone: string | null,
     public country: string | null,
     public status: CustomerStatus,
-  ) {}
+  ) { }
 
-  static create(props: CreateCustomerProps): Customer {
-    if (!props.email && !props.phone) {
-      throw new Error("Customer must have email or phone");
-    }
+  public static fromObject(object: { [key: string]: any }) {
 
-    if (props.email && !props.email.includes("@")) {
-      throw new Error("Invalid customer email");
-    }
-
+    const { id, firstName, lastName, email, phone, country, status } = object;
     return new Customer(
-      props.id,
-      props.firstName.trim(),
-      props.lastName.trim(),
-      props.email?.trim().toLowerCase() ?? null,
-      props.phone?.trim() ?? null,
-      props.country?.trim() ?? null,
-      props.status ?? "active",
-    );
-  }
-
-  changeEmail(email: string) {
-    if (!email.includes("@")) {
-      throw new Error("Invalid customer email");
-    }
-
-    this.email = email.trim().toLowerCase();
-  }
-
-  block() {
-    this.status = "blocked";
-  }
-
-  activate() {
-    this.status = "active";
+      id || null,
+      firstName.trim(),
+      lastName.trim(),
+      email?.trim().toLowerCase() || null,
+      phone?.trim() || null,
+      country?.trim() || null,
+      status || null,
+    )
   }
 }

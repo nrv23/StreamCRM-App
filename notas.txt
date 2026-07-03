@@ -2,3 +2,8 @@ PORTs en clean arquitecture son contratos o interfaces qye representan la forma 
 va a ejecutar un proceso sin importar la tecnologia a usar.
 Luego los adaptadores son quienes implementan la tecnologia para crear o ejecutar el proceso 
 ya sea transacciones de bd, servicios http, tokens o lo que sea.
+
+git for-each-ref --sort=-committerdate refs/heads/ \
+  --format='%(committerdate:relative) %(refname:short)'
+
+  lista las ramas de git por su orden de uso
