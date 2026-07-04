@@ -2,8 +2,10 @@ import { Customer } from '../entity/customer.entity.js';
 import { CustomerService } from '../services/customer.service.js';
 import { ApiResponse } from './../shared/types/api-response.js';
 import { CreateCustomerDto } from './../dto/createCustomer.dto.js';
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
+import { GetCustomerDto } from '../dto/getCustomer.dto.js';
+import { IPaginationResponse } from '../interfaces/pagination.interface.js';
 
 export class CustomerController {
 
@@ -27,6 +29,18 @@ export class CustomerController {
         }
 
         res.status(201).json(response);
+        return;
+    }
+
+    async search(req: Request, res: Response) {
+
+        const query = req.query as any;
+        const data = await this._customerService.search(query as GetCustomerDto);
+        const response: ApiResponse<IPaginationResponse<Customer[]>> = {
+            data,
+            success: true,
+        }
+        res.status(200).json(response);
         return;
     }
 }

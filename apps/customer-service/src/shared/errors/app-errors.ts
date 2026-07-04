@@ -10,7 +10,7 @@ export class AppError extends Error {
         Object.setPrototypeOf(this, new.target.prototype);
     }
 }
-
+/*
 // Tus errores específicos ahora llevan el código interno que pide tu tipo
 export class ConflictError extends AppError {
     constructor(message: string, code = 'CONFLICT_ERROR') {
@@ -23,3 +23,21 @@ export class NotFoundError extends AppError {
         super(message, 404, code);
     }
 }
+
+export class BadRequestError extends AppError {
+    constructor(message = '', code = 'BAD_REQUEST') {
+        super(message, 400, code);
+    }
+}
+
+export class CustomeError extends AppError {
+    constructor(message = '', code = '') {
+        super(message, 500, code);
+    }
+}
+
+export class InternalServerError extends AppError {
+    constructor(message = '', code = '') {
+        super(message, 500, code);
+    }
+}*/

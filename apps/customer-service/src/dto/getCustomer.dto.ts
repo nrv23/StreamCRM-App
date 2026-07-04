@@ -1,9 +1,10 @@
 import { CustomerStatus } from "../enum/CustomerStatus.type.js";
 
 export interface GetCustomerDto {
-
-    email?: string | null;
-    phone?: string | null;
+    page?: number | null;
     country?: string | null;
     status?: CustomerStatus;
+    search?: string | null;
+    sortBy: string;
+    orderBy: string;
 }

@@ -5,8 +5,7 @@ import { CustomerController } from "../controllers/customer.controller.js";
 import { CustomerService } from "../services/customer.service.js";
 import { CustomerRepository } from "../repository/customerRepository.repository.js";
 import { Database } from "../config/query.js";
-
-
+import { getCustomerValidator } from "../validators/get-customer.validator.js";
 
 export class CustomerRoutes {
 
@@ -17,6 +16,7 @@ export class CustomerRoutes {
     private _database: Database;
 
     constructor() {
+
         this._database = new Database();
         this._customerRepository = new CustomerRepository(this._database);
         this._customerService = new CustomerService(this._customerRepository);
@@ -26,6 +26,8 @@ export class CustomerRoutes {
 
     BuildCustomerRoutes(): Router {
         this._router.post("/", createCustomerValidator, validateRequest, this._controller.createCustomer.bind(this._controller));
+        this._router.get("/", getCustomerValidator, validateRequest, this._controller.search.bind(this._controller));
+
         return this._router;
     }
 }

@@ -2,11 +2,13 @@
 
 export interface IPaginationResponse<T> {
 
-    data: T,
+    data: T;
     paginationData: {
-        page: number,
-        totalPages: number,
-        previousPage: number,
-        nextPage: number
-    }
+        page: number;
+        pageSize: number;
+        totalPages: number;
+        totalRecords: number;
+        previousPage: number | null;
+        nextPage: number | null;
+    };
 }
