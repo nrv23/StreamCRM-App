@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Customer Service",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "/home/nvm23/.nvm/versions/node/v22.22.2/bin/node",
+            "cwd": "${workspaceFolder}/apps/customer-service",
+            "program": "${workspaceFolder}/apps/customer-service/node_modules/tsx/dist/cli.mjs",
+            "args": [
+                "watch",
+                "src/main.ts"
+            ],
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/apps/customer-service/.env",
+            "skipFiles": [
+                "<node_internals>/**",
+                "**/node_modules/**"
+            ]
+        }
+    ]
+}
