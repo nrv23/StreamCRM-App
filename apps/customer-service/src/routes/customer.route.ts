@@ -25,7 +25,7 @@ export class CustomerRoutes {
     }
 
     BuildCustomerRoutes(): Router {
-        this._router.post("/create", createCustomerValidator, validateRequest);
+        this._router.post("/", createCustomerValidator, validateRequest, this._controller.createCustomer.bind(this._controller));
         return this._router;
     }
 }

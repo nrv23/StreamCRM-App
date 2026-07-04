@@ -14,7 +14,7 @@ export const validateRequest = (req: Request, res: Response, next: NextFunction)
                 code: "400",
                 message: errors.array({
                     onlyFirstError: true
-                }).map(message => message.toString()),
+                }).map(message => message),
             },
             success: false
         }

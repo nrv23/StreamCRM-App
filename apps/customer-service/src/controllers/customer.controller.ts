@@ -2,7 +2,8 @@ import { Customer } from '../entity/customer.entity.js';
 import { CustomerService } from '../services/customer.service.js';
 import { ApiResponse } from './../shared/types/api-response.js';
 import { CreateCustomerDto } from './../dto/createCustomer.dto.js';
-
+import { Request, Response, NextFunction } from 'express';
+import { randomUUID } from 'node:crypto';
 
 export class CustomerController {
 
@@ -14,21 +15,18 @@ export class CustomerController {
 
     async createCustomer(req: Request, res: Response) {
 
-        try {
-            // 
-            const customerBody = req.body as CreateCustomerDto;
-
-            const newCustomer = await this._customerService.save(customerBody);
-            const response: ApiResponse<Customer> = {
-                data: newCustomer,
-                success: true
-            }
-
-            res.status(201).json(response);
-            return;
-
-        } catch (error) {
-
+        const body = req.body as any;
+        const newCustomer = {
+            ...body,
+            external_id: randomUUID()
         }
+        const customerCreatedResponse = await this._customerService.save(newCustomer as CreateCustomerDto);
+        const response: ApiResponse<Customer> = {
+            data: customerCreatedResponse,
+            success: true
+        }
+
+        res.status(201).json(response);
+        return;
     }
 }
