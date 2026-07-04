@@ -55,34 +55,32 @@ export class CustomerRepository implements ICustomerRepository {
         const limit = 20;
         const offset = (page - 1) * limit;
 
-        // Array para almacenar los valores de los filtros dinámicos
-        const queryParams: any[] = [];
-
-        // Base de la consulta
+        const params: any[] = [];
         let query = `
             select id, first_name, last_name, email, phone, country, status 
             from customers 
             where deleted_at is null
-
-            ${options.search ? ` and concat(first_name, '', last_name) ilike '%${options.search}%'` : ''}
-            ${options.status ? ` and status = '${options.status}'` : ''}
-            ${options.country ? `and country = '${options.country}'` : ''}
         `;
 
-        // Validamos que el sortBy exista en nuestra lista, si no, ordenamos por id por defecto
-        const sortColumn = (options.sortBy && options.sortBy === 'name' ? 'concat(first_name, " ", last_name)' : options.sortBy) || 'id';
+        if (options.search) {
+            params.push(`%${options.search}%`);
+            query += ` and concat(first_name, ' ', last_name) ilike $${params.length}`;
+        }
+        if (options.status) {
+            params.push(options.status);
+            query += ` and status = $${params.length}`;
+        }
+        if (options.country) {
+            params.push(options.country);
+            query += ` and country = $${params.length}`;
+        }
 
-        // Validamos que el orderBy sea estrictamente ASC o DESC para evitar inyecciones ahí
+        const sortColumn = (options.sortBy && options.sortBy === 'name' ? "concat(first_name, ' ', last_name)" : options.sortBy) || 'id';
         const sortOrder = options.orderBy?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
-        query += ` order by ${sortColumn} ${sortOrder}`;
+        query += ` order by ${sortColumn} ${sortOrder} limit ${limit} offset ${offset};`;
 
-        // 3. Paginación (Añadimos LIMIT y OFFSET con parámetros)
-        queryParams.push(limit, offset);
-        query += ` limit ${limit} offset ${offset};`;
-
-        // Ejecutar la query pasando la estructura y sus parámetros correspondientes
-        const customers = await this.db.query<Customer>(query);
+        const customers = await this.db.query<Customer>(query, params);
         return customers;
     }
     // count de registros
@@ -90,29 +88,30 @@ export class CustomerRepository implements ICustomerRepository {
 
 
     async getTotalRecords(options: GetCustomerDto): Promise<number> {
-
-        /*
-            GET /customers?page=1&pageSize=20
-            GET /customers?status=active
-            GET /customers?country=CR
-            GET /customers?search=Juan
-            GET /customers?sort=created_at&order=desc
-        */
-        const query = `
-            select  
-                count(1) as totalRecords
+        const params: any[] = [];
+        let query = `
+            select count(1) as "totalRecords"
             from customers 
             where deleted_at is null
-
-            ${options.search ? ` and concat(first_name, ' ', last_name) =  ${options.search}` : ''}
-            ${options.status ? `and status = ${options.status}` : ''}
-            ${options.country ? `and country = ${options.country}` : ''}
         `;
+
+        if (options.search) {
+            params.push(`%${options.search}%`);
+            query += ` and concat(first_name, ' ', last_name) ilike $${params.length}`;
+        }
+        if (options.status) {
+            params.push(options.status);
+            query += ` and status = $${params.length}`;
+        }
+        if (options.country) {
+            params.push(options.country);
+            query += ` and country = $${params.length}`;
+        }
 
         const response = await this.db.query<{
             totalRecords: number
-        }>(query);
+        }>(query, params);
 
-        return response[0]?.totalRecords!;
+        return Number(response[0]?.totalRecords || 0);
     }
 }

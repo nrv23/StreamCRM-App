@@ -20,14 +20,10 @@ export class CustomerService {
 
         const isCustomerExist = await this._customerRepository.findByEmail(customer.email!);
 
-        if (isCustomerExist) {
-            console.log("Entro")
+        if (isCustomerExist)
             throw ErrorFactory.build(ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED, `email ${customer.email!} already exists`, '');
-        }
 
-
-        const newcustomer = await this._customerRepository.save(customer);
-        return newcustomer;
+        return await this._customerRepository.save(customer);
     }
 
     async search(options: GetCustomerDto): Promise<IPaginationResponse<Customer[]>> {
@@ -48,7 +44,7 @@ export class CustomerService {
 
             data: customers,
             paginationData: {
-                page,
+                page: +page,
                 pageSize: customers.length,
                 totalPages,
                 totalRecords: totalItems,
