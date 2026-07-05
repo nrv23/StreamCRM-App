@@ -35,5 +35,6 @@ export const errorHandler = ( // va en el app .ts
         };
 
         res.status(500).json(internalResponse);
+        return;
     }
 };

@@ -1,19 +1,26 @@
-import { Database } from '../config/query.js';
+import { databaseInstance } from "../config/query.js";
+import type { IDatabase } from "../interfaces/database.interface.js";
 import { CreateCustomerDto } from '../dto/createCustomer.dto.js';
 import { GetCustomerDto } from '../dto/getCustomer.dto.js';
 import { UpdateCustomerDto } from '../dto/updateCustomer.dto.js';
 import { Customer } from '../entity/customer.entity.js';
+import { CustomerStatus } from '../enum/CustomerStatus.type.js';
+import { ApiErrorCode } from '../enum/error-codes.enum.js';
+import { ErrorFactory } from '../shared/factory/error-factory.js';
 import { ICustomerRepository } from './../interfaces/customer-repository.interface.js';
 
 // aqui se implementa la parte de postgresql
 
 
 export class CustomerRepository implements ICustomerRepository {
+    private _db: IDatabase;
+    constructor(db?: IDatabase) {
+        this._db = db ?? databaseInstance;
+    }
 
-    constructor(private db: Database) { }
     async save(customer: CreateCustomerDto): Promise<Customer> {
 
-        const newCustomer = await this.db.query<Customer>(`
+        const newCustomer = await this._db.query<Customer>(`
             Insert into customers(
                 external_id, first_name, last_name, email, phone, country, created_by_user_id
             ) 
@@ -28,7 +35,7 @@ export class CustomerRepository implements ICustomerRepository {
     }
     async findById(id: number): Promise<Customer | null> {
 
-        const customer = await this.db.query(
+        const customer = await this._db.query(
             'select  id, first_name, last_name, email, phone, country, status from customers where id = $1', [id]
         );
 
@@ -38,7 +45,7 @@ export class CustomerRepository implements ICustomerRepository {
 
     async findByEmail(email: string): Promise<Customer | null> {
 
-        const customer = await this.db.query(
+        const customer = await this._db.query(
             'select  id, first_name, last_name, email, phone, country, status from customers where email = $1', [email]
         );
 
@@ -46,9 +53,41 @@ export class CustomerRepository implements ICustomerRepository {
         return customer[0] as Customer;
     }
 
-    update(customer: UpdateCustomerDto): Promise<Customer> {
-        throw new Error('Method not implemented.');
+    async updateByFilters(customer: UpdateCustomerDto): Promise<Customer> {
+        const currentCustomer = await this.findById(customer.id);
+        if (!currentCustomer) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `customer not exists`, '');
+        return await this.update(customer);
     }
+
+    async update(customer: UpdateCustomerDto): Promise<Customer> {
+        const { firstName, lastName, country, email, phone, id } = customer;
+
+        const query = `
+            update customers set first_name = $1, last_name = $2, country = $3, email = $4, phone = $5 where id = $6 
+            RETURNING id, first_name, last_name, email, phone, country, status;
+        ` ;
+        const response = await this._db.query<Customer>(query, [firstName, lastName, country, email, phone, id]);
+        return response[0] as Customer;
+    }
+
+    // delete soft
+
+    async deleteByFilters(id: number, status: CustomerStatus): Promise<Customer> {
+        const currentCustomer = await this.findById(id);
+        if (!currentCustomer) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `customer not exists`, '');
+        return await this.delete(id, status);
+    }
+
+    async delete(id: number, status: CustomerStatus): Promise<Customer> {
+
+        const query = `
+            update customers set status = $1 where id = $2
+            RETURNING id, first_name, last_name, email, phone, country, status;
+        ` ;
+        const response = await this._db.query<Customer>(query, [status, id]);
+        return response[0] as Customer;
+    }
+
 
     async searchByFilters(options: GetCustomerDto): Promise<Customer[]> {
         const page = options.page || 1;
@@ -80,12 +119,11 @@ export class CustomerRepository implements ICustomerRepository {
 
         query += ` order by ${sortColumn} ${sortOrder} limit ${limit} offset ${offset};`;
 
-        const customers = await this.db.query<Customer>(query, params);
+        const customers = await this._db.query<Customer>(query, params);
         return customers;
     }
+
     // count de registros
-
-
 
     async getTotalRecords(options: GetCustomerDto): Promise<number> {
         const params: any[] = [];
@@ -108,7 +146,7 @@ export class CustomerRepository implements ICustomerRepository {
             query += ` and country = $${params.length}`;
         }
 
-        const response = await this.db.query<{
+        const response = await this._db.query<{
             totalRecords: number
         }>(query, params);
 

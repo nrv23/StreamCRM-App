@@ -13,12 +13,13 @@ export class CustomerRoutes {
     private _controller: CustomerController;
     private _customerService: CustomerService;
     private _customerRepository: CustomerRepository;
-    private _database: Database;
+    //private _database: Database;
 
     constructor() {
 
-        this._database = new Database();
-        this._customerRepository = new CustomerRepository(this._database);
+        // this._database = new Database();
+        this._customerRepository = new CustomerRepository();
+        // this._customerRepository = new CustomerRepository(this._database);
         this._customerService = new CustomerService(this._customerRepository);
         this._router = Router();
         this._controller = new CustomerController(this._customerService)
