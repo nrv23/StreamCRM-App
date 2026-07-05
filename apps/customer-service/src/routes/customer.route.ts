@@ -28,6 +28,8 @@ export class CustomerRoutes {
     BuildCustomerRoutes(): Router {
         this._router.post("/", createCustomerValidator, validateRequest, this._controller.createCustomer.bind(this._controller));
         this._router.get("/", getCustomerValidator, validateRequest, this._controller.search.bind(this._controller));
+        this._router.put("/:id", getCustomerValidator, validateRequest, this._controller.search.bind(this._controller));
+        this._router.delete("/:id", getCustomerValidator, validateRequest, this._controller.search.bind(this._controller));
 
         return this._router;
     }

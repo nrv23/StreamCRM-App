@@ -53,12 +53,6 @@ export class CustomerRepository implements ICustomerRepository {
         return customer[0] as Customer;
     }
 
-    async updateByFilters(customer: UpdateCustomerDto): Promise<Customer> {
-        const currentCustomer = await this.findById(customer.id);
-        if (!currentCustomer) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `customer not exists`, '');
-        return await this.update(customer);
-    }
-
     async update(customer: UpdateCustomerDto): Promise<Customer> {
         const { firstName, lastName, country, email, phone, id } = customer;
 
@@ -71,13 +65,6 @@ export class CustomerRepository implements ICustomerRepository {
     }
 
     // delete soft
-
-    async deleteByFilters(id: number, status: CustomerStatus): Promise<Customer> {
-        const currentCustomer = await this.findById(id);
-        if (!currentCustomer) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `customer not exists`, '');
-        return await this.delete(id, status);
-    }
-
     async delete(id: number, status: CustomerStatus): Promise<Customer> {
 
         const query = `

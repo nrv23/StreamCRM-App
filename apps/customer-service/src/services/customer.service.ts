@@ -1,5 +1,7 @@
 import { GetCustomerDto } from "../dto/getCustomer.dto.js";
+import { UpdateCustomerDto } from "../dto/updateCustomer.dto.js";
 import { Customer } from "../entity/customer.entity.js";
+import { CustomerStatus } from "../enum/CustomerStatus.type.js";
 import { ApiErrorCode } from "../enum/error-codes.enum.js";
 import { ICustomerRepository } from "../interfaces/customer-repository.interface.js";
 import { IPaginationResponse } from "../interfaces/pagination.interface.js";
@@ -56,4 +58,20 @@ export class CustomerService {
         return response;
     }
 
+    async update(customer: UpdateCustomerDto): Promise<Customer | null> {
+
+        const isExists = await this._customerRepository.findById(customer.id);
+        if (!isExists)
+            throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `customer with email ${customer.email!} not exists`, '');
+
+        return await this._customerRepository.update(customer);
+    }
+
+    async delete(id: number, status: CustomerStatus) {
+
+        const isExists = await this._customerRepository.findById(id);
+        if (!isExists)
+            throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `customer not exists`, '');
+        return await this._customerRepository.delete(id, status);
+    }
 }

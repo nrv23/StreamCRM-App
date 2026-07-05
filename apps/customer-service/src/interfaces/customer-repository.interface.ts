@@ -9,9 +9,7 @@ export interface ICustomerRepository {
     findById(id: number): Promise<Customer | null>;
     findByEmail(email: string): Promise<Customer | null>;
     update(customer: UpdateCustomerDto): Promise<Customer>;
-    updateByFilters(customer: UpdateCustomerDto): Promise<Customer>;
     searchByFilters(options: GetCustomerDto): Promise<Customer[]>;
     getTotalRecords(options: GetCustomerDto): Promise<number>;
     delete(id: number, status: CustomerStatus): Promise<Customer>;
-    deleteByFilters(id: number, status: CustomerStatus): Promise<Customer>;
 }
