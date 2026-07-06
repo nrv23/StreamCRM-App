@@ -54,13 +54,13 @@ export class CustomerRepository implements ICustomerRepository {
     }
 
     async update(customer: UpdateCustomerDto): Promise<Customer> {
-        const { firstName, lastName, country, email, phone, id } = customer;
+        const { firstName, lastName, email, phone, id } = customer;
 
         const query = `
-            update customers set first_name = $1, last_name = $2, country = $3, email = $4, phone = $5 where id = $6 
+            update customers set first_name = $1, last_name = $2, email = $3, phone = $4 where id = $5 
             RETURNING id, first_name, last_name, email, phone, country, status;
         ` ;
-        const response = await this._db.query<Customer>(query, [firstName, lastName, country, email, phone, id]);
+        const response = await this._db.query<Customer>(query, [firstName, lastName, email, phone, id]);
         return response[0] as Customer;
     }
 

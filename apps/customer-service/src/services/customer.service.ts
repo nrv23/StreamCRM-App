@@ -58,20 +58,23 @@ export class CustomerService {
         return response;
     }
 
-    async update(customer: UpdateCustomerDto): Promise<Customer | null> {
+    async update(customer: UpdateCustomerDto): Promise<Customer> {
 
-        const isExists = await this._customerRepository.findById(customer.id);
-        if (!isExists)
-            throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `customer with email ${customer.email!} not exists`, '');
-
+        await this.searchById(customer.id);
         return await this._customerRepository.update(customer);
     }
 
     async delete(id: number, status: CustomerStatus) {
 
-        const isExists = await this._customerRepository.findById(id);
-        if (!isExists)
-            throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `customer not exists`, '');
+        await this.searchById(id);
         return await this._customerRepository.delete(id, status);
+    }
+
+    async searchById(id: number) {
+
+        const customer = await this._customerRepository.findById(id);
+        if (!customer)
+            throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `customer is not exists`, '');
+        return customer;
     }
 }

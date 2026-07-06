@@ -6,6 +6,8 @@ import { CustomerService } from "../services/customer.service.js";
 import { CustomerRepository } from "../repository/customerRepository.repository.js";
 import { Database } from "../config/query.js";
 import { getCustomerValidator } from "../validators/get-customer.validator.js";
+import { updateCustomerValidator } from "../validators/update-customer.validator.js";
+import { deleteCustomerValidator } from "../validators/delete-customer.validator.js";
 
 export class CustomerRoutes {
 
@@ -28,8 +30,9 @@ export class CustomerRoutes {
     BuildCustomerRoutes(): Router {
         this._router.post("/", createCustomerValidator, validateRequest, this._controller.createCustomer.bind(this._controller));
         this._router.get("/", getCustomerValidator, validateRequest, this._controller.search.bind(this._controller));
-        this._router.put("/:id", getCustomerValidator, validateRequest, this._controller.search.bind(this._controller));
-        this._router.delete("/:id", getCustomerValidator, validateRequest, this._controller.search.bind(this._controller));
+        this._router.get("/:id", getCustomerValidator, validateRequest, this._controller.seachById.bind(this._controller));
+        this._router.put("/:id", updateCustomerValidator, validateRequest, this._controller.update.bind(this._controller));
+        this._router.delete("/:id", deleteCustomerValidator, validateRequest, this._controller.delete.bind(this._controller));
 
         return this._router;
     }
