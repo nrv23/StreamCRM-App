@@ -25,7 +25,7 @@ export class CustomerController {
         }
         const customerCreatedResponse = await this._customerService.save(newCustomer as CreateCustomerDto);
         const response: ApiResponse<Customer> = {
-            data: {
+            response: {
                 message: "Customer created",
                 details: customerCreatedResponse
             },
@@ -41,7 +41,7 @@ export class CustomerController {
         const query = req.query as any;
         const data = await this._customerService.search(query as GetCustomerDto);
         const response: ApiResponse<IPaginationResponse<Customer[]>> = {
-            data: {
+            response: {
                 message: "",
                 details: data
             },
@@ -62,7 +62,7 @@ export class CustomerController {
 
         const updateCustomerResponse = await this._customerService.update(customer as UpdateCustomerDto);
         const response: ApiResponse<Customer> = {
-            data: {
+            response: {
                 message: "Customer updated",
                 details: updateCustomerResponse
             },
@@ -80,7 +80,7 @@ export class CustomerController {
 
         const deletedCustomerResponse = await this._customerService.delete(+id!, status);
         const response: ApiResponse<Customer> = {
-            data: {
+            response: {
                 message: "Customer deleted",
                 details: deletedCustomerResponse
             },
@@ -95,7 +95,7 @@ export class CustomerController {
         const { id } = req.params;
         const customer = await this._customerService.searchById(+id!);
         const response: ApiResponse<Customer> = {
-            data: {
+            response: {
                 message: "",
                 details: customer
             },
