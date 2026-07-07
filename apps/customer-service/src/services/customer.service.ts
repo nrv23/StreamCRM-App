@@ -6,7 +6,6 @@ import { Customer } from "../entity/customer.entity.js";
 import { CustomerStatus } from "../enum/CustomerStatus.type.js";
 import { ApiErrorCode } from "../enum/error-codes.enum.js";
 import { ICustomerRepository } from "../interfaces/customer-repository.interface.js";
-import { IOutboxEventsRepository } from "../interfaces/outbox_event-repository.repository.js";
 import { IPaginationResponse } from "../interfaces/pagination.interface.js";
 import { ErrorFactory } from "../shared/factory/error-factory.js";
 import { CreateCustomerDto } from './../dto/createCustomer.dto.js'
@@ -19,7 +18,7 @@ export class CustomerService {
     private _unitOfWork: UnitOfWork
     private _customerRepository: ICustomerRepository;
 
-    constructor(customerRepository: ICustomerRepository, outBoxEventRepository: IOutboxEventsRepository, unitOfWork: UnitOfWork) {
+    constructor(customerRepository: ICustomerRepository, unitOfWork: UnitOfWork) {
         this._customerRepository = customerRepository;
         this._unitOfWork = unitOfWork;
     }
