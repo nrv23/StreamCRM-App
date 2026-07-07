@@ -2,7 +2,7 @@ import { CustomerStatus } from "../enum/CustomerStatus.type.js";
 
 export class Customer {
     private constructor(
-        public readonly id: string,
+        public readonly id: number,
         public firstName: string,
         public lastName: string,
         public email: string | null,

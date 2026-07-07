@@ -24,6 +24,8 @@ export class Database implements IDatabase {
          * internamente, por lo que no hay sobrecarga de crear nuevas
          * conexiones en cada request.
          */
+
+        // revisar porque el debugger no funciona y ver logs de la clase database para ver que el pool funcione bien
         try {
             const result = await client.query<T>(text, params);
             return result.rows;

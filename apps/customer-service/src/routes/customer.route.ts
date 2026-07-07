@@ -8,6 +8,9 @@ import { Database } from "../config/query.js";
 import { getCustomerValidator } from "../validators/get-customer.validator.js";
 import { updateCustomerValidator } from "../validators/update-customer.validator.js";
 import { deleteCustomerValidator } from "../validators/delete-customer.validator.js";
+import { OutboxEventRepository } from "../repository/outbox_event-repository.repository.js";
+import { UnitOfWork } from "../config/unitOfWork.js";
+import { pool } from "../config/db.js";
 
 export class CustomerRoutes {
 
@@ -15,14 +18,21 @@ export class CustomerRoutes {
     private _controller: CustomerController;
     private _customerService: CustomerService;
     private _customerRepository: CustomerRepository;
+    private _outboxEventRepository: OutboxEventRepository;
+
     //private _database: Database;
 
     constructor() {
 
         // this._database = new Database();
         this._customerRepository = new CustomerRepository();
+        this._outboxEventRepository = new OutboxEventRepository();
         // this._customerRepository = new CustomerRepository(this._database);
-        this._customerService = new CustomerService(this._customerRepository);
+        this._customerService = new CustomerService(
+            this._customerRepository,
+            this._outboxEventRepository,
+            new UnitOfWork()
+        );
         this._router = Router();
         this._controller = new CustomerController(this._customerService)
     }

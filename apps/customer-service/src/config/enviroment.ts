@@ -10,6 +10,6 @@ export const env = {
         user: process.env.DB_USER ?? "postgres",
         password: process.env.DB_PASSWORD ?? "",
     },
-
+    api_version: process.env.API_VERSION || 1,
     server_port: process.env.PORT ?? 3000,
 };

@@ -1,31 +1,63 @@
+import { randomUUID } from "node:crypto";
+import { UnitOfWork } from "../config/unitOfWork.js";
 import { GetCustomerDto } from "../dto/getCustomer.dto.js";
 import { UpdateCustomerDto } from "../dto/updateCustomer.dto.js";
 import { Customer } from "../entity/customer.entity.js";
 import { CustomerStatus } from "../enum/CustomerStatus.type.js";
 import { ApiErrorCode } from "../enum/error-codes.enum.js";
 import { ICustomerRepository } from "../interfaces/customer-repository.interface.js";
+import { IOutboxEventsRepository } from "../interfaces/outbox_event-repository.repository.js";
 import { IPaginationResponse } from "../interfaces/pagination.interface.js";
 import { ErrorFactory } from "../shared/factory/error-factory.js";
 import { CreateCustomerDto } from './../dto/createCustomer.dto.js'
+import { env } from "../config/enviroment.js";
+import { CREATE_CUSTOMER } from "../shared/types/events.type.js";
 
 
 export class CustomerService {
 
+    private _unitOfWork: UnitOfWork
     private _customerRepository: ICustomerRepository;
 
-    constructor(customerRepository: ICustomerRepository) {
+    constructor(customerRepository: ICustomerRepository, outBoxEventRepository: IOutboxEventsRepository, unitOfWork: UnitOfWork) {
         this._customerRepository = customerRepository;
+        this._unitOfWork = unitOfWork;
     }
 
 
-    async save(customer: CreateCustomerDto): Promise<Customer> {
+    async save(customerDto: CreateCustomerDto): Promise<Customer> {
 
-        const isCustomerExist = await this._customerRepository.findByEmail(customer.email!);
+        return await this._unitOfWork.execute(async ({ customers, events }) => {
 
-        if (isCustomerExist)
-            throw ErrorFactory.build(ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED, `email ${customer.email!} already exists`, '');
+            const isCustomerExist = await customers.findByEmail(customerDto.email!);
 
-        return await this._customerRepository.save(customer);
+            if (isCustomerExist)
+                throw ErrorFactory.build(ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED, `email ${customerDto.email!} already exists`, '');
+
+            const customer = await customers.save(customerDto);
+
+            await events.save({
+                event_id: randomUUID(),
+                event_name: CREATE_CUSTOMER,
+                aggregate_id: customer.id,
+                aggregate_type: "customer",
+                payload: {
+                    customerId: customer.id,
+                    firstName: customer.firstName,
+                    lastName: customer.lastName,
+                    email: customer.email,
+                    phone: customer.phone,
+                    country: customer.country
+                },
+
+                headers: {
+                    source: "customer-service",
+                    version: env.api_version,
+                }
+            });
+
+            return customer;
+        });
     }
 
     async search(options: GetCustomerDto): Promise<IPaginationResponse<Customer[]>> {

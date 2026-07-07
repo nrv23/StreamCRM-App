@@ -1,0 +1,22 @@
+
+type JsonValue =
+    | string
+    | number
+    | boolean
+    | null
+    | JsonObject;
+
+interface JsonObject {
+    [key: string]: JsonValue;
+}
+
+export interface createOutboxEventDto {
+
+    id?: number;
+    event_id: string;
+    event_name: string;
+    aggregate_id: number;
+    aggregate_type: string;
+    payload: JsonObject;
+    headers: JsonObject;
+}

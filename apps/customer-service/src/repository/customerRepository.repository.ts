@@ -5,8 +5,6 @@ import { GetCustomerDto } from '../dto/getCustomer.dto.js';
 import { UpdateCustomerDto } from '../dto/updateCustomer.dto.js';
 import { Customer } from '../entity/customer.entity.js';
 import { CustomerStatus } from '../enum/CustomerStatus.type.js';
-import { ApiErrorCode } from '../enum/error-codes.enum.js';
-import { ErrorFactory } from '../shared/factory/error-factory.js';
 import { ICustomerRepository } from './../interfaces/customer-repository.interface.js';
 
 // aqui se implementa la parte de postgresql
