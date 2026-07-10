@@ -1,7 +1,7 @@
 import { PoolClient } from 'pg';
 import { CustomerRepository } from '../repository/customer/customerRepository.repository.js';
 import { OutboxEventRepository } from '../repository/customer/outbox_event-repository.repository.js';
-import { IDatabase } from '../interfaces/customer/database.interface.js';
+import { IDatabase } from '../interfaces/database.interface.js';
 import { pool } from './db.js';
 import { TagRepository } from '../repository/tag/tag.repository.js';
 

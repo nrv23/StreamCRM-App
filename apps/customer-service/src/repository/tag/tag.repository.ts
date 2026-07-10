@@ -1,7 +1,7 @@
 import { databaseInstance } from "../../config/query.js";
 import { CreateTagDto } from "../../dto/tag/create-tag.dto.js";
 import { Tag } from "../../entity/Tag.entity.js";
-import { IDatabase } from "../../interfaces/customer/database.interface.js";
+import { IDatabase } from "../../interfaces/database.interface.js";
 import { ITagRepository } from "../../interfaces/tag/tag-repository.interface.js";
 
 

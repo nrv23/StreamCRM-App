@@ -1,5 +1,5 @@
 import { databaseInstance } from "../../config/query.js";
-import type { IDatabase } from "../../interfaces/customer/database.interface.js";
+import type { IDatabase } from "../../interfaces/database.interface.js";
 import { CreateCustomerDto } from '../../dto/customer/createCustomer.dto.js';
 import { GetCustomerDto } from '../../dto/customer/getCustomer.dto.js';
 import { UpdateCustomerDto } from '../../dto/customer/updateCustomer.dto.js';
