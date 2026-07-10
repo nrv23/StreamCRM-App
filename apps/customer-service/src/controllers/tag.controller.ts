@@ -8,7 +8,6 @@ import { ApiResponse } from "../shared/types/api-response.js";
 
 export class TagController {
 
-
     private _tagService: TagService
 
     constructor(tagService: TagService) {
