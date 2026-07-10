@@ -17,5 +17,11 @@ export class TagRepository implements ITagRepository {
         return newTag as Tag;
     }
 
+    async addTagToCustomer(customerId: number, tagId: number): Promise<boolean> {
 
+        const response = await this._db.query<{ id: number }>('insert into customer_tags(customer_id, tag_id) returning id;',
+            [customerId, tagId]);
+
+        return Boolean(response.length);
+    }
 }

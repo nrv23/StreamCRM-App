@@ -2,7 +2,7 @@ export type ApiResponse<T> = {
     success: boolean;
     response?: {
         message?: string;
-        details: T
+        details?: T
     };
     error?: {
         code: string;

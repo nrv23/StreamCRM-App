@@ -1,6 +1,7 @@
 import express, { Application } from "express";
 import { CustomerRoutes } from "./routes/customer.route.js";
 import { errorHandler } from "./shared/utils/error-handler.js";
+import { TagRoutes } from "./routes/tag.routes.js";
 
 
 export function createApp(): Application {
@@ -19,7 +20,8 @@ export function createApp(): Application {
         });
     });
 
-    app.use("/api/v1/customers", new CustomerRoutes().BuildCustomerRoutes());
+    app.use("/api/v1/customers", new CustomerRoutes().BuildRoutes());
+    app.use("/api/v1/tags", new TagRoutes().BuildRoutes());
     app.use(errorHandler); // manejador de errores generico
     return app;
 }

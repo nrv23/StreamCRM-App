@@ -1,5 +1,5 @@
 import { param, body } from 'express-validator';
-import { CustomerStatus } from '../enum/CustomerStatus.type.js';
+import { CustomerStatus } from '../../enum/CustomerStatus.type.js';
 
 export const deleteCustomerValidator = [
     param('id')

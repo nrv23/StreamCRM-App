@@ -1,15 +1,16 @@
 import { Router } from "express";
-import { createCustomerValidator } from "../validators/create-customer.validator.js";
+import { createCustomerValidator } from "../validators/customer/create-customer.validator.js";
 import { validateRequest } from "../shared/middleware/validate-errors.middleware.js";
 import { CustomerController } from "../controllers/customer.controller.js";
 import { CustomerService } from "../services/customer.service.js";
 import { CustomerRepository } from "../repository/customer/customerRepository.repository.js";
-import { getCustomerValidator } from "../validators/get-customer.validator.js";
-import { updateCustomerValidator } from "../validators/update-customer.validator.js";
-import { deleteCustomerValidator } from "../validators/delete-customer.validator.js";
+import { getCustomerValidator } from "../validators/customer/get-customer.validator.js";
+import { updateCustomerValidator } from "../validators/customer/update-customer.validator.js";
+import { deleteCustomerValidator } from "../validators/customer/delete-customer.validator.js";
 import { UnitOfWork } from "../config/unitOfWork.js";
+import { IRoutes } from "../interfaces/routes.interface.js";
 
-export class CustomerRoutes {
+export class CustomerRoutes implements IRoutes {
 
     private _router: Router;
     private _controller: CustomerController;
@@ -29,7 +30,7 @@ export class CustomerRoutes {
         this._controller = new CustomerController(this._customerService)
     }
 
-    BuildCustomerRoutes(): Router {
+    BuildRoutes(): Router {
         this._router.post("/", createCustomerValidator, validateRequest, this._controller.createCustomer.bind(this._controller));
         this._router.get("/", getCustomerValidator, validateRequest, this._controller.search.bind(this._controller));
         this._router.get("/:id", getCustomerValidator, validateRequest, this._controller.seachById.bind(this._controller));

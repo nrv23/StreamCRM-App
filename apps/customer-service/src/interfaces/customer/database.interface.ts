@@ -13,3 +13,8 @@ export interface IDatabase {
    */
   query<T extends QueryResultRow>(text: string, params?: unknown[]): Promise<T[]>;
 }
+
+export interface CustomQueryResult<T> {
+  rows: T[];
+  rowCount: number; // Postgres puede devolver null en algunos comandos, pero usualmente es un number
+}
