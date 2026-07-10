@@ -21,7 +21,22 @@ export interface IUnitOfWorkRepositories {
 }
 
 export class UnitOfWork {
-    constructor() { }
+
+
+    constructor() {
+
+
+
+    }
+
+    private getRepos(dbAdapter: PgClientAdapter): IUnitOfWorkRepositories {
+
+        return {
+            customers: new CustomerRepository(dbAdapter),
+            events: new OutboxEventRepository(dbAdapter),
+            tags: new TagRepository(dbAdapter),
+        }
+    }
 
     /**
      * Ejecuta una serie de operaciones dentro de una transacción segura.
@@ -35,16 +50,14 @@ export class UnitOfWork {
         const dbAdapter = new PgClientAdapter(client);
 
         // 2. Inicializamos los repositorios localmente pasándoles el cliente transaccional
-        const customers = new CustomerRepository(dbAdapter);
-        const events = new OutboxEventRepository(dbAdapter);
-        const tags = new TagRepository(dbAdapter);
+
 
         try {
             // 3. Empezamos la transacción en Postgres
             await client.query('BEGIN');
 
             // 4. Ejecutamos la lógica de negocio que nos pasaron con las instancias locales
-            const result = await work({ customers, events, tags });
+            const result = await work(this.getRepos(dbAdapter));
 
             // 5. Si todo salió bien, guardamos cambios
             await client.query('COMMIT');
