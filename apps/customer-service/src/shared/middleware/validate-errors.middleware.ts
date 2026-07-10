@@ -18,9 +18,6 @@ export const validateRequest = (req: Request, res: Response, next: NextFunction)
             },
             success: false
         }
-
-        delete response?.data;
-
         res.status(400).json(response);
         return;
     }
