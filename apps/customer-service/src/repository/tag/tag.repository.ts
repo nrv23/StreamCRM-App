@@ -1,5 +1,6 @@
 import { databaseInstance } from "../../config/query.js";
 import { CreateTagDto } from "../../dto/tag/create-tag.dto.js";
+import { Tag } from "../../entity/Tag.entity.js";
 import { IDatabase } from "../../interfaces/customer/database.interface.js";
 import { ITagRepository } from "../../interfaces/tag/tag-repository.interface.js";
 
@@ -11,8 +12,9 @@ export class TagRepository implements ITagRepository {
         this._db = db ?? databaseInstance;
     }
 
-    save(tag: CreateTagDto): Promise<void> {
-        return;
+    async save(tag: CreateTagDto): Promise<Tag> {
+        const [newTag] = await this._db.query('Insert into tag(name) values($1) RETURNING *', [tag.name]);
+        return newTag as Tag;
     }
 
 

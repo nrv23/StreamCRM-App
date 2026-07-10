@@ -3,6 +3,7 @@ import { CustomerRepository } from '../repository/customer/customerRepository.re
 import { OutboxEventRepository } from '../repository/customer/outbox_event-repository.repository.js';
 import { IDatabase } from '../interfaces/customer/database.interface.js';
 import { pool } from './db.js';
+import { TagRepository } from '../repository/tag/tag.repository.js';
 
 // Adaptador para cumplir con la interfaz IDatabase usando el cliente de pg
 class PgClientAdapter implements IDatabase {
@@ -16,6 +17,7 @@ class PgClientAdapter implements IDatabase {
 export interface IUnitOfWorkRepositories {
     customers: CustomerRepository;
     events: OutboxEventRepository;
+    tags: TagRepository;
 }
 
 export class UnitOfWork {
@@ -35,13 +37,14 @@ export class UnitOfWork {
         // 2. Inicializamos los repositorios localmente pasándoles el cliente transaccional
         const customers = new CustomerRepository(dbAdapter);
         const events = new OutboxEventRepository(dbAdapter);
+        const tags = new TagRepository(dbAdapter);
 
         try {
             // 3. Empezamos la transacción en Postgres
             await client.query('BEGIN');
 
             // 4. Ejecutamos la lógica de negocio que nos pasaron con las instancias locales
-            const result = await work({ customers, events });
+            const result = await work({ customers, events, tags });
 
             // 5. Si todo salió bien, guardamos cambios
             await client.query('COMMIT');
