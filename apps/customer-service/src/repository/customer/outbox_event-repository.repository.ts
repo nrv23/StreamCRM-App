@@ -1,8 +1,8 @@
-import { OutBoxEvent } from "../entity/OutBoxEvent.entity.js";
-import { IDatabase } from "../interfaces/database.interface.js";
-import { IOutboxEventsRepository } from "../interfaces/outbox_event-repository.repository.js";
-import { databaseInstance } from "../config/query.js";
-import { createOutboxEventDto } from "../dto/createOutboxEvent.dto.js";
+import { OutBoxEvent } from "../../entity/OutBoxEvent.entity.js";
+import { IDatabase } from "../../interfaces/customer/database.interface.js";
+import { IOutboxEventsRepository } from "../../interfaces/customer/outbox_event-repository.repository.js";
+import { databaseInstance } from "../../config/query.js";
+import { createOutboxEventDto } from "../../dto/customer/createOutboxEvent.dto.js";
 
 export class OutboxEventRepository implements IOutboxEventsRepository {
 

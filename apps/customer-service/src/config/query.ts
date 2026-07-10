@@ -6,7 +6,7 @@
 
 import type { QueryResultRow } from "pg";
 import { pool } from "./db.js";
-import { IDatabase } from "../interfaces/database.interface.js";
+import { IDatabase } from "../interfaces/customer/database.interface.js";
 
 export class Database implements IDatabase {
     async query<T extends QueryResultRow>(

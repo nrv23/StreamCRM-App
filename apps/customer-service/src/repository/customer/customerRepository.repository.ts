@@ -1,11 +1,11 @@
-import { databaseInstance } from "../config/query.js";
-import type { IDatabase } from "../interfaces/database.interface.js";
-import { CreateCustomerDto } from '../dto/createCustomer.dto.js';
-import { GetCustomerDto } from '../dto/getCustomer.dto.js';
-import { UpdateCustomerDto } from '../dto/updateCustomer.dto.js';
-import { Customer } from '../entity/customer.entity.js';
-import { CustomerStatus } from '../enum/CustomerStatus.type.js';
-import { ICustomerRepository } from './../interfaces/customer-repository.interface.js';
+import { databaseInstance } from "../../config/query.js";
+import type { IDatabase } from "../../interfaces/customer/database.interface.js";
+import { CreateCustomerDto } from '../../dto/customer/createCustomer.dto.js';
+import { GetCustomerDto } from '../../dto/customer/getCustomer.dto.js';
+import { UpdateCustomerDto } from '../../dto/customer/updateCustomer.dto.js';
+import { Customer } from '../../entity/customer.entity.js';
+import { CustomerStatus } from '../../enum/CustomerStatus.type.js';
+import { ICustomerRepository } from '../../interfaces/customer/customer-repository.interface.js';
 
 // aqui se implementa la parte de postgresql
 

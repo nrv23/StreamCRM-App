@@ -1,14 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { UnitOfWork } from "../config/unitOfWork.js";
-import { GetCustomerDto } from "../dto/getCustomer.dto.js";
-import { UpdateCustomerDto } from "../dto/updateCustomer.dto.js";
+import { GetCustomerDto } from "../dto/customer/getCustomer.dto.js";
+import { UpdateCustomerDto } from "../dto/customer/updateCustomer.dto.js";
 import { Customer } from "../entity/customer.entity.js";
 import { CustomerStatus } from "../enum/CustomerStatus.type.js";
 import { ApiErrorCode } from "../enum/error-codes.enum.js";
-import { ICustomerRepository } from "../interfaces/customer-repository.interface.js";
-import { IPaginationResponse } from "../interfaces/pagination.interface.js";
+import { ICustomerRepository } from "../interfaces/customer/customer-repository.interface.js";
+import { IPaginationResponse } from "../interfaces/customer/pagination.interface.js";
 import { ErrorFactory } from "../shared/factory/error-factory.js";
-import { CreateCustomerDto } from './../dto/createCustomer.dto.js'
+import { CreateCustomerDto } from '../dto/customer/createCustomer.dto.js'
 import { env } from "../config/enviroment.js";
 import { CREATE_CUSTOMER, DELETE_CUSTOMER, UPDATE_CUSTOMER } from "../shared/types/events.type.js";
 

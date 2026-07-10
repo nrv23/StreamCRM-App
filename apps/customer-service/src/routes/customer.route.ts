@@ -3,7 +3,7 @@ import { createCustomerValidator } from "../validators/create-customer.validator
 import { validateRequest } from "../shared/middleware/validate-errors.middleware.js";
 import { CustomerController } from "../controllers/customer.controller.js";
 import { CustomerService } from "../services/customer.service.js";
-import { CustomerRepository } from "../repository/customerRepository.repository.js";
+import { CustomerRepository } from "../repository/customer/customerRepository.repository.js";
 import { getCustomerValidator } from "../validators/get-customer.validator.js";
 import { updateCustomerValidator } from "../validators/update-customer.validator.js";
 import { deleteCustomerValidator } from "../validators/delete-customer.validator.js";

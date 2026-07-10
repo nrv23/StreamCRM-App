@@ -1,7 +1,7 @@
 import { PoolClient } from 'pg';
-import { CustomerRepository } from '../repository/customerRepository.repository.js';
-import { OutboxEventRepository } from '../repository/outbox_event-repository.repository.js';
-import { IDatabase } from '../interfaces/database.interface.js';
+import { CustomerRepository } from '../repository/customer/customerRepository.repository.js';
+import { OutboxEventRepository } from '../repository/customer/outbox_event-repository.repository.js';
+import { IDatabase } from '../interfaces/customer/database.interface.js';
 import { pool } from './db.js';
 
 // Adaptador para cumplir con la interfaz IDatabase usando el cliente de pg
