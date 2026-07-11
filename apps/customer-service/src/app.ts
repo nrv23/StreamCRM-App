@@ -2,6 +2,8 @@ import express, { Application } from "express";
 import { CustomerRoutes } from "./routes/customer.route.js";
 import { errorHandler } from "./shared/utils/error-handler.js";
 import { TagRoutes } from "./routes/tag.routes.js";
+import { NotesRoutes } from "./routes/notes.routes.js";
+import { notFoundRouteHandler } from "./shared/utils/not-found-route-handler.js";
 
 export function createApp(): Application {
     const app = express();
@@ -21,6 +23,10 @@ export function createApp(): Application {
 
     app.use("/api/v1/customers", new CustomerRoutes().BuildRoutes());
     app.use("/api/v1/tags", new TagRoutes().BuildRoutes());
+    app.use("/api/v1/notes", new NotesRoutes().BuildRoutes());
+    app.use(notFoundRouteHandler); // ruta no encontrada
     app.use(errorHandler); // manejador de errores generico
+
+
     return app;
 }

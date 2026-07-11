@@ -18,7 +18,7 @@ export class NoteRepository implements INoteRepository {
 
         const [newNote] = await this._db.query<Note>(
             'Insert into customer_notes(customer_id,user_id,note) values($1,$2,$3) returning *', [
-            note.customer_id, note.user_id, note.user_id
+            note.customer_id, note.user_id, note.note
         ]);
 
         return newNote!

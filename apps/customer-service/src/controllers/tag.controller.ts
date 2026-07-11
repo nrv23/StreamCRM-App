@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { TagService } from "../services/tag,service.js";
+import { TagService } from "../services/tag.service.js";
 import { CreateTagDto } from "../dto/tag/create-tag.dto.js";
 import { Tag } from "../entity/Tag.entity.js";
 import { ApiResponse } from "../shared/types/api-response.js";

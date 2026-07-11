@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { TagController } from "../controllers/tag.controller.js";
-import { TagService } from "../services/tag,service.js";
+import { TagService } from "../services/tag.service.js";
 import { UnitOfWork } from "../config/unitOfWork.js";
 import { TagRepository } from "../repository/tag/tag.repository.js";
 import { createTagValidator } from "../validators/tag/create-tag.validator.js";
