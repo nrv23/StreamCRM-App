@@ -4,6 +4,7 @@ import { OutboxEventRepository } from '../repository/customer/outbox_event-repos
 import { IDatabase } from '../interfaces/database.interface.js';
 import { pool } from './db.js';
 import { TagRepository } from '../repository/tag/tag.repository.js';
+import { NoteRepository } from '../repository/note/note.repository.js';
 
 // Adaptador para cumplir con la interfaz IDatabase usando el cliente de pg
 class PgClientAdapter implements IDatabase {
@@ -18,16 +19,10 @@ export interface IUnitOfWorkRepositories {
     customers: CustomerRepository;
     events: OutboxEventRepository;
     tags: TagRepository;
+    notes: NoteRepository
 }
 
 export class UnitOfWork {
-
-
-    constructor() {
-
-
-
-    }
 
     private getRepos(dbAdapter: PgClientAdapter): IUnitOfWorkRepositories {
 
@@ -35,6 +30,7 @@ export class UnitOfWork {
             customers: new CustomerRepository(dbAdapter),
             events: new OutboxEventRepository(dbAdapter),
             tags: new TagRepository(dbAdapter),
+            notes: new NoteRepository(dbAdapter)
         }
     }
 

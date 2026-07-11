@@ -5,7 +5,7 @@ import { CreateCustomerDto } from '../dto/customer/createCustomer.dto.js';
 import { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { GetCustomerDto } from '../dto/customer/getCustomer.dto.js';
-import { IPaginationResponse } from '../interfaces/customer/pagination.interface.js';
+import { IPaginationResponse } from '../interfaces/pagination.interface.js';
 import { UpdateCustomerDto } from '../dto/customer/updateCustomer.dto.js';
 
 export class CustomerController {

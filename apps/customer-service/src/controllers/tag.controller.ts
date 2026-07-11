@@ -33,6 +33,6 @@ export class TagController {
             },
             success: true,
         }
-        res.status(200).json(response);
+        res.status(201).json(response);
     }
 }

@@ -3,7 +3,6 @@ import { CustomerRoutes } from "./routes/customer.route.js";
 import { errorHandler } from "./shared/utils/error-handler.js";
 import { TagRoutes } from "./routes/tag.routes.js";
 
-
 export function createApp(): Application {
     const app = express();
     // 1. Para parsear peticiones con formato JSON (el estándar de tu API / Postman)
