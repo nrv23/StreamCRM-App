@@ -5,9 +5,6 @@ import { GetNoteDto } from "../../dto/note/get-note.dto.js";
 import { Note } from "../../entity/note.entity.js";
 import { IDatabase } from "../../interfaces/database.interface.js";
 import { INoteRepository } from "../../interfaces/note/note-repository.interface.js";
-import { IPaginationResponse } from "../../interfaces/pagination.interface.js";
-
-
 
 export class NoteRepository implements INoteRepository {
 
@@ -31,7 +28,8 @@ export class NoteRepository implements INoteRepository {
         const limit = options.limit!;
         const offset = (page - 1) * limit;
 
-        const params: any[] = [];
+        const params: Array<string | number> = [];
+        params.push(options.user_id);
         let query = `
             select 
                 c.id as customerId,
@@ -39,28 +37,23 @@ export class NoteRepository implements INoteRepository {
                 c.email customerEmail,
                 c.external_id as customerExternalId,
                 cn.note,
-                cn.created_at createdAt
+                 to_char(cn.created_at ,'YYYY-MM-DD') createdAt
             from customer_notes cn
             inner join customers c on c.id = cn.customer_id 
-            where c.user_id = $1
+            where c.id = $${params.length}
         `;
-        params.push(options.user_id);
+
 
         if (options.customer_id) {
-            query += ' and cn.customer_id = $2';
             params.push(options.customer_id);
+            query += ` and cn.customer_id = $${params.length}`;
+
         }
 
-        if (options.created_at) {
-            query += " and TO_CHAR($3, 'YYYY-MM-DD')";
-            params.push(options.created_at);
-        }
+        params.push(limit, offset);
+        query += ` order by cn.created_at ${options.sortOrder ? options.sortOrder.toUpperCase() : 'ASC'} limit $${params.length - 1} offset $${params.length};`;
 
-        const sortOrder = options.orderBy?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'; // 3
 
-        query += ` order by createdAt $4 limit $5 offset $6;`;
-
-        params.push(sortOrder, limit, offset);
 
         const notes = await this._db.query<GetNoteDtoResponse>(query, params);
         return notes;
@@ -70,24 +63,20 @@ export class NoteRepository implements INoteRepository {
 
     async getTotalRecords(options: GetNoteDto): Promise<number> {
 
-        const params: any[] = [];
+        const params: Array<string | number> = [];
         let query = `
             select 
                count(*) as "totalRecords"
             from customer_notes cn
             inner join customers c on c.id = cn.customer_id 
-            where c.user_id = $1
+            where c.id = $1
         `;
         params.push(options.user_id);
 
         if (options.customer_id) {
-            query += ' and cn.customer_id = $2';
             params.push(options.customer_id);
-        }
+            query += ` and cn.customer_id = $${params.length}`;
 
-        if (options.created_at) {
-            query += " and TO_CHAR($3, 'YYYY-MM-DD')";
-            params.push(options.created_at);
         }
 
         const response = await this._db.query<{

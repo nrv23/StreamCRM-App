@@ -29,6 +29,10 @@ export class NoteService {
 
             const page = options.page || 1;
             const limit = options.limit || 20;
+
+            options.limit = limit;
+            options.page = page;
+
             const [notesData, totalItems] = await Promise.all([notes.searchByFilters(options), notes.getTotalRecords(options)]);
             const totalPages = Math.ceil(totalItems / limit);
             const prevPage = page! > 1 ? page! - 1 : null;

@@ -2,16 +2,12 @@ import { query } from 'express-validator';
 
 export const getNoteValidator = [
     query('customer_id')
-        .exists({ checkFalsy: true })
-        .withMessage('customer_id es requerido')
+        .optional({
+            nullable: true
+        })
         .isInt({ min: 1 })
         .withMessage('customer_id debe ser un número entero mayor a 0')
         .toInt(),
-    query('created_at')
-        .exists({ checkFalsy: true })
-        .withMessage('created_at es requerido')
-        .isString()
-        .trim(),
     query('page')
         .optional()
         .isInt({ min: 1 })
@@ -22,11 +18,12 @@ export const getNoteValidator = [
         .isInt({ min: 1 })
         .withMessage('limit debe ser un número entero mayor a 0')
         .toInt(),
-    query('orderBy')
-        .exists({ checkFalsy: true })
-        .withMessage('orderBy es requerido')
+    query('sortOrder')
+        .optional({
+            nullable: true
+        })
         .isString()
         .isIn(['asc', 'desc', 'ASC', 'DESC'])
-        .withMessage('orderBy debe ser asc o desc')
+        .withMessage('sortOrder debe ser asc o desc')
         .trim()
 ];
