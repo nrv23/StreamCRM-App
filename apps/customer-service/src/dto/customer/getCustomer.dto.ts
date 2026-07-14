@@ -7,4 +7,5 @@ export interface GetCustomerDto {
     search?: string | null;
     sortBy: string;
     orderBy: string;
+    limit?: number;
 }

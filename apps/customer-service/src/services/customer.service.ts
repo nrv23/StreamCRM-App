@@ -61,20 +61,20 @@ export class CustomerService {
 
     async search(options: GetCustomerDto): Promise<IPaginationResponse<Customer[]>> {
 
+
+        const page = options.page || 1;
+        const limit = options.limit || 20;
+
+        // 4. CÁLCULO DE NEXT Y PREVIOUS (Tu ajuste clave)
         const [customers, totalItems] = await Promise.all([
             this._customerRepository.searchByFilters(options), this._customerRepository.getTotalRecords(options)
         ]);
 
-        const page = options.page || 1;
-        const limit = 20;
         const totalPages = Math.ceil(totalItems / limit);
-        // 4. CÁLCULO DE NEXT Y PREVIOUS (Tu ajuste clave)
         const prevPage = page! > 1 ? page! - 1 : null;
         const nextPage = page! < totalPages ? page! + 1 : null;
 
-
         const response: IPaginationResponse<Customer[]> = {
-
             data: customers,
             paginationData: {
                 page: +page,

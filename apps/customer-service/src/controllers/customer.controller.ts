@@ -76,7 +76,7 @@ export class CustomerController {
     async delete(req: Request, res: Response) {
 
         const { id } = req.params;
-        const { status } = req.body as any;
+        const { status } = req.body;
 
         const deletedCustomerResponse = await this._customerService.delete(+id!, status);
         const response: ApiResponse<Customer> = {

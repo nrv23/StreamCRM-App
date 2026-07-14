@@ -6,6 +6,7 @@ import { NoteService } from "../services/note.service.js";
 import { createNoteValidator } from "../validators/notes/create-note.validator.js";
 import { validateRequest } from "../shared/middleware/validate-errors.middleware.js";
 import { fakeAuth } from "../shared/middleware/fake-user.middleware.js";
+import { getNoteValidator } from "../validators/notes/get-note.validator.js";
 
 
 export class NotesRoutes implements IRoutes {
@@ -25,7 +26,20 @@ export class NotesRoutes implements IRoutes {
 
     BuildRoutes(): Router {
 
-        this._router.post('/:customer_id', createNoteValidator, validateRequest, fakeAuth, this._noteController.save.bind(this._noteController));
+        this._router.post(
+            '/:customer_id',
+            createNoteValidator,
+            validateRequest,
+            fakeAuth,
+            this._noteController.save.bind(this._noteController)
+        );
+        this._router.get(
+            '/',
+            getNoteValidator,
+            validateRequest,
+            fakeAuth,
+            this._noteController.search.bind(this._noteController)
+        );
         return this._router;
     }
 

@@ -75,8 +75,8 @@ export class CustomerRepository implements ICustomerRepository {
 
 
     async searchByFilters(options: GetCustomerDto): Promise<Customer[]> {
-        const page = options.page || 1;
-        const limit = 20;
+        const page = options.page!;
+        const limit = options.limit!;
         const offset = (page - 1) * limit;
 
         const params: any[] = [];
