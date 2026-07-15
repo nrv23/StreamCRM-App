@@ -40,7 +40,7 @@ export class NoteRepository implements INoteRepository {
                  to_char(cn.created_at ,'YYYY-MM-DD') createdAt
             from customer_notes cn
             inner join customers c on c.id = cn.customer_id 
-            where c.id = $${params.length}
+            where cn.user_id = $${params.length}
         `;
 
 
@@ -69,7 +69,7 @@ export class NoteRepository implements INoteRepository {
                count(*) as "totalRecords"
             from customer_notes cn
             inner join customers c on c.id = cn.customer_id 
-            where c.id = $1
+            where cn.user_id = $1
         `;
         params.push(options.user_id);
 
