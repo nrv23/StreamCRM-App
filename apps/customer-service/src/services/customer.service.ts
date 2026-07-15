@@ -50,7 +50,7 @@ export class CustomerService {
                 },
 
                 headers: {
-                    source: "customer-service",
+                    source: env.service_name,
                     version: env.api_version,
                 }
             });
@@ -113,7 +113,7 @@ export class CustomerService {
                 },
 
                 headers: {
-                    source: "customer-service",
+                    source: env.service_name,
                     version: env.api_version,
                 }
             });
@@ -150,7 +150,7 @@ export class CustomerService {
                 },
 
                 headers: {
-                    source: "customer-service",
+                    source: env.service_name,
                     version: env.api_version,
                 }
             });

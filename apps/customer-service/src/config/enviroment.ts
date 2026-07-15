@@ -12,4 +12,5 @@ export const env = {
     },
     api_version: process.env.API_VERSION || 1,
     server_port: process.env.PORT ?? 3000,
+    service_name: process.env.SERVICE_NAME || "customer_service"
 };
