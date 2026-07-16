@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { GetCustomerDto } from '../dto/customer/getCustomer.dto.js';
 import { IPaginationResponse } from '../interfaces/pagination.interface.js';
 import { UpdateCustomerDto } from '../dto/customer/updateCustomer.dto.js';
+import { CustomerStatus } from '../enum/CustomerStatus.type.js';
 
 export class CustomerController {
 
@@ -73,16 +74,18 @@ export class CustomerController {
         return;
     }
 
-    async delete(req: Request, res: Response) {
+    async setStatus(req: Request, res: Response) {
 
         const { id } = req.params;
         const { status } = req.body;
         const { id: user_id } = req.user;
-        const deletedCustomerResponse = await this._customerService.delete(+id!, status, user_id);
+        const newCustomerStatusResponse = await this._customerService.setStatus(+id!, status, user_id);
         const response: ApiResponse<Customer> = {
             response: {
-                message: "Customer deleted",
-                details: deletedCustomerResponse
+                message: (status as CustomerStatus) === CustomerStatus.blocked
+                    ? "Customer deleted"
+                    : "Customer status was changed",
+                details: newCustomerStatusResponse
             },
             success: true
         };

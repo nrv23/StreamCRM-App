@@ -63,7 +63,7 @@ export class CustomerRepository implements ICustomerRepository {
     }
 
     // delete soft
-    async delete(id: number, status: CustomerStatus): Promise<Customer> {
+    async setStatus(id: number, status: CustomerStatus): Promise<Customer> {
 
         const query = `
             update customers set status = $1 where id = $2

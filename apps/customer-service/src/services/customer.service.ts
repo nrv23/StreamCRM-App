@@ -10,7 +10,7 @@ import { IPaginationResponse } from "../interfaces/pagination.interface.js";
 import { ErrorFactory } from "../shared/factory/error-factory.js";
 import { CreateCustomerDto } from '../dto/customer/createCustomer.dto.js'
 import { env } from "../config/enviroment.js";
-import { CREATE_CUSTOMER, DELETE_CUSTOMER, UPDATE_CUSTOMER } from "../shared/types/events.type.js";
+import { CREATE_CUSTOMER, CHANGE_CUSTOMER_STATUS, UPDATE_CUSTOMER, DELETE_CUSTOMER } from "../shared/types/events.type.js";
 
 
 export class CustomerService {
@@ -122,7 +122,7 @@ export class CustomerService {
         });
     }
 
-    async delete(id: number, status: CustomerStatus, user_id: number) {
+    async setStatus(id: number, status: CustomerStatus, user_id: number) {
 
         return await this._unitOfWork.execute(async ({ customers, events, customerStatusHistory }) => {
 
@@ -132,11 +132,13 @@ export class CustomerService {
             if (isCustomerExist.status === CustomerStatus.blocked && status === CustomerStatus.blocked)
                 throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `Customer is not exists`, '');
 
-            const customer = await customers.delete(id, status);
+            const customer = await customers.setStatus(id, status);
 
             await events.save({
                 event_id: randomUUID(),
-                event_name: DELETE_CUSTOMER,
+                event_name: status === CustomerStatus.blocked
+                    ? DELETE_CUSTOMER
+                    : CHANGE_CUSTOMER_STATUS,
                 aggregate_id: customer.id,
                 aggregate_type: "customer",
                 payload: {
