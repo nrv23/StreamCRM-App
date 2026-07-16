@@ -63,17 +63,35 @@ export class CustomerRepository implements ICustomerRepository {
     }
 
     // delete soft
-    async setStatus(id: number, status: CustomerStatus): Promise<Customer> {
-
+    async setStatus(
+        id: number,
+        status: CustomerStatus,
+    ): Promise<Customer> {
         const query = `
-            update customers set status = $1,  updated_at = now(), deleted_at = CASE
-                WHEN $2 = 'blocked' THEN now()
-                ELSE NULL
-            END where id = $3
-            RETURNING id, first_name, last_name, email, phone, country, status;
-        ` ;
-        const isDeleted: string | null = status === CustomerStatus.blocked ? 'now()' : null
-        const response = await this._db.query<Customer>(query, [status, isDeleted, id]);
+            UPDATE customers
+            SET
+                status = $1::varchar,
+                updated_at = now(),
+                deleted_at = CASE
+                    WHEN $1::varchar = 'blocked'::varchar THEN now() -- convertir el valor a varchar
+                    ELSE NULL
+                END
+            WHERE id = $2
+            RETURNING
+                id,
+                first_name,
+                last_name,
+                email,
+                phone,
+                country,
+                status;
+        `;
+
+        const response = await this._db.query<Customer>(
+            query,
+            [status, id],
+        );
+
         return response[0] as Customer;
     }
 
