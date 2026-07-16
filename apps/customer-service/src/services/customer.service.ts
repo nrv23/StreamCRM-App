@@ -94,7 +94,11 @@ export class CustomerService {
 
         return await this._unitOfWork.execute(async ({ customers, events }) => {
 
-            await this.searchById(customerDto.id);
+            const isCustomerExist = await customers.findById(customerDto.id);
+
+            if (!isCustomerExist)
+                throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `Customer is not exists`, '');
+
 
             const customer = await customers.update(customerDto);
 
@@ -121,53 +125,70 @@ export class CustomerService {
             return customer;
         });
     }
+    async setStatus(
+        id: number,
+        status: CustomerStatus,
+        userId: number,
+    ): Promise<Customer> {
+        return this._unitOfWork.execute(
+            async ({ customers, events, customerStatusHistory }) => {
+                const currentCustomer = await customers.findById(id);
 
-    async setStatus(id: number, status: CustomerStatus, user_id: number) {
-
-        return await this._unitOfWork.execute(async ({ customers, events, customerStatusHistory }) => {
-
-
-            const isCustomerExist = await this.searchById(id);
-
-            if (isCustomerExist.status === CustomerStatus.blocked && status === CustomerStatus.blocked)
-                throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `Customer is not exists`, '');
-
-            const customer = await customers.setStatus(id, status);
-
-            await events.save({
-                event_id: randomUUID(),
-                event_name: status === CustomerStatus.blocked
-                    ? DELETE_CUSTOMER
-                    : CHANGE_CUSTOMER_STATUS,
-                aggregate_id: customer.id,
-                aggregate_type: "customer",
-                payload: {
-                    customerId: customer.id,
-                    firstName: customer.firstName,
-                    lastName: customer.lastName,
-                    email: customer.email,
-                    phone: customer.phone,
-                    country: customer.country,
-                    status
-                },
-
-                headers: {
-                    source: env.service_name,
-                    version: env.api_version,
+                if (!currentCustomer) {
+                    throw ErrorFactory.build(
+                        ApiErrorCode.NOT_FOUND,
+                        "Customer does not exist",
+                        "",
+                    );
                 }
-            });
 
-            // agregar aqui el registro en customer_status_history
+                if (currentCustomer.status === status) {
+                    throw ErrorFactory.build(
+                        ApiErrorCode.CONFLICT_ERROR,
+                        `Customer already has status '${status}'`,
+                        "",
+                    );
+                }
 
-            if (status !== isCustomerExist.status) await customerStatusHistory.save({
-                customer_id: isCustomerExist.id,
-                new_status: status,
-                previous_status: isCustomerExist.status,
-                changed_by_userId: user_id
-            });
+                const updatedCustomer = await customers.setStatus(id, status);
 
-            return customer;
-        });
+                await customerStatusHistory.save({
+                    customer_id: updatedCustomer.id,
+                    previous_status: currentCustomer.status,
+                    new_status: status,
+                    changed_by_userId: userId,
+                });
+
+                await events.save({
+                    event_id: randomUUID(),
+                    event_name:
+                        status === CustomerStatus.blocked
+                            ? DELETE_CUSTOMER
+                            : CHANGE_CUSTOMER_STATUS,
+
+                    aggregate_id: updatedCustomer.id,
+                    aggregate_type: "customer",
+
+                    payload: {
+                        customerId: updatedCustomer.id,
+                        firstName: updatedCustomer.firstName,
+                        lastName: updatedCustomer.lastName,
+                        email: updatedCustomer.email,
+                        phone: updatedCustomer.phone,
+                        country: updatedCustomer.country,
+                        previousStatus: currentCustomer.status,
+                        newStatus: status,
+                    },
+
+                    headers: {
+                        source: env.service_name,
+                        version: env.api_version,
+                    },
+                });
+
+                return updatedCustomer;
+            },
+        );
     }
 
     async searchById(id: number) {

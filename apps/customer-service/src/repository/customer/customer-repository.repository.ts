@@ -55,7 +55,7 @@ export class CustomerRepository implements ICustomerRepository {
         const { firstName, lastName, email, phone, id } = customer;
 
         const query = `
-            update customers set first_name = $1, last_name = $2, email = $3, phone = $4 where id = $5 
+            update customers set first_name = $1, last_name = $2, email = $3, phone = $4, updated_at = now() where id = $5 
             RETURNING id, first_name, last_name, email, phone, country, status;
         ` ;
         const response = await this._db.query<Customer>(query, [firstName, lastName, email, phone, id]);
@@ -66,10 +66,14 @@ export class CustomerRepository implements ICustomerRepository {
     async setStatus(id: number, status: CustomerStatus): Promise<Customer> {
 
         const query = `
-            update customers set status = $1 where id = $2
+            update customers set status = $1,  updated_at = now(), deleted_at = CASE
+                WHEN $2 = 'blocked' THEN now()
+                ELSE NULL
+            END where id = $3
             RETURNING id, first_name, last_name, email, phone, country, status;
         ` ;
-        const response = await this._db.query<Customer>(query, [status, id]);
+        const isDeleted: string | null = status === CustomerStatus.blocked ? 'now()' : null
+        const response = await this._db.query<Customer>(query, [status, isDeleted, id]);
         return response[0] as Customer;
     }
 
