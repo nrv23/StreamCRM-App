@@ -41,7 +41,7 @@ export class TagService {
                     created_at: new Date().toISOString()
                 },
                 headers: {
-                    source: "customer-service",
+                    source: env.service_name,
                     version: env.api_version,
                 }
             });
