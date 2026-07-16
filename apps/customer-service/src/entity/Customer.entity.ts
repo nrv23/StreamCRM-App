@@ -8,7 +8,7 @@ export class Customer {
         public email: string | null,
         public phone: string | null,
         public country: string | null,
-        public status?: CustomerStatus | null,
+        public status: CustomerStatus,
     ) { }
 
 

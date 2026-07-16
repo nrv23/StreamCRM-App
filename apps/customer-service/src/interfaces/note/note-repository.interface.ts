@@ -1,7 +1,7 @@
 import { CreateNoteDto } from "../../dto/note/create-not.dto.js";
 import { GetNoteDtoResponse } from "../../dto/note/get-note-response.dto.js";
 import { GetNoteDto } from "../../dto/note/get-note.dto.js";
-import { Note } from "../../entity/note.entity.js";
+import { Note } from "../../entity/Note.entity.js";
 
 
 export interface INoteRepository {

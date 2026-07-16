@@ -1,4 +1,4 @@
-import { Customer } from '../entity/customer.entity.js';
+import { Customer } from '../entity/Customer.entity.js';
 import { CustomerService } from '../services/customer.service.js';
 import { ApiResponse } from './../shared/types/api-response.js';
 import { CreateCustomerDto } from '../dto/customer/createCustomer.dto.js';
@@ -77,8 +77,8 @@ export class CustomerController {
 
         const { id } = req.params;
         const { status } = req.body;
-
-        const deletedCustomerResponse = await this._customerService.delete(+id!, status);
+        const { id: user_id } = req.user;
+        const deletedCustomerResponse = await this._customerService.delete(+id!, status, user_id);
         const response: ApiResponse<Customer> = {
             response: {
                 message: "Customer deleted",

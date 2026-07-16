@@ -2,7 +2,7 @@ import { NoteService } from "../services/note.service.js";
 import { Request, response, Response } from 'express';
 import { matchedData } from 'express-validator';
 import { ApiResponse } from './../shared/types/api-response.js'
-import { Note } from "../entity/note.entity.js";
+import { Note } from "../entity/Note.entity.js";
 import { GetNoteDto } from "../dto/note/get-note.dto.js";
 import { IPaginationResponse } from "../interfaces/pagination.interface.js";
 import { GetNoteDtoResponse } from "../dto/note/get-note-response.dto.js";

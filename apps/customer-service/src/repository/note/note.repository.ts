@@ -2,7 +2,7 @@ import { databaseInstance } from "../../config/query.js";
 import { CreateNoteDto } from "../../dto/note/create-not.dto.js";
 import { GetNoteDtoResponse } from "../../dto/note/get-note-response.dto.js";
 import { GetNoteDto } from "../../dto/note/get-note.dto.js";
-import { Note } from "../../entity/note.entity.js";
+import { Note } from "../../entity/Note.entity.js";
 import { IDatabase } from "../../interfaces/database.interface.js";
 import { INoteRepository } from "../../interfaces/note/note-repository.interface.js";
 

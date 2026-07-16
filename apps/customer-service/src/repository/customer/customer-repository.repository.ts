@@ -3,7 +3,7 @@ import type { IDatabase } from "../../interfaces/database.interface.js";
 import { CreateCustomerDto } from '../../dto/customer/createCustomer.dto.js';
 import { GetCustomerDto } from '../../dto/customer/getCustomer.dto.js';
 import { UpdateCustomerDto } from '../../dto/customer/updateCustomer.dto.js';
-import { Customer } from '../../entity/customer.entity.js';
+import { Customer } from '../../entity/Customer.entity.js';
 import { CustomerStatus } from '../../enum/CustomerStatus.type.js';
 import { ICustomerRepository } from '../../interfaces/customer/customer-repository.interface.js';
 

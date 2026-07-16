@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { UnitOfWork } from "../config/unitOfWork.js";
 import { GetCustomerDto } from "../dto/customer/getCustomer.dto.js";
 import { UpdateCustomerDto } from "../dto/customer/updateCustomer.dto.js";
-import { Customer } from "../entity/customer.entity.js";
+import { Customer } from "../entity/Customer.entity.js";
 import { CustomerStatus } from "../enum/CustomerStatus.type.js";
 import { ApiErrorCode } from "../enum/error-codes.enum.js";
 import { ICustomerRepository } from "../interfaces/customer/customer-repository.interface.js";
@@ -122,14 +122,14 @@ export class CustomerService {
         });
     }
 
-    async delete(id: number, status: CustomerStatus) {
+    async delete(id: number, status: CustomerStatus, user_id: number) {
 
-        return await this._unitOfWork.execute(async ({ customers, events }) => {
+        return await this._unitOfWork.execute(async ({ customers, events, customerStatusHistory }) => {
 
 
             const isCustomerExist = await this.searchById(id);
 
-            if (isCustomerExist.status && isCustomerExist.status === CustomerStatus.blocked)
+            if (isCustomerExist.status === CustomerStatus.blocked && status === CustomerStatus.blocked)
                 throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `Customer is not exists`, '');
 
             const customer = await customers.delete(id, status);
@@ -153,6 +153,15 @@ export class CustomerService {
                     source: env.service_name,
                     version: env.api_version,
                 }
+            });
+
+            // agregar aqui el registro en customer_status_history
+
+            if (status !== isCustomerExist.status) await customerStatusHistory.save({
+                customer_id: isCustomerExist.id,
+                new_status: status,
+                previous_status: isCustomerExist.status,
+                changed_by_userId: user_id
             });
 
             return customer;
