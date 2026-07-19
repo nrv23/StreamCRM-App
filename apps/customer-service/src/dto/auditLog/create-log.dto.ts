@@ -1,10 +1,11 @@
+import { JsonObject } from "../customer/createOutboxEvent.dto.js";
 
 
 export interface CreateLogDto {
     entity_type: string,
     entity_id: number,
-    action: number,
+    action: string,
     changed_by_user_id: number,
-    old_values: JSON,
-    new_values: JSON,
+    old_values?: JsonObject,
+    new_values: JsonObject,
 }

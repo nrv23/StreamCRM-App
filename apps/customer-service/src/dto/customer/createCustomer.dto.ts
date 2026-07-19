@@ -6,4 +6,5 @@ export interface CreateCustomerDto {
     phone?: string | null;
     country?: string | null;
     createByUser?: number;
+    user_id: number;
 };

@@ -6,7 +6,7 @@ type JsonValue =
     | null
     | JsonObject;
 
-interface JsonObject {
+export interface JsonObject {
     [key: string]: JsonValue;
 }
 

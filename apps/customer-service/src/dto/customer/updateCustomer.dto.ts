@@ -6,4 +6,5 @@ export interface UpdateCustomerDto {
     lastName: string;
     email?: string | null;
     phone?: string | null;
+    user_id: number;
 };

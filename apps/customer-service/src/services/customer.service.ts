@@ -35,25 +35,37 @@ export class CustomerService {
 
             const customer = await customers.save(customerDto);
 
-            await events.save({
-                event_id: randomUUID(),
-                event_name: CREATE_CUSTOMER,
-                aggregate_id: customer.id,
-                aggregate_type: "customer",
-                payload: {
-                    customerId: customer.id,
-                    firstName: customer.firstName,
-                    lastName: customer.lastName,
-                    email: customer.email,
-                    phone: customer.phone,
-                    country: customer.country
-                },
+            // Promise all para ejecutar eventos y logs de auditoria
 
-                headers: {
-                    source: env.service_name,
-                    version: env.api_version,
-                }
-            });
+            await Promise.all([
+                events.save({
+                    event_id: randomUUID(),
+                    event_name: CREATE_CUSTOMER,
+                    aggregate_id: customer.id,
+                    aggregate_type: "customer",
+                    payload: {
+                        customerId: customer.id,
+                        firstName: customer.firstName,
+                        lastName: customer.lastName,
+                        email: customer.email,
+                        phone: customer.phone,
+                        country: customer.country
+                    },
+
+                    headers: {
+                        source: env.service_name,
+                        version: env.api_version,
+                    }
+                }),
+                auditLogs.save({
+                    entity_id: customer.id,
+                    entity_type: "customer",
+                    action: CREATE_CUSTOMER,
+                    changed_by_user_id: customerDto.user_id,
+                    old_values: {},
+                    new_values: { ...customer }
+                })
+            ]);
 
             return customer;
         });
@@ -92,47 +104,57 @@ export class CustomerService {
     async update(customerDto: UpdateCustomerDto): Promise<Customer> {
 
 
-        return await this._unitOfWork.execute(async ({ customers, events }) => {
+        return await this._unitOfWork.execute(async ({ customers, events, auditLogs }) => {
 
-            const isCustomerExist = await customers.findById(customerDto.id);
+            const currentCustomer = await customers.findById(customerDto.id);
 
-            if (!isCustomerExist)
+            if (!currentCustomer)
                 throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `Customer is not exists`, '');
 
 
             const customer = await customers.update(customerDto);
 
-            await events.save({
-                event_id: randomUUID(),
-                event_name: UPDATE_CUSTOMER,
-                aggregate_id: customer.id,
-                aggregate_type: "customer",
-                payload: {
-                    customerId: customer.id,
-                    firstName: customer.firstName,
-                    lastName: customer.lastName,
-                    email: customer.email,
-                    phone: customer.phone,
-                    country: customer.country
-                },
+            await Promise.all([
+                events.save({
+                    event_id: randomUUID(),
+                    event_name: UPDATE_CUSTOMER,
+                    aggregate_id: customer.id,
+                    aggregate_type: "customer",
+                    payload: {
+                        customerId: customer.id,
+                        firstName: customer.firstName,
+                        lastName: customer.lastName,
+                        email: customer.email,
+                        phone: customer.phone,
+                        country: customer.country
+                    },
 
-                headers: {
-                    source: env.service_name,
-                    version: env.api_version,
-                }
-            });
+                    headers: {
+                        source: env.service_name,
+                        version: env.api_version,
+                    }
+                }),
+                auditLogs.save({
+                    entity_id: customer.id,
+                    entity_type: "customer",
+                    action: UPDATE_CUSTOMER,
+                    changed_by_user_id: customerDto.user_id,
+                    old_values: { ...currentCustomer },
+                    new_values: { ...customer }
+                })
+            ]);
 
             return customer;
         });
     }
     async setStatus(
-        id: number,
+        customer_id: number,
         status: CustomerStatus,
-        userId: number,
+        user_id: number,
     ): Promise<Customer> {
         return this._unitOfWork.execute(
-            async ({ customers, events, customerStatusHistory }) => {
-                const currentCustomer = await customers.findById(id);
+            async ({ customers, events, customerStatusHistory, auditLogs }) => {
+                const currentCustomer = await customers.findById(customer_id);
 
                 if (!currentCustomer) {
                     throw ErrorFactory.build(
@@ -150,41 +172,57 @@ export class CustomerService {
                     );
                 }
 
-                const updatedCustomer = await customers.setStatus(id, status);
+                const updatedCustomer = await customers.setStatus(customer_id, status);
 
-                await customerStatusHistory.save({
-                    customer_id: updatedCustomer.id,
-                    previous_status: currentCustomer.status,
-                    new_status: status,
-                    changed_by_userId: userId,
-                });
 
-                await events.save({
-                    event_id: randomUUID(),
-                    event_name:
-                        status === CustomerStatus.blocked
-                            ? DELETE_CUSTOMER
-                            : CHANGE_CUSTOMER_STATUS,
 
-                    aggregate_id: updatedCustomer.id,
-                    aggregate_type: "customer",
+                await Promise.all([
+                    customerStatusHistory.save({
+                        customer_id: updatedCustomer.id,
+                        previous_status: currentCustomer.status,
+                        new_status: status,
+                        changed_by_userId: user_id,
+                    }),
 
-                    payload: {
-                        customerId: updatedCustomer.id,
-                        firstName: updatedCustomer.firstName,
-                        lastName: updatedCustomer.lastName,
-                        email: updatedCustomer.email,
-                        phone: updatedCustomer.phone,
-                        country: updatedCustomer.country,
-                        previousStatus: currentCustomer.status,
-                        newStatus: status,
-                    },
+                    events.save({
+                        event_id: randomUUID(),
+                        event_name:
+                            status === CustomerStatus.blocked
+                                ? DELETE_CUSTOMER
+                                : CHANGE_CUSTOMER_STATUS,
 
-                    headers: {
-                        source: env.service_name,
-                        version: env.api_version,
-                    },
-                });
+                        aggregate_id: updatedCustomer.id,
+                        aggregate_type: "customer",
+
+                        payload: {
+                            customerId: updatedCustomer.id,
+                            firstName: updatedCustomer.firstName,
+                            lastName: updatedCustomer.lastName,
+                            email: updatedCustomer.email,
+                            phone: updatedCustomer.phone,
+                            country: updatedCustomer.country,
+                            previousStatus: currentCustomer.status,
+                            newStatus: status,
+                        },
+
+                        headers: {
+                            source: env.service_name,
+                            version: env.api_version,
+                        },
+                    }),
+                    auditLogs.save({
+                        entity_id: updatedCustomer.id,
+                        entity_type: "customer",
+                        action: status === CustomerStatus.blocked ? DELETE_CUSTOMER : CHANGE_CUSTOMER_STATUS,
+                        changed_by_user_id: user_id,
+                        old_values: {
+                            status: currentCustomer.status
+                        },
+                        new_values: {
+                            status
+                        }
+                    })
+                ]);
 
                 return updatedCustomer;
             },
