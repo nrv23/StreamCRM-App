@@ -32,10 +32,12 @@ export class AuditLogsRepository implements IAuditLogsRepository {
                 action,
                 changed_by_user_id,
                 old_values,
-                new_values
+                new_values,
+                ip_address, 
+                user_agent
             )
             VALUES (
-                $1,$2,$3,$4,$5::jsonb,$6::jsonb
+                $1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8
             )
             RETURNING * ;
         `;
@@ -46,7 +48,9 @@ export class AuditLogsRepository implements IAuditLogsRepository {
             log.action,
             log.changed_by_user_id,
             log.old_values,
-            log.new_values
+            log.new_values,
+            log.ip_address,
+            log.user_agent
         ]);
 
         if (!response) throw ErrorFactory.build(

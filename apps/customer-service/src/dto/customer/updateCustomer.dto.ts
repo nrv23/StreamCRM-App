@@ -7,4 +7,6 @@ export interface UpdateCustomerDto {
     email?: string | null;
     phone?: string | null;
     user_id: number;
+    ip_address: string;
+    user_agent: string;
 };

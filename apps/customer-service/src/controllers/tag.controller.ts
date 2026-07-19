@@ -19,11 +19,13 @@ export class TagController {
         const { customerId } = req.params;
         const { id } = req.user;
         const { name } = req.body;
-
+        const { ip_address, user_agent } = req.requestDataInfo;
         const newTag = {
             customerId: +customerId!,
             name,
-            user_id: id
+            user_id: id,
+            ip_address,
+            user_agent
         };
 
         const data = await this._tagService.save(newTag);

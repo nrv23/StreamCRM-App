@@ -5,6 +5,10 @@ declare global {
     namespace Express { // extender el objeto request de express y agregarle un campo llamada user
         interface Request {
             user: AuthenticatedUser;
+            requestDataInfo: {
+                ip_address: string;
+                user_agent: string;
+            };
         }
     }
 }

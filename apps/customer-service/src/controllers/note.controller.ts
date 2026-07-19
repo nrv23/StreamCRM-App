@@ -22,11 +22,14 @@ export class NoteController {
         const { customer_id } = req.params;
         const { note } = req.body;
         const { user: { id } } = req;
+        const { ip_address, user_agent } = req.requestDataInfo;
 
         const noteDto = {
             customer_id: +customer_id!,
             note,
-            user_id: id
+            user_id: id,
+            ip_address,
+            user_agent
         }
 
         const data = await this._noteService.save(noteDto);

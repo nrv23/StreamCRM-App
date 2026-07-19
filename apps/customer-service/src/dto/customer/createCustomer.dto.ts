@@ -7,4 +7,6 @@ export interface CreateCustomerDto {
     country?: string | null;
     createByUser?: number;
     user_id: number;
+    ip_address: string;
+    user_agent: string;
 };

@@ -21,11 +21,15 @@ export class CustomerController {
 
         const body = req.body as any;
         const { id } = req.user;
+        const { ip_address, user_agent } = req.requestDataInfo;
         const newCustomer = {
             ...body,
             external_id: randomUUID(),
-            user_id: id
+            user_id: id,
+            ip_address,
+            user_agent
         }
+
         const customerCreatedResponse = await this._customerService.save(newCustomer as CreateCustomerDto);
         const response: ApiResponse<Customer> = {
             response: {
@@ -56,14 +60,19 @@ export class CustomerController {
 
     async update(req: Request, res: Response) {
 
+        const { ip_address, user_agent } = req.requestDataInfo;
         const { id } = req.params;
         const { id: user_id } = req.user;
         const body = req.body as any;
         const customer = {
             id: +id!,
             ...body,
-            user_id
+            user_id,
+            ip_address,
+            user_agent
         }
+
+
 
         const updateCustomerResponse = await this._customerService.update(customer as UpdateCustomerDto);
         const response: ApiResponse<Customer> = {
@@ -83,7 +92,9 @@ export class CustomerController {
         const { id } = req.params;
         const { status } = req.body;
         const { id: user_id } = req.user;
-        const newCustomerStatusResponse = await this._customerService.setStatus(+id!, status, user_id);
+        const { ip_address, user_agent } = req.requestDataInfo;
+
+        const newCustomerStatusResponse = await this._customerService.setStatus(+id!, status, user_id, ip_address, user_agent);
         const response: ApiResponse<Customer> = {
             response: {
                 message: (status as CustomerStatus) === CustomerStatus.blocked

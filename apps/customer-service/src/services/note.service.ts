@@ -30,7 +30,9 @@ export class NoteService {
                 action: CREATE_NOTE,
                 changed_by_user_id: dto.user_id,
                 old_values: {},
-                new_values: { ...newNote }
+                new_values: { ...newNote },
+                ip_address: dto.ip_address,
+                user_agent: dto.user_agent
             })
 
             return newNote;

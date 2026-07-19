@@ -64,7 +64,9 @@ export class CustomerService {
                     action: CREATE_CUSTOMER,
                     changed_by_user_id: dto.user_id,
                     old_values: {},
-                    new_values: { ...customer }
+                    new_values: { ...customer },
+                    ip_address: dto.ip_address,
+                    user_agent: dto.user_agent
                 })
             ]);
 
@@ -141,7 +143,9 @@ export class CustomerService {
                     action: UPDATE_CUSTOMER,
                     changed_by_user_id: dto.user_id,
                     old_values: { ...currentCustomer },
-                    new_values: { ...customer }
+                    new_values: { ...customer },
+                    ip_address: dto.ip_address,
+                    user_agent: dto.user_agent
                 })
             ]);
 
@@ -152,6 +156,8 @@ export class CustomerService {
         customer_id: number,
         status: CustomerStatus,
         user_id: number,
+        ip_address: string,
+        user_agent: string
     ): Promise<Customer> {
         return this._unitOfWork.execute(
             async ({ customers, events, customerStatusHistory, auditLogs }) => {
@@ -221,7 +227,9 @@ export class CustomerService {
                         },
                         new_values: {
                             status
-                        }
+                        },
+                        ip_address,
+                        user_agent
                     })
                 ]);
 

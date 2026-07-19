@@ -16,14 +16,14 @@ export class TagService {
         this._unitOfWork = unitOfWork;
     }
 
-    async save(tagDto: CreateTagDto) {
+    async save(dto: CreateTagDto) {
 
         return await this._unitOfWork.execute(async ({ tags, customers, events, auditLogs }) => {
 
-            const customer = await customers.findById(tagDto.customerId);
+            const customer = await customers.findById(dto.customerId);
             if (!customer) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `Customer is not exists`, '');
 
-            const newTag = await tags.save(tagDto);
+            const newTag = await tags.save(dto);
             // agregar a la tabla customer_tags y outbox events
 
             //const addedTagToCustomer = 
@@ -53,9 +53,11 @@ export class TagService {
                     entity_id: newTag.id,
                     entity_type: EntityType.CUSTOMER_TAG,
                     action: CREATE_TAG,
-                    changed_by_user_id: tagDto.user_id,
+                    changed_by_user_id: dto.user_id,
                     old_values: {},
-                    new_values: { ...newTag }
+                    new_values: { ...newTag },
+                    ip_address: dto.ip_address,
+                    user_agent: dto.user_agent
                 })
             ]);
 
