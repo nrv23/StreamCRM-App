@@ -29,11 +29,11 @@ export class AuditLogsRepository implements IAuditLogsRepository {
                 entity_id,
                 action,
                 changed_by_user_id,
-                old_values::jsonb,
-                new_values::jsonb
+                old_values,
+                new_values
             )
             VALUES (
-                $1,$2,$3,$4,$5,$6
+                $1,$2,$3,$4,$5::jsonb,$6::jsonb
             )
             RETURNING * ;
         `;
