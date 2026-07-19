@@ -32,10 +32,10 @@ export class CustomerRoutes implements IRoutes {
     }
 
     BuildRoutes(): Router {
-        this._router.post("/", createCustomerValidator, validateRequest, this._controller.createCustomer.bind(this._controller));
+        this._router.post("/", createCustomerValidator, validateRequest, fakeAuth, this._controller.createCustomer.bind(this._controller));
         this._router.get("/", getCustomerValidator, validateRequest, this._controller.search.bind(this._controller));
         this._router.get("/:id", getCustomerValidator, validateRequest, this._controller.seachById.bind(this._controller));
-        this._router.put("/:id", updateCustomerValidator, validateRequest, this._controller.update.bind(this._controller));
+        this._router.put("/:id", updateCustomerValidator, validateRequest, fakeAuth, this._controller.update.bind(this._controller));
         this._router.patch("/status/:id", deleteCustomerValidator, validateRequest, fakeAuth, this._controller.setStatus.bind(this._controller));
 
         return this._router;

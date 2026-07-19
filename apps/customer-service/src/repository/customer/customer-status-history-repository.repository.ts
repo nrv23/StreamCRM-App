@@ -1,8 +1,10 @@
 import { databaseInstance } from "../../config/query.js";
 import { ChangeCustomerHistoryStatusDto } from "../../dto/customer/changeCustomerStatusHistory,dto.js";
 import { CustomerStatusHistory } from "../../entity/CustomerStatusHistory.entity.js";
+import { ApiErrorCode } from "../../enum/error-codes.enum.js";
 import { ICustomerStatusHistoryRepository } from "../../interfaces/customer/customer-status-history-repository.interface.js";
 import { IDatabase } from "../../interfaces/database.interface.js";
+import { ErrorFactory } from "../../shared/factory/error-factory.js";
 
 export class CustomerStatusHistoryRepository implements ICustomerStatusHistoryRepository {
     private _db: IDatabase;
@@ -24,6 +26,12 @@ export class CustomerStatusHistoryRepository implements ICustomerStatusHistoryRe
             RETURNING *;
         `, [dto.customer_id, dto.previous_status, dto.new_status, dto.changed_by_userId]);
 
-        return customerHistoryStatusResponse!;
+        if (!customerHistoryStatusResponse) throw ErrorFactory.build(
+            ApiErrorCode.CONFLICT_ERROR,
+            "customer status history record was not inserted",
+            "",
+        );
+        return customerHistoryStatusResponse;
+
     }
 }

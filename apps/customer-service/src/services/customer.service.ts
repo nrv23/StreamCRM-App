@@ -28,9 +28,9 @@ export class CustomerService {
 
         return await this._unitOfWork.execute(async ({ customers, events, auditLogs }) => {
 
-            const isCustomerExist = await customers.findByEmail(customerDto.email!);
+            const currentCustomer = await customers.findByEmail(customerDto.email!);
 
-            if (isCustomerExist)
+            if (currentCustomer)
                 throw ErrorFactory.build(ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED, `email ${customerDto.email!} already exists`, '');
 
             const customer = await customers.save(customerDto);

@@ -6,6 +6,8 @@ import { UpdateCustomerDto } from '../../dto/customer/updateCustomer.dto.js';
 import { Customer } from '../../entity/Customer.entity.js';
 import { CustomerStatus } from '../../enum/CustomerStatus.type.js';
 import { ICustomerRepository } from '../../interfaces/customer/customer-repository.interface.js';
+import { ApiErrorCode } from "../../enum/error-codes.enum.js";
+import { ErrorFactory } from "../../shared/factory/error-factory.js";
 
 // aqui se implementa la parte de postgresql
 
@@ -18,7 +20,7 @@ export class CustomerRepository implements ICustomerRepository {
 
     async save(customer: CreateCustomerDto): Promise<Customer> {
 
-        const newCustomer = await this._db.query<Customer>(`
+        const [newCustomer] = await this._db.query<Customer>(`
             Insert into customers(
                 external_id, first_name, last_name, email, phone, country, created_by_user_id
             ) 
@@ -29,7 +31,13 @@ export class CustomerRepository implements ICustomerRepository {
                 customer.country, customer.createByUser
             ]
         );
-        return newCustomer[0] as Customer;
+        if (!newCustomer) throw ErrorFactory.build(
+            ApiErrorCode.CONFLICT_ERROR,
+            "Customer was not inserted",
+            "",
+        );
+
+        return newCustomer;
     }
     async findById(id: number): Promise<Customer | null> {
 
@@ -58,8 +66,14 @@ export class CustomerRepository implements ICustomerRepository {
             update customers set first_name = $1, last_name = $2, email = $3, phone = $4, updated_at = now() where id = $5 
             RETURNING id, first_name, last_name, email, phone, country, status;
         ` ;
-        const response = await this._db.query<Customer>(query, [firstName, lastName, email, phone, id]);
-        return response[0] as Customer;
+        const [response] = await this._db.query<Customer>(query, [firstName, lastName, email, phone, id]);
+
+        if (!response) throw ErrorFactory.build(
+            ApiErrorCode.CONFLICT_ERROR,
+            "Customer was not updated",
+            "",
+        );
+        return response;
     }
 
     // delete soft
@@ -87,12 +101,17 @@ export class CustomerRepository implements ICustomerRepository {
                 status;
         `;
 
-        const response = await this._db.query<Customer>(
+        const [response] = await this._db.query<Customer>(
             query,
             [status, id],
         );
 
-        return response[0] as Customer;
+        if (!response) throw ErrorFactory.build(
+            ApiErrorCode.CONFLICT_ERROR,
+            "Customer was not updated",
+            "",
+        );
+        return response;
     }
 
 

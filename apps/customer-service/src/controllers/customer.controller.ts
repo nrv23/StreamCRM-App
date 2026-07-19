@@ -20,9 +20,11 @@ export class CustomerController {
     async createCustomer(req: Request, res: Response) {
 
         const body = req.body as any;
+        const { id } = req.user;
         const newCustomer = {
             ...body,
-            external_id: randomUUID()
+            external_id: randomUUID(),
+            user_id: id
         }
         const customerCreatedResponse = await this._customerService.save(newCustomer as CreateCustomerDto);
         const response: ApiResponse<Customer> = {
@@ -55,10 +57,12 @@ export class CustomerController {
     async update(req: Request, res: Response) {
 
         const { id } = req.params;
+        const { id: user_id } = req.user;
         const body = req.body as any;
         const customer = {
             id: +id!,
-            ...body
+            ...body,
+            user_id
         }
 
         const updateCustomerResponse = await this._customerService.update(customer as UpdateCustomerDto);

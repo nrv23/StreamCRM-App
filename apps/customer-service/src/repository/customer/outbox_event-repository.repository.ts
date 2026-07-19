@@ -3,6 +3,8 @@ import { IDatabase } from "../../interfaces/database.interface.js";
 import { IOutboxEventsRepository } from "../../interfaces/customer/outbox_event-repository.repository.js";
 import { databaseInstance } from "../../config/query.js";
 import { createOutboxEventDto } from "../../dto/customer/createOutboxEvent.dto.js";
+import { ErrorFactory } from "../../shared/factory/error-factory.js";
+import { ApiErrorCode } from "../../enum/error-codes.enum.js";
 
 export class OutboxEventRepository implements IOutboxEventsRepository {
 
@@ -13,7 +15,7 @@ export class OutboxEventRepository implements IOutboxEventsRepository {
 
     async save(event: createOutboxEventDto): Promise<OutBoxEvent> {
 
-        const outBoxEvent = await this._db.query<OutBoxEvent>(`
+        const [outBoxEventResponse] = await this._db.query<OutBoxEvent>(`
             Insert into outbox_events(
                 event_id,event_name,aggregate_id,aggregate_type,payload,headers
             )
@@ -21,6 +23,11 @@ export class OutboxEventRepository implements IOutboxEventsRepository {
             RETURNING id, event_id,event_name,aggregate_id,aggregate_type,payload,headers;
         `, [event.event_id, event.event_name, event.aggregate_id, event.aggregate_type, event.payload, event.headers]);
 
-        return outBoxEvent[0] as OutBoxEvent;
+        if (!outBoxEventResponse) throw ErrorFactory.build(
+            ApiErrorCode.CONFLICT_ERROR,
+            "Event was not inserted",
+            "",
+        );
+        return outBoxEventResponse;
     }
 }
