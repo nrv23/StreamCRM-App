@@ -26,7 +26,7 @@ export class CustomerService {
 
     async save(customerDto: CreateCustomerDto): Promise<Customer> {
 
-        return await this._unitOfWork.execute(async ({ customers, events }) => {
+        return await this._unitOfWork.execute(async ({ customers, events, auditLogs }) => {
 
             const isCustomerExist = await customers.findByEmail(customerDto.email!);
 

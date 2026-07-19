@@ -6,6 +6,7 @@ import { pool } from './db.js';
 import { TagRepository } from '../repository/tag/tag.repository.js';
 import { NoteRepository } from '../repository/note/note.repository.js';
 import { CustomerStatusHistoryRepository } from '../repository/customer/customer-status-history-repository.repository.js';
+import { AuditLogsRepository } from '../repository/auditLog/audit-log-repository.repository.js';
 
 // Adaptador para cumplir con la interfaz IDatabase usando el cliente de pg
 class PgClientAdapter implements IDatabase {
@@ -21,7 +22,8 @@ export interface IUnitOfWorkRepositories {
     events: OutboxEventRepository;
     tags: TagRepository;
     notes: NoteRepository;
-    customerStatusHistory: CustomerStatusHistoryRepository
+    customerStatusHistory: CustomerStatusHistoryRepository;
+    auditLogs: AuditLogsRepository
 }
 
 export class UnitOfWork {
@@ -33,7 +35,8 @@ export class UnitOfWork {
             events: new OutboxEventRepository(dbAdapter),
             tags: new TagRepository(dbAdapter),
             notes: new NoteRepository(dbAdapter),
-            customerStatusHistory: new CustomerStatusHistoryRepository(dbAdapter)
+            customerStatusHistory: new CustomerStatusHistoryRepository(dbAdapter),
+            auditLogs: new AuditLogsRepository(dbAdapter)
         }
     }
 
