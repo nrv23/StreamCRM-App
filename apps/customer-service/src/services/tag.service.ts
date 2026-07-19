@@ -5,6 +5,7 @@ import { ApiErrorCode } from '../enum/error-codes.enum.js';
 import { ErrorFactory } from '../shared/factory/error-factory.js';
 import { CREATE_TAG } from '../shared/types/events.type.js';
 import { env } from '../config/enviroment.js';
+import { EntityType } from '../enum/entity-type.enum.js';
 
 
 export class TagService {
@@ -17,7 +18,7 @@ export class TagService {
 
     async save(tagDto: CreateTagDto) {
 
-        return await this._unitOfWork.execute(async ({ tags, customers, events }) => {
+        return await this._unitOfWork.execute(async ({ tags, customers, events, auditLogs }) => {
 
             const customer = await customers.findById(tagDto.customerId);
             if (!customer) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `Customer is not exists`, '');
@@ -25,26 +26,38 @@ export class TagService {
             const newTag = await tags.save(tagDto);
             // agregar a la tabla customer_tags y outbox events
 
-            const addedTagToCustomer = await tags.addTagToCustomer(customer.id, newTag.id);
+            //const addedTagToCustomer = 
 
-            if (!addedTagToCustomer)
+            /*if (!addedTagToCustomer)
                 throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'An error occurred while trying to insert the tag ', '');
+            */
 
-            await events.save({
-                event_id: randomUUID(),
-                event_name: CREATE_TAG,
-                aggregate_id: customer.id,
-                aggregate_type: "customer",
-                payload: {
-                    customerId: customer.id,
-                    tagId: newTag.id,
-                    created_at: new Date().toISOString()
-                },
-                headers: {
-                    source: env.service_name,
-                    version: env.api_version,
-                }
-            });
+            await Promise.all([
+                tags.addTagToCustomer(customer.id, newTag.id),
+                events.save({
+                    event_id: randomUUID(),
+                    event_name: CREATE_TAG,
+                    aggregate_id: customer.id,
+                    aggregate_type: EntityType.CUSTOMER_TAG,
+                    payload: {
+                        customerId: customer.id,
+                        tagId: newTag.id,
+                        created_at: new Date().toISOString()
+                    },
+                    headers: {
+                        source: env.service_name,
+                        version: env.api_version,
+                    }
+                }),
+                auditLogs.save({
+                    entity_id: newTag.id,
+                    entity_type: EntityType.CUSTOMER_TAG,
+                    action: CREATE_TAG,
+                    changed_by_user_id: tagDto.user_id,
+                    old_values: {},
+                    new_values: { ...newTag }
+                })
+            ]);
 
             return newTag;
         });

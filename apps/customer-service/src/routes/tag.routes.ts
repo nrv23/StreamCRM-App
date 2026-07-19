@@ -6,6 +6,7 @@ import { TagRepository } from "../repository/tag/tag.repository.js";
 import { createTagValidator } from "../validators/tag/create-tag.validator.js";
 import { validateRequest } from "../shared/middleware/validate-errors.middleware.js";
 import { IRoutes } from "../interfaces/routes.interface.js";
+import { fakeAuth } from "../shared/middleware/fake-user.middleware.js";
 
 
 
@@ -30,7 +31,7 @@ export class TagRoutes implements IRoutes {
 
     BuildRoutes(): Router {
 
-        this._router.post('/:customerId/', createTagValidator, validateRequest, this._controller.save.bind(this._controller));
+        this._router.post('/:customerId/', createTagValidator, validateRequest, fakeAuth, this._controller.save.bind(this._controller));
 
         return this._router;
     }

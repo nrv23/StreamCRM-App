@@ -9,3 +9,4 @@ export const DELETE_CUSTOMER = "customer.deleted";
 
 
 export const CREATE_TAG = "customer.tag.added";
+export const CREATE_NOTE = "customer.note.added";

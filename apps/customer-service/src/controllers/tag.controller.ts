@@ -17,15 +17,16 @@ export class TagController {
     async save(req: Request, res: Response) {
 
         const { customerId } = req.params;
+        const { id } = req.user;
         const { name } = req.body;
 
         const newTag = {
             customerId: +customerId!,
-            name
+            name,
+            user_id: id
         };
 
-        const data = await this._tagService.save(newTag as CreateTagDto);
-
+        const data = await this._tagService.save(newTag);
         const response: ApiResponse<Tag> = {
             response: {
                 message: "Tag created",

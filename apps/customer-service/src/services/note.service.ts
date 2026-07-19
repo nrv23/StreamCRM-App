@@ -6,6 +6,8 @@ import { Note } from "../entity/Note.entity.js";
 import { ApiErrorCode } from "../enum/error-codes.enum.js";
 import { IPaginationResponse } from "../interfaces/pagination.interface.js";
 import { ErrorFactory } from "../shared/factory/error-factory.js";
+import { CREATE_NOTE } from "../shared/types/events.type.js";
+import { EntityType } from "../enum/entity-type.enum.js";
 
 export class NoteService {
 
@@ -16,10 +18,22 @@ export class NoteService {
 
     async save(dto: CreateNoteDto): Promise<Note> {
 
-        return await this._unitOfWork.execute(async ({ customers, notes }) => {
+        return await this._unitOfWork.execute(async ({ customers, notes, auditLogs }) => {
             const customer = await customers.findById(dto.customer_id);
             if (!customer) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'Customer is no exists', '');
-            return await notes.save(dto);
+
+            const newNote = await notes.save(dto);
+
+            await auditLogs.save({
+                entity_id: newNote.id,
+                entity_type: EntityType.CUSTOMER_NOTE,
+                action: CREATE_NOTE,
+                changed_by_user_id: dto.user_id,
+                old_values: {},
+                new_values: { ...newNote }
+            })
+
+            return newNote;
         })
     }
 

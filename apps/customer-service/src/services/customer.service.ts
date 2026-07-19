@@ -11,6 +11,7 @@ import { ErrorFactory } from "../shared/factory/error-factory.js";
 import { CreateCustomerDto } from '../dto/customer/createCustomer.dto.js'
 import { env } from "../config/enviroment.js";
 import { CREATE_CUSTOMER, CHANGE_CUSTOMER_STATUS, UPDATE_CUSTOMER, DELETE_CUSTOMER } from "../shared/types/events.type.js";
+import { EntityType } from "../enum/entity-type.enum.js";
 
 
 export class CustomerService {
@@ -24,16 +25,16 @@ export class CustomerService {
     }
 
 
-    async save(customerDto: CreateCustomerDto): Promise<Customer> {
+    async save(dto: CreateCustomerDto): Promise<Customer> {
 
         return await this._unitOfWork.execute(async ({ customers, events, auditLogs }) => {
 
-            const currentCustomer = await customers.findByEmail(customerDto.email!);
+            const currentCustomer = await customers.findByEmail(dto.email!);
 
             if (currentCustomer)
-                throw ErrorFactory.build(ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED, `email ${customerDto.email!} already exists`, '');
+                throw ErrorFactory.build(ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED, `email ${dto.email!} already exists`, '');
 
-            const customer = await customers.save(customerDto);
+            const customer = await customers.save(dto);
 
             // Promise all para ejecutar eventos y logs de auditoria
 
@@ -42,7 +43,7 @@ export class CustomerService {
                     event_id: randomUUID(),
                     event_name: CREATE_CUSTOMER,
                     aggregate_id: customer.id,
-                    aggregate_type: "customer",
+                    aggregate_type: EntityType.CUSTOMER,
                     payload: {
                         customerId: customer.id,
                         firstName: customer.firstName,
@@ -59,9 +60,9 @@ export class CustomerService {
                 }),
                 auditLogs.save({
                     entity_id: customer.id,
-                    entity_type: "customer",
+                    entity_type: EntityType.CUSTOMER,
                     action: CREATE_CUSTOMER,
-                    changed_by_user_id: customerDto.user_id,
+                    changed_by_user_id: dto.user_id,
                     old_values: {},
                     new_values: { ...customer }
                 })
@@ -101,25 +102,25 @@ export class CustomerService {
         return response;
     }
 
-    async update(customerDto: UpdateCustomerDto): Promise<Customer> {
+    async update(dto: UpdateCustomerDto): Promise<Customer> {
 
 
         return await this._unitOfWork.execute(async ({ customers, events, auditLogs }) => {
 
-            const currentCustomer = await customers.findById(customerDto.id);
+            const currentCustomer = await customers.findById(dto.id);
 
             if (!currentCustomer)
                 throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `Customer is not exists`, '');
 
 
-            const customer = await customers.update(customerDto);
+            const customer = await customers.update(dto);
 
             await Promise.all([
                 events.save({
                     event_id: randomUUID(),
                     event_name: UPDATE_CUSTOMER,
                     aggregate_id: customer.id,
-                    aggregate_type: "customer",
+                    aggregate_type: EntityType.CUSTOMER,
                     payload: {
                         customerId: customer.id,
                         firstName: customer.firstName,
@@ -136,9 +137,9 @@ export class CustomerService {
                 }),
                 auditLogs.save({
                     entity_id: customer.id,
-                    entity_type: "customer",
+                    entity_type: EntityType.CUSTOMER,
                     action: UPDATE_CUSTOMER,
-                    changed_by_user_id: customerDto.user_id,
+                    changed_by_user_id: dto.user_id,
                     old_values: { ...currentCustomer },
                     new_values: { ...customer }
                 })
@@ -192,7 +193,7 @@ export class CustomerService {
                                 : CHANGE_CUSTOMER_STATUS,
 
                         aggregate_id: updatedCustomer.id,
-                        aggregate_type: "customer",
+                        aggregate_type: EntityType.CUSTOMER,
 
                         payload: {
                             customerId: updatedCustomer.id,
@@ -212,7 +213,7 @@ export class CustomerService {
                     }),
                     auditLogs.save({
                         entity_id: updatedCustomer.id,
-                        entity_type: "customer",
+                        entity_type: EntityType.CUSTOMER,
                         action: status === CustomerStatus.blocked ? DELETE_CUSTOMER : CHANGE_CUSTOMER_STATUS,
                         changed_by_user_id: user_id,
                         old_values: {
