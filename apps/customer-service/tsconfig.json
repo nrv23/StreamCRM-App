@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": "./",
     "outDir": "./dist",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
@@ -24,6 +24,10 @@
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": [
+    "./node_modules"
   ]
 }
