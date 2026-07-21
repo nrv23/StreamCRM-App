@@ -18,8 +18,7 @@ export class TagRepository implements ITagRepository {
         const [newTag] = await this._db.query<Tag>('Insert into tags(name) values($1) RETURNING *', [tag.name]);
         if (!newTag) throw ErrorFactory.build(
             ApiErrorCode.CONFLICT_ERROR,
-            "Tag was not inserted",
-            "",
+            "Tag was not inserted"
         );
         return newTag;
     }
@@ -31,8 +30,7 @@ export class TagRepository implements ITagRepository {
 
         if (!response.length) throw ErrorFactory.build(
             ApiErrorCode.CONFLICT_ERROR,
-            "TagToCustomer was not inserted",
-            "",
+            "TagToCustomer was not inserted"
         );
         return true;
     }

@@ -28,8 +28,7 @@ export class CustomerStatusHistoryRepository implements ICustomerStatusHistoryRe
 
         if (!customerHistoryStatusResponse) throw ErrorFactory.build(
             ApiErrorCode.CONFLICT_ERROR,
-            "customer status history record was not inserted",
-            "",
+            "customer status history record was not inserted"
         );
         return customerHistoryStatusResponse;
 

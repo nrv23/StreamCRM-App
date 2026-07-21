@@ -25,8 +25,7 @@ export class OutboxEventRepository implements IOutboxEventsRepository {
 
         if (!outBoxEventResponse) throw ErrorFactory.build(
             ApiErrorCode.CONFLICT_ERROR,
-            "Event was not inserted",
-            "",
+            "Event was not inserted"
         );
         return outBoxEventResponse;
     }

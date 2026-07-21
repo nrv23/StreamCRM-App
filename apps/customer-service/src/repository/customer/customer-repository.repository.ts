@@ -33,8 +33,7 @@ export class CustomerRepository implements ICustomerRepository {
         );
         if (!newCustomer) throw ErrorFactory.build(
             ApiErrorCode.CONFLICT_ERROR,
-            "Customer was not inserted",
-            "",
+            "Customer was not inserted"
         );
 
         return newCustomer;
@@ -70,8 +69,8 @@ export class CustomerRepository implements ICustomerRepository {
 
         if (!response) throw ErrorFactory.build(
             ApiErrorCode.CONFLICT_ERROR,
-            "Customer was not updated",
-            "",
+            "Customer was not updated"
+
         );
         return response;
     }
@@ -108,8 +107,7 @@ export class CustomerRepository implements ICustomerRepository {
 
         if (!response) throw ErrorFactory.build(
             ApiErrorCode.CONFLICT_ERROR,
-            "Customer was not updated",
-            "",
+            "Customer was not updated"
         );
         return response;
     }

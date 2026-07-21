@@ -55,8 +55,7 @@ export class AuditLogsRepository implements IAuditLogsRepository {
 
         if (!response) throw ErrorFactory.build(
             ApiErrorCode.CONFLICT_ERROR,
-            "log was not inserted",
-            "",
+            "log was not inserted"
         );
 
         return response;

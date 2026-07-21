@@ -24,8 +24,7 @@ export class NoteRepository implements INoteRepository {
 
         if (!newNote) throw ErrorFactory.build(
             ApiErrorCode.CONFLICT_ERROR,
-            "Note was not inserted",
-            "",
+            "Note was not inserted"
         );
         return newNote;
     }
