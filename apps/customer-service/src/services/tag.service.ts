@@ -6,8 +6,6 @@ import { ErrorFactory } from '../shared/factory/error-factory.js';
 import { CREATE_TAG } from '../shared/types/events.type.js';
 import { env } from '../config/enviroment.js';
 import { EntityType } from '../enum/entity-type.enum.js';
-import { CustomerResponseCode } from '../responses/customer.responses.js';
-
 
 export class TagService {
 

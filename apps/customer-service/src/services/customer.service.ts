@@ -12,8 +12,6 @@ import { CreateCustomerDto } from '../dto/customer/createCustomer.dto.js'
 import { env } from "../config/enviroment.js";
 import { CREATE_CUSTOMER, CHANGE_CUSTOMER_STATUS, UPDATE_CUSTOMER, DELETE_CUSTOMER } from "../shared/types/events.type.js";
 import { EntityType } from "../enum/entity-type.enum.js";
-import { CustomerResponseCode } from "../responses/customer.responses.js";
-
 
 export class CustomerService {
 
