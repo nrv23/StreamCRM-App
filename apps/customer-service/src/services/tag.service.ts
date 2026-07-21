@@ -6,6 +6,7 @@ import { ErrorFactory } from '../shared/factory/error-factory.js';
 import { CREATE_TAG } from '../shared/types/events.type.js';
 import { env } from '../config/enviroment.js';
 import { EntityType } from '../enum/entity-type.enum.js';
+import { CustomerResponseCode } from '../responses/customer.responses.js';
 
 
 export class TagService {
@@ -21,7 +22,10 @@ export class TagService {
         return await this._unitOfWork.execute(async ({ tags, customers, events, auditLogs }) => {
 
             const customer = await customers.findById(dto.customerId);
-            if (!customer) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `Customer is not exists`, '');
+            if (!customer) throw ErrorFactory.build(
+                ApiErrorCode.NOT_FOUND,
+                CustomerResponseCode[ApiErrorCode.NOT_FOUND]!.message
+            );
 
             const newTag = await tags.save(dto);
             // agregar a la tabla customer_tags y outbox events

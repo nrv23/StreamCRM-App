@@ -12,6 +12,7 @@ import { CreateCustomerDto } from '../dto/customer/createCustomer.dto.js'
 import { env } from "../config/enviroment.js";
 import { CREATE_CUSTOMER, CHANGE_CUSTOMER_STATUS, UPDATE_CUSTOMER, DELETE_CUSTOMER } from "../shared/types/events.type.js";
 import { EntityType } from "../enum/entity-type.enum.js";
+import { CustomerResponseCode } from "../responses/customer.responses.js";
 
 
 export class CustomerService {
@@ -31,8 +32,10 @@ export class CustomerService {
 
             const currentCustomer = await customers.findByEmail(dto.email!);
 
-            if (currentCustomer)
-                throw ErrorFactory.build(ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED, `email ${dto.email!} already exists`, '');
+            if (currentCustomer) throw ErrorFactory.build(
+                ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED,
+                CustomerResponseCode[ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED]!.message
+            );
 
             const customer = await customers.save(dto);
 
@@ -112,7 +115,10 @@ export class CustomerService {
             const currentCustomer = await customers.findById(dto.id);
 
             if (!currentCustomer)
-                throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `Customer is not exists`, '');
+                throw ErrorFactory.build(
+                    ApiErrorCode.NOT_FOUND,
+                    CustomerResponseCode[ApiErrorCode.NOT_FOUND]!.message
+                );
 
 
             const customer = await customers.update(dto);
@@ -166,8 +172,7 @@ export class CustomerService {
                 if (!currentCustomer) {
                     throw ErrorFactory.build(
                         ApiErrorCode.NOT_FOUND,
-                        "Customer does not exist",
-                        "",
+                        CustomerResponseCode[ApiErrorCode.NOT_FOUND]!.message
                     );
                 }
 
@@ -175,7 +180,6 @@ export class CustomerService {
                     throw ErrorFactory.build(
                         ApiErrorCode.CONFLICT_ERROR,
                         `Customer already has status '${status}'`,
-                        "",
                     );
                 }
 
@@ -242,7 +246,10 @@ export class CustomerService {
 
         const customer = await this._customerRepository.findById(id);
         if (!customer)
-            throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, `customer is not exists`, '');
+            throw ErrorFactory.build(
+                ApiErrorCode.NOT_FOUND,
+                CustomerResponseCode[ApiErrorCode.NOT_FOUND]!.message
+            );
         return customer;
     }
 }

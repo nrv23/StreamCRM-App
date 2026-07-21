@@ -2,6 +2,8 @@
 // shared/middleware/error.middleware.ts
 import { Request, Response } from 'express';
 import { ApiResponse } from '../types/api-response.js';
+import { CustomerResponseCode } from '../../responses/customer.responses.js';
+import { ApiErrorCode } from '../../enum/error-codes.enum.js';
 
 
 export const notFoundRouteHandler = ( // va en el app .ts
@@ -13,8 +15,8 @@ export const notFoundRouteHandler = ( // va en el app .ts
     const response: ApiResponse<never> = {
         success: false,
         error: {
-            code: '404',
-            message: "Ruta no encontrada"
+            code: CustomerResponseCode[ApiErrorCode.ROUTE_NOT_FOUND]!.code,
+            message: CustomerResponseCode[ApiErrorCode.ROUTE_NOT_FOUND]!.message
         }
     }
 

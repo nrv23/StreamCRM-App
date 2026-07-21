@@ -2,6 +2,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiResponse } from '../types/api-response.js';
 import { AppError } from '../errors/app-errors.js';
+import { CustomerResponseCode } from '../../responses/customer.responses.js';
+import { ApiErrorCode } from '../../enum/error-codes.enum.js';
 
 export const errorHandler = ( // va en el app .ts
     err: Error,
@@ -29,8 +31,8 @@ export const errorHandler = ( // va en el app .ts
         const internalResponse: ApiResponse<never> = {
             success: false,
             error: {
-                code: 'INTERNAL_SERVER_ERROR',
-                message: 'Ocurrió un error inesperado en el servidor'
+                code: CustomerResponseCode[ApiErrorCode.INTERNAL_SERVER_ERROR]!.code,
+                message: CustomerResponseCode[ApiErrorCode.INTERNAL_SERVER_ERROR]!.message
             }
         };
 

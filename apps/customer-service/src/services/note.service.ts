@@ -8,6 +8,7 @@ import { IPaginationResponse } from "../interfaces/pagination.interface.js";
 import { ErrorFactory } from "../shared/factory/error-factory.js";
 import { CREATE_NOTE } from "../shared/types/events.type.js";
 import { EntityType } from "../enum/entity-type.enum.js";
+import { CustomerResponseCode } from "../responses/customer.responses.js";
 
 export class NoteService {
 
@@ -20,7 +21,10 @@ export class NoteService {
 
         return await this._unitOfWork.execute(async ({ customers, notes, auditLogs }) => {
             const customer = await customers.findById(dto.customer_id);
-            if (!customer) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'Customer is no exists', '');
+            if (!customer) throw ErrorFactory.build(
+                ApiErrorCode.NOT_FOUND,
+                CustomerResponseCode[ApiErrorCode.NOT_FOUND]!.message
+            );
 
             const newNote = await notes.save(dto);
 
