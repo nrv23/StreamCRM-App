@@ -1,5 +1,5 @@
 
-import { ApiErrorCode } from '../../enum/error-codes.enum.js';
+import { ApiErrorCode } from '../../enum/ErrorCodes.enum.js';
 import { AppError } from '../errors/app-errors.js';
 import { CustomerResponseCode } from '../../responses/customer.responses.js';
 
@@ -33,7 +33,7 @@ export class ErrorFactory {
 
             default: throw new Error("Error type not implemented")
         }
-        
+
         // Resolvemos el mensaje dinámicamente si no se provee uno
         const message = customMessage || CustomerResponseCode[enumErrorCode]?.message || "Unexpected error";
 

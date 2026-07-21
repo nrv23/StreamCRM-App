@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ApiResponse } from '../types/api-response.js';
 import { AppError } from '../errors/app-errors.js';
 import { CustomerResponseCode } from '../../responses/customer.responses.js';
-import { ApiErrorCode } from '../../enum/error-codes.enum.js';
+import { ApiErrorCode } from '../../enum/ErrorCodes.enum.js';
 
 export const errorHandler = ( // va en el app .ts
     err: Error,

@@ -3,15 +3,15 @@ import { UnitOfWork } from "../config/unitOfWork.js";
 import { GetCustomerDto } from "../dto/customer/getCustomer.dto.js";
 import { UpdateCustomerDto } from "../dto/customer/updateCustomer.dto.js";
 import { Customer } from "../entity/Customer.entity.js";
-import { CustomerStatus } from "../enum/CustomerStatus.type.js";
-import { ApiErrorCode } from "../enum/error-codes.enum.js";
+import { CustomerStatus } from "../enum/CustomerStatus.enum.js";
+import { ApiErrorCode } from "../enum/ErrorCodes.enum.js";
 import { ICustomerRepository } from "../interfaces/customer/customer-repository.interface.js";
 import { IPaginationResponse } from "../interfaces/pagination.interface.js";
 import { ErrorFactory } from "../shared/factory/error-factory.js";
 import { CreateCustomerDto } from '../dto/customer/createCustomer.dto.js'
 import { env } from "../config/enviroment.js";
 import { CREATE_CUSTOMER, CHANGE_CUSTOMER_STATUS, UPDATE_CUSTOMER, DELETE_CUSTOMER } from "../shared/types/events.type.js";
-import { EntityType } from "../enum/entity-type.enum.js";
+import { EntityType } from "../enum/EntityType.enum.js";
 
 export class CustomerService {
 

@@ -3,11 +3,11 @@ import { CreateNoteDto } from "../dto/note/create-not.dto.js";
 import { GetNoteDtoResponse } from "../dto/note/get-note-response.dto.js";
 import { GetNoteDto } from "../dto/note/get-note.dto.js";
 import { Note } from "../entity/Note.entity.js";
-import { ApiErrorCode } from "../enum/error-codes.enum.js";
+import { ApiErrorCode } from "../enum/ErrorCodes.enum.js";
 import { IPaginationResponse } from "../interfaces/pagination.interface.js";
 import { ErrorFactory } from "../shared/factory/error-factory.js";
 import { CREATE_NOTE } from "../shared/types/events.type.js";
-import { EntityType } from "../enum/entity-type.enum.js";
+import { EntityType } from "../enum/EntityType.enum.js";
 
 export class NoteService {
 

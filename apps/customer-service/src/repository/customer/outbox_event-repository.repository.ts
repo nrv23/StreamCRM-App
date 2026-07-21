@@ -4,7 +4,7 @@ import { IOutboxEventsRepository } from "../../interfaces/customer/outbox_event-
 import { databaseInstance } from "../../config/query.js";
 import { createOutboxEventDto } from "../../dto/customer/createOutboxEvent.dto.js";
 import { ErrorFactory } from "../../shared/factory/error-factory.js";
-import { ApiErrorCode } from "../../enum/error-codes.enum.js";
+import { ApiErrorCode } from "../../enum/ErrorCodes.enum.js";
 
 export class OutboxEventRepository implements IOutboxEventsRepository {
 

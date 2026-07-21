@@ -1,7 +1,7 @@
 import { databaseInstance } from "../../config/query.js";
 import { CreateLogDto } from "../../dto/auditLog/create-log.dto.js";
 import { AuditLogs } from "../../entity/AuditLogs.entity.js";
-import { ApiErrorCode } from "../../enum/error-codes.enum.js";
+import { ApiErrorCode } from "../../enum/ErrorCodes.enum.js";
 import { IAuditLogsRepository } from "../../interfaces/AuditLog/audit-log-repository.interface.js";
 import { IDatabase } from "../../interfaces/database.interface.js";
 import { ErrorFactory } from "../../shared/factory/error-factory.js";

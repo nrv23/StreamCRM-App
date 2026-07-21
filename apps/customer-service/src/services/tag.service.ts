@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { UnitOfWork } from '../config/unitOfWork.js';
 import { CreateTagDto } from '../dto/tag/create-tag.dto.js';
-import { ApiErrorCode } from '../enum/error-codes.enum.js';
+import { ApiErrorCode } from '../enum/ErrorCodes.enum.js';
 import { ErrorFactory } from '../shared/factory/error-factory.js';
 import { CREATE_TAG } from '../shared/types/events.type.js';
 import { env } from '../config/enviroment.js';
-import { EntityType } from '../enum/entity-type.enum.js';
+import { EntityType } from '../enum/EntityType.enum.js';
 
 export class TagService {
 

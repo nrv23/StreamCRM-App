@@ -2,7 +2,7 @@ import { CreateCustomerDto } from "../../dto/customer/createCustomer.dto.js";
 import { GetCustomerDto } from "../../dto/customer/getCustomer.dto.js";
 import { UpdateCustomerDto } from "../../dto/customer/updateCustomer.dto.js";
 import { Customer } from "../../entity/Customer.entity.js";
-import { CustomerStatus } from "../../enum/CustomerStatus.type.js";
+import { CustomerStatus } from "../../enum/CustomerStatus.enum.js";
 
 export interface ICustomerRepository {
     save(customer: CreateCustomerDto): Promise<Customer>;

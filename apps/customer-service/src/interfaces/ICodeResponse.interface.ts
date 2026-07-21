@@ -1,6 +1,6 @@
 // 1. Definimos el enum con los códigos
 
-import { ApiErrorCode } from "../enum/error-codes.enum.js";
+import { ApiErrorCode } from "../enum/ErrorCodes.enum.js";
 
 
 

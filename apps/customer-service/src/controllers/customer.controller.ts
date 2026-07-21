@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { GetCustomerDto } from '../dto/customer/getCustomer.dto.js';
 import { IPaginationResponse } from '../interfaces/pagination.interface.js';
 import { UpdateCustomerDto } from '../dto/customer/updateCustomer.dto.js';
-import { CustomerStatus } from '../enum/CustomerStatus.type.js';
+import { CustomerStatus } from '../enum/CustomerStatus.enum.js';
 
 export class CustomerController {
 

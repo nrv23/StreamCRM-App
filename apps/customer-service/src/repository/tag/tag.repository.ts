@@ -1,7 +1,7 @@
 import { databaseInstance } from "../../config/query.js";
 import { CreateTagDto } from "../../dto/tag/create-tag.dto.js";
 import { Tag } from "../../entity/Tag.entity.js";
-import { ApiErrorCode } from "../../enum/error-codes.enum.js";
+import { ApiErrorCode } from "../../enum/ErrorCodes.enum.js";
 import { IDatabase } from "../../interfaces/database.interface.js";
 import { ITagRepository } from "../../interfaces/tag/tag-repository.interface.js";
 import { ErrorFactory } from "../../shared/factory/error-factory.js";

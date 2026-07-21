@@ -1,5 +1,5 @@
 import { query } from 'express-validator';
-import { CustomerStatus } from '../../enum/CustomerStatus.type.js';
+import { CustomerStatus } from '../../enum/CustomerStatus.enum.js';
 
 export const getCustomerValidator = [
     query('page')

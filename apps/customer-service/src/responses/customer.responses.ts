@@ -1,5 +1,5 @@
 
-import { ApiErrorCode } from "../enum/error-codes.enum.js";
+import { ApiErrorCode } from "../enum/ErrorCodes.enum.js";
 import { CodeResponseDictionary } from "../interfaces/ICodeResponse.interface.js";
 
 export const CustomerResponseCode: CodeResponseDictionary = {

@@ -1,4 +1,4 @@
-import { CustomerStatus } from "../../enum/CustomerStatus.type.js";
+import { CustomerStatus } from "../../enum/CustomerStatus.enum.js";
 
 export interface UpdateCustomerDto {
     id: number;

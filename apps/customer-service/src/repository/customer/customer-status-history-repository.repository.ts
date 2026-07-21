@@ -1,7 +1,7 @@
 import { databaseInstance } from "../../config/query.js";
 import { ChangeCustomerHistoryStatusDto } from "../../dto/customer/changeCustomerStatusHistory,dto.js";
 import { CustomerStatusHistory } from "../../entity/CustomerStatusHistory.entity.js";
-import { ApiErrorCode } from "../../enum/error-codes.enum.js";
+import { ApiErrorCode } from "../../enum/ErrorCodes.enum.js";
 import { ICustomerStatusHistoryRepository } from "../../interfaces/customer/customer-status-history-repository.interface.js";
 import { IDatabase } from "../../interfaces/database.interface.js";
 import { ErrorFactory } from "../../shared/factory/error-factory.js";
