@@ -22,10 +22,7 @@ export class TagService {
         return await this._unitOfWork.execute(async ({ tags, customers, events, auditLogs }) => {
 
             const customer = await customers.findById(dto.customerId);
-            if (!customer) throw ErrorFactory.build(
-                ApiErrorCode.NOT_FOUND,
-                CustomerResponseCode[ApiErrorCode.NOT_FOUND]!.message
-            );
+            if (!customer) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND);
 
             const newTag = await tags.save(dto);
             // agregar a la tabla customer_tags y outbox events

@@ -21,10 +21,7 @@ export class NoteService {
 
         return await this._unitOfWork.execute(async ({ customers, notes, auditLogs }) => {
             const customer = await customers.findById(dto.customer_id);
-            if (!customer) throw ErrorFactory.build(
-                ApiErrorCode.NOT_FOUND,
-                CustomerResponseCode[ApiErrorCode.NOT_FOUND]!.message
-            );
+            if (!customer) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND);
 
             const newNote = await notes.save(dto);
 

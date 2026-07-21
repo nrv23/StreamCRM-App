@@ -32,10 +32,7 @@ export class CustomerService {
 
             const currentCustomer = await customers.findByEmail(dto.email!);
 
-            if (currentCustomer) throw ErrorFactory.build(
-                ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED,
-                CustomerResponseCode[ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED]!.message
-            );
+            if (currentCustomer) throw ErrorFactory.build(ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED);
 
             const customer = await customers.save(dto);
 
@@ -115,10 +112,7 @@ export class CustomerService {
             const currentCustomer = await customers.findById(dto.id);
 
             if (!currentCustomer)
-                throw ErrorFactory.build(
-                    ApiErrorCode.NOT_FOUND,
-                    CustomerResponseCode[ApiErrorCode.NOT_FOUND]!.message
-                );
+                throw ErrorFactory.build(ApiErrorCode.NOT_FOUND);
 
 
             const customer = await customers.update(dto);
@@ -170,10 +164,7 @@ export class CustomerService {
                 const currentCustomer = await customers.findById(customer_id);
 
                 if (!currentCustomer) {
-                    throw ErrorFactory.build(
-                        ApiErrorCode.NOT_FOUND,
-                        CustomerResponseCode[ApiErrorCode.NOT_FOUND]!.message
-                    );
+                    throw ErrorFactory.build(ApiErrorCode.NOT_FOUND);
                 }
 
                 if (currentCustomer.status === status) {
@@ -246,10 +237,7 @@ export class CustomerService {
 
         const customer = await this._customerRepository.findById(id);
         if (!customer)
-            throw ErrorFactory.build(
-                ApiErrorCode.NOT_FOUND,
-                CustomerResponseCode[ApiErrorCode.NOT_FOUND]!.message
-            );
+            throw ErrorFactory.build(ApiErrorCode.NOT_FOUND);
         return customer;
     }
 }
