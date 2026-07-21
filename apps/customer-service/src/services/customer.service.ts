@@ -78,6 +78,8 @@ export class CustomerService {
         const page = options.page || 1;
         const limit = options.limit || 20;
 
+        options.limit = limit;
+        options.page = page;
         // 4. CÁLCULO DE NEXT Y PREVIOUS (Tu ajuste clave)
         const [customers, totalItems] = await Promise.all([
             this._customerRepository.searchByFilters(options), this._customerRepository.getTotalRecords(options)
