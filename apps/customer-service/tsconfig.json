@@ -4,7 +4,6 @@
     "outDir": "./dist",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "target": "ES2022",
     "lib": [
       "ES2022"
     ],
@@ -20,7 +19,11 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "target": "ESNext",
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "erasableSyntaxOnly": true,
   },
   "include": [
     "src/**/*.ts",

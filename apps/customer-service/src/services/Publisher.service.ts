@@ -2,19 +2,24 @@ import { IOutboxEventsRepository } from "../interfaces/customer/outbox_event-rep
 import { EventPublisher } from "../interfaces/publisher/EventPublisher.interface.js";
 
 export class PublishPendingEventsUseCase {
+    private readonly _outboxRepository: IOutboxEventsRepository;
+    private readonly _eventPublisher: EventPublisher;
     constructor(
-        private readonly outboxRepository: IOutboxEventsRepository,
-        private readonly eventPublisher: EventPublisher,
-    ) { }
+        outboxRepository: IOutboxEventsRepository,
+        eventPublisher: EventPublisher
+    ) {
+        this._outboxRepository = outboxRepository;
+        this._eventPublisher = eventPublisher;
+    }
 
     async execute(limit: number): Promise<void> {
-        const events = await this.outboxRepository.findPending(limit);
+        const events = await this._outboxRepository.findPending(limit);
 
         for (const event of events) {
             try {
-                await this.eventPublisher.publish(event);
+                await this._eventPublisher.publish(event);
 
-                await this.outboxRepository.markAsPublished(
+                await this._outboxRepository.markAsPublished(
                     event.id,
                 );
             } catch (error) {
@@ -23,7 +28,7 @@ export class PublishPendingEventsUseCase {
                         ? error.message
                         : "Unknown publisher error";
 
-                await this.outboxRepository.markAsFailed(
+                await this._outboxRepository.markAsFailed(
                     event.id,
                     message,
                 );

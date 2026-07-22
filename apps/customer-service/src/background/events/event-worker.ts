@@ -1,8 +1,8 @@
 import { parentPort, workerData } from "node:worker_threads";
-import { OutboxEventRepository } from "../../repository/customer/outbox_event-repository.repository.js";
-import { ConsoleEventPublisher } from "../../publisher/ConsoleEvent.publisher.js";
-import { env } from "../../config/enviroment.js";
-import { PublishPendingEventsUseCase } from "../../services/Publisher.service.js";
+import { OutboxEventRepository } from "../../repository/customer/outbox_event-repository.repository.ts";
+import { ConsoleEventPublisher } from "../../publisher/ConsoleEvent.publisher.ts";
+import { env } from "../../config/enviroment.ts";
+import { PublishPendingEventsUseCase } from "../../services/Publisher.service.ts";
 
 export class OutboxPublisherWorker {
     private timer?: NodeJS.Timeout;
