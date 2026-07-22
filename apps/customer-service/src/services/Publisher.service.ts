@@ -1,13 +1,13 @@
+import { IOutboxEventsRepository } from "../interfaces/customer/outbox_event-repository.repository.js";
 import { EventPublisher } from "../interfaces/publisher/EventPublisher.interface.js";
-import { OutboxEventRepository } from "../repository/customer/outbox_event-repository.repository.js";
 
 export class PublishPendingEventsUseCase {
     constructor(
-        private readonly outboxRepository: OutboxEventRepository,
+        private readonly outboxRepository: IOutboxEventsRepository,
         private readonly eventPublisher: EventPublisher,
     ) { }
 
-    async execute(limit = 100): Promise<void> {
+    async execute(limit: number): Promise<void> {
         const events = await this.outboxRepository.findPending(limit);
 
         for (const event of events) {
