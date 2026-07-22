@@ -10,5 +10,7 @@ export interface IEnvConfig {
     },
     api_version: number,
     server_port: number,
-    service_name: string
+    service_name: string,
+    interval_worker_execution_time: number;
+    pagination_record_events_limit: number;
 }

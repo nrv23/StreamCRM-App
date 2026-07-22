@@ -1,5 +1,6 @@
 import { createApp } from "./app.js";
 import { env } from "./config/enviroment.js";
+import './background/events';
 
 async function bootstrap() {
     const app = createApp();

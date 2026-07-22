@@ -19,6 +19,8 @@ const validatedEnv = cleanEnv(process.env, {
     SERVER_PORT: num({ default: 3000 }),
 
     SERVICE_NAME: str(),
+    INTERVAL_WORKER_EXECUTION_TIME: num(),
+    PAGINATION_RECORD_EVENTS_LIMIT: num()
 });
 
 export const env: IEnvConfig = {
@@ -33,6 +35,8 @@ export const env: IEnvConfig = {
     api_version: validatedEnv.API_VERSION,
     server_port: validatedEnv.SERVER_PORT,
     service_name: validatedEnv.SERVICE_NAME,
+    interval_worker_execution_time: validatedEnv.INTERVAL_WORKER_EXECUTION_TIME,
+    pagination_record_events_limit: validatedEnv.PAGINATION_RECORD_EVENTS_LIMIT
 };
 /*
 export const env: IEnvConfig = {
