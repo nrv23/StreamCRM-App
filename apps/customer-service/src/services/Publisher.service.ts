@@ -1,4 +1,4 @@
-import { IOutboxEventsRepository } from "../interfaces/customer/outbox_event-repository.repository.js";
+import { IOutboxEventsRepository } from "../interfaces/customer/outbox_event-repository.interface.ts";
 import { EventPublisher } from "../interfaces/publisher/EventPublisher.interface.js";
 
 export class PublishPendingEventsUseCase {
