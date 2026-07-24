@@ -7,6 +7,8 @@ import { env }
     from "../../config/enviroment.js";
 import { PublishPendingEventsUseCase }
     from "../../services/Publisher.service.js";
+import { RabbitEventPublisher } from "../../publisher/RabbitEvent.publisher.ts";
+import { rabbitMQClient } from "../../config/raabbitmq.ts";
 
 export class OutboxPublisherWorker {
     private timer?: NodeJS.Timeout;
@@ -71,21 +73,47 @@ export class OutboxPublisherWorker {
         console.log("[OUTBOX WORKER] Detenido.");
     }
 }
+async function startWorker(): Promise<void> {
+    try {
+        const { pagination_record_events_limit } = workerData;
 
-// Inicialización del Worker
-const { pagination_record_events_limit } = workerData;
-const repository = new OutboxEventRepository();
-const publisher = new ConsoleEventPublisher();
+        /*
+         * Esta conexión pertenece exclusivamente al Worker Thread.
+         */
+        await rabbitMQClient.connect();
 
-const useCase = new PublishPendingEventsUseCase(
-    repository,
-    publisher,
-);
+        const repository = new OutboxEventRepository();
+        const publisher = new RabbitEventPublisher();
 
-const worker = new OutboxPublisherWorker(
-    useCase,
-    env.interval_worker_execution_time ?? 5000,
-    +pagination_record_events_limit
-);
+        const useCase = new PublishPendingEventsUseCase(
+            repository,
+            publisher,
+        );
 
-worker.start();
+        const worker = new OutboxPublisherWorker(
+            useCase,
+            env.interval_worker_execution_time ?? 5000,
+            Number(pagination_record_events_limit),
+        );
+
+        worker.start();
+    } catch (error) {
+        console.error(
+            '[OUTBOX WORKER] Failed to initialize.',
+            error,
+        );
+
+        parentPort?.postMessage({
+            message:
+                'Outbox worker initialization failed: ' +
+                (error instanceof Error
+                    ? error.message
+                    : String(error)),
+            ok: false,
+        });
+
+        process.exitCode = 1;
+    }
+}
+
+void startWorker();

@@ -4,10 +4,12 @@ import { EventPublisher } from "../interfaces/publisher/EventPublisher.interface
 
 export class ConsoleEventPublisher implements EventPublisher {
 
-    async publish(event: OutBoxEvent): Promise<void> {
+    async publish(event: OutBoxEvent): Promise<boolean> {
         console.log(
             `[OUTBOX] Publishing ${event.event_name}`,
             event.payload,
         );
+
+        return true;
     }
 }
