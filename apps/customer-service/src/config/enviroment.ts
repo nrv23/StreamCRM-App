@@ -20,7 +20,13 @@ const validatedEnv = cleanEnv(process.env, {
 
     SERVICE_NAME: str(),
     INTERVAL_WORKER_EXECUTION_TIME: num(),
-    PAGINATION_RECORD_EVENTS_LIMIT: num()
+    PAGINATION_RECORD_EVENTS_LIMIT: num(),
+    RABBITMQ_HOST: str({
+        default: "localhost"
+    }),
+    RABBITMQ_HOST_PORT: num({
+        default: 5672
+    })
 });
 
 export const env: IEnvConfig = {
@@ -36,7 +42,9 @@ export const env: IEnvConfig = {
     server_port: validatedEnv.SERVER_PORT,
     service_name: validatedEnv.SERVICE_NAME,
     interval_worker_execution_time: validatedEnv.INTERVAL_WORKER_EXECUTION_TIME,
-    pagination_record_events_limit: validatedEnv.PAGINATION_RECORD_EVENTS_LIMIT
+    pagination_record_events_limit: validatedEnv.PAGINATION_RECORD_EVENTS_LIMIT,
+    rabbitmq_host: validatedEnv.RABBITMQ_HOST,
+    rabbitmq_host_port: validatedEnv.RABBITMQ_HOST_PORT
 };
 /*
 export const env: IEnvConfig = {

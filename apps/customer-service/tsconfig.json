@@ -23,7 +23,7 @@
     "target": "ESNext",
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true,
-    "erasableSyntaxOnly": true,
+    "erasableSyntaxOnly": false, // evita warning en estructuras como enum
   },
   "include": [
     "src/**/*.ts",
