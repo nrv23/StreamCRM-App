@@ -38,12 +38,20 @@ export class OutboxPublisherWorker {
         if (this.isStopping) return;
 
         try {
-            await this.workerEventPublisherService.execute(this.limit);
+            // cambiar aqui el mensaje segun lo que retorne
+            const hasEventProccesed = await this.workerEventPublisherService.execute(this.limit);
+            if (hasEventProccesed) {
 
-            parentPort?.postMessage({
-                message: "Events batch processed successfully",
-                ok: true
-            });
+                parentPort?.postMessage({
+                    message: "Events batch processed successfully",
+                    ok: true
+                });
+            } else {
+                parentPort?.postMessage({
+                    message: "No pending events was found",
+                    ok: true
+                });
+            }
         } catch (error) {
             console.error("[OUTBOX WORKER] Error detectado. Apagando worker...", error);
 

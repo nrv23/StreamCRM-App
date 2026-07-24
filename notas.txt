@@ -7,3 +7,6 @@ git for-each-ref --sort=-committerdate refs/heads/ \
   --format='%(committerdate:relative) %(refname:short)'
 
   lista las ramas de git por su orden de uso
+
+  No se puede reutilizar conexiones de rabbitmq de un main process a un worker thread o child process.
+  Cada uno tiene su contexto de procesamiento e instancia propia
