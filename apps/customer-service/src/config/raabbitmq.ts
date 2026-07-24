@@ -195,8 +195,8 @@ export class RabbitMQClient {
         }
 
         const url =
-            `amqp://${env.rabbitmq_host}:${env.rabbitmq_host_port}`;
-
+            `amqp://${env.rabbitmq_host}:${env.rabbitmq_host_port}/`;
+        console.log({ url })
         try {
             const connection = await amqp.connect(url);
             const channel = await connection.createConfirmChannel();
