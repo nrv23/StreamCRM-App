@@ -1,5 +1,5 @@
 import { databaseInstance } from "../../config/query.js";
-import { CreateLogDto } from "../../dto/auditLog/create-log.dto.js";
+import { CreateLogDto } from "./../../dto/auditLog/create-log.dto.ts";
 import { AuditLogs } from "../../entity/AuditLogs.entity.js";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.js";
 import { IAuditLogsRepository } from "../../interfaces/auditLog/audit-log-repository.interface.js";
