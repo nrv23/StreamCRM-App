@@ -28,9 +28,7 @@ export class RabbitMQConsumer {
         const url = `amqp://${env.rabbitmq_host}:${env.rabbitmq_host_port}/`;
         this.connection = await amqp.connect(url);
         this.channel = await this.connection.createChannel();
-        console.log(
-            { channelConsumer: this.channel }
-        )
+
         console.log('[RabbitMQ Consumer] Connected.');
     }
     public async getChannel(): Promise<Channel> {

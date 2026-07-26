@@ -32,7 +32,7 @@ export class OutboxEventRepository implements IOutboxEventsRepository {
     async markAsPublished(eventId: number): Promise<void> {
 
         const query = `
-            update outbox_events set status = $1, published_at = now(), last_error = null
+            update outbox_events set status = $1, published_at = now(), last_error = null, retry_count = 0
             where id = $2
             RETURNING id;
         `;
@@ -43,26 +43,24 @@ export class OutboxEventRepository implements IOutboxEventsRepository {
     }
 
     async markAsFailed(
-        eventId: number,
+        eventId: string,
         error: string,
     ): Promise<void> {
         const sql = `
-        UPDATE outbox_events
-        SET
-            status = CASE 
-                WHEN (retry_count + 1) >= 5 then 'failed' 
-                ELSE 'pending'
-            END,
-            retry_count = retry_count + 1,
-            last_error = $1,
-            published_at = null
-        WHERE event_id = $2
-        returning id;
-    `;
+            UPDATE outbox_events
+            SET
+                status = CASE 
+                    WHEN (retry_count + 1) >= 5 then 'failed' 
+                    ELSE 'pending'
+                END,
+                retry_count = retry_count + 1,
+                last_error = $1,
+                published_at = null
+            WHERE event_id = $2
+            returning id;
+        `;
 
-        await this._db.query(sql, [StatusEvent.pending, error, eventId]);
-
-        const [response] = await this._db.query(sql, [StatusEvent.pending, error, eventId]);
+        const [response] = await this._db.query(sql, [error, eventId])
         if (!response) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR,
             `outbox_events with id ${eventId} not found`
         );

@@ -15,22 +15,21 @@ export class PublishPendingEventsUseCase {
     async execute(limit: number): Promise<boolean> {
         const events = await this._outboxRepository.findPending(limit);
         if (!events.length) return false;
-
         for (const event of events) {
             try {
                 await this._eventPublisher.publish(event);
                 await this._outboxRepository.markAsPublished(
                     event.id,
                 );
-
             } catch (error) {
                 const message =
                     error instanceof Error
                         ? error.message
                         : "Unknown publisher error";
-                console.log({ error })
+                console.log("error");
+                console.log({ event })
                 await this._outboxRepository.markAsFailed(
-                    event.id,
+                    event.event_id,
                     message,
                 );
             }

@@ -12,10 +12,6 @@ export class RabbitEventPublisher implements EventPublisher {
     }
 
     async publish(event: OutBoxEvent): Promise<boolean> {
-        console.log(
-            `[OUTBOX] Publishing ${event.event_name}`,
-            event.payload,
-        );
 
         return await this._rabbitClient.publish<OutBoxEvent>(event.event_name!, event)
     }

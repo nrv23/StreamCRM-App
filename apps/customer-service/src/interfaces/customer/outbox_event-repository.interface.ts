@@ -9,7 +9,7 @@ export interface IOutboxEventsRepository {
         eventId: number,
     ): Promise<void>;
     markAsFailed(
-        eventId: number,
+        eventId: string,
         error: string,
     ): Promise<void>;
 }
