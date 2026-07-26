@@ -9,6 +9,8 @@ import { PublishPendingEventsUseCase }
     from "../../services/Publisher.service.js";
 import { RabbitEventPublisher } from "../../publisher/RabbitEvent.publisher.ts";
 import { rabbitMQClient } from "../../config/raabbitmq.ts";
+import './consumer/consumer-bootstrap.ts';
+
 
 export class OutboxPublisherWorker {
     private timer?: NodeJS.Timeout;
@@ -89,13 +91,12 @@ async function startWorker(): Promise<void> {
          * Esta conexión pertenece exclusivamente al Worker Thread.
          */
         await rabbitMQClient.connect();
-
         const repository = new OutboxEventRepository();
         const publisher = new RabbitEventPublisher();
 
         const useCase = new PublishPendingEventsUseCase(
             repository,
-            publisher,
+            publisher
         );
 
         const worker = new OutboxPublisherWorker(
