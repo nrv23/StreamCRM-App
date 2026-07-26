@@ -1,0 +1,7 @@
+export enum ApiErrorCode {
+    NOT_FOUND = 'CTMR-0002',
+    CONFLICT_ERROR = 'CTMR-0003',
+    BAD_REQUEST = 'CTMR-0004',
+    INTERNAL_SERVER_ERROR = 'CTMR-0001',
+    ROUTE_NOT_FOUND = "CTMR-0007"
+}
