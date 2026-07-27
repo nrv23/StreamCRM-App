@@ -194,8 +194,7 @@ export class RabbitMQClient {
             return;
         }
 
-        const url =
-            `amqp://${env.rabbitmq_host}:${env.rabbitmq_host_port}/`;
+        const url = `amqp://${env.rabbitmq_user}:${env.rabbitmq_password}@${env.rabbitmq_host}:${env.rabbitmq_host_port}${env.rabbitmq_vhost}`;
         console.log({ url })
         try {
             const connection = await amqp.connect(url);

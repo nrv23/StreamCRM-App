@@ -15,4 +15,7 @@ export interface IEnvConfig {
     pagination_record_events_limit: number;
     rabbitmq_host: string;
     rabbitmq_host_port: number;
+    rabbitmq_user: string;
+    rabbitmq_password: string;
+    rabbitmq_vhost: string;
 }

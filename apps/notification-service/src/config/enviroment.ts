@@ -26,7 +26,10 @@ const validatedEnv = cleanEnv(process.env, {
     }),
     RABBITMQ_HOST_PORT: num({
         default: 5672
-    })
+    }),
+    RABBITMQ_USER: str(),
+    RABBITMQ_PASSWORD: str(),
+    RABBITMQ_VHOST: str({ default: '/' })
 });
 
 export const env: IEnvConfig = {
@@ -44,7 +47,10 @@ export const env: IEnvConfig = {
     interval_worker_execution_time: validatedEnv.INTERVAL_WORKER_EXECUTION_TIME,
     pagination_record_events_limit: validatedEnv.PAGINATION_RECORD_EVENTS_LIMIT,
     rabbitmq_host: validatedEnv.RABBITMQ_HOST,
-    rabbitmq_host_port: validatedEnv.RABBITMQ_HOST_PORT
+    rabbitmq_host_port: validatedEnv.RABBITMQ_HOST_PORT,
+    rabbitmq_user: validatedEnv.RABBITMQ_USER,
+    rabbitmq_password: validatedEnv.RABBITMQ_PASSWORD,
+    rabbitmq_vhost: validatedEnv.RABBITMQ_VHOST
 };
 /*
 export const env: IEnvConfig = {
