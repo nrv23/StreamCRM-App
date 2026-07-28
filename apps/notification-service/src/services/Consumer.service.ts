@@ -1,40 +1,19 @@
-import { IOutboxEventsRepository } from "../interfaces/event/outbox_event-repository.interface.ts";
-import { EventPublisher } from "../interfaces/publisher/EventPublisher.interface.js";
+import RabbitMQConsumer from "../config/rabbitmqConsumer.ts";
 
-export class PublishPendingEventsUseCase {
-    private readonly _outboxRepository: IOutboxEventsRepository;
-    private readonly _eventPublisher: EventPublisher;
+export class ConsumePendingEventsUseCase {
+
+    private _rabbitMQConsumer: RabbitMQConsumer
+
     constructor(
-        outboxRepository: IOutboxEventsRepository,
-        eventPublisher: EventPublisher
+        rabbitMQConsumer: RabbitMQConsumer
     ) {
-        this._outboxRepository = outboxRepository;
-        this._eventPublisher = eventPublisher;
+        this._rabbitMQConsumer = rabbitMQConsumer;
     }
 
-    async execute(limit: number): Promise<boolean> {
-        const events = await this._outboxRepository.findPending(limit);
-        if (!events.length) return false;
-        for (const event of events) {
-            try {
-                await this._eventPublisher.publish(event);
-                await this._outboxRepository.markAsPublished(
-                    event.id,
-                );
-            } catch (error) {
-                const message =
-                    error instanceof Error
-                        ? error.message
-                        : "Unknown publisher error";
-                console.log("error");
-                console.log({ event })
-                await this._outboxRepository.markAsFailed(
-                    event.event_id,
-                    message,
-                );
-            }
-        }
-
-        return true;
+    async execute(): Promise<void> {
+        console.log("llego")
+        await this._rabbitMQConsumer.connect();
+        const channel = await this._rabbitMQConsumer.getChannel();
+        await this._rabbitMQConsumer.consume(channel);
     }
 }

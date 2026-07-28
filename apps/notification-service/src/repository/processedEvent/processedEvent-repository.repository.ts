@@ -21,7 +21,8 @@ export class ProcessedEventRepository implements IProcessedEventRepository {
         this._db = db ?? databaseInstance;
     }
     async save(event: CreateProcessedEventDto): Promise<void> {
-        const sql = 'insert into processed_events(event_id, event_name) values($1,$2);';
+        console.log({ event });
+        const sql = 'insert into processed_events(event_id, event_name) values($1,$2) returning id;';
         const [response] = await this._db.query<ProcessedEventInsertedRow>(sql, [event.event_id, event.event_name]);
         if (!response || !response.id) {
             throw ErrorFactory.build(
@@ -48,7 +49,7 @@ export class ProcessedEventRepository implements IProcessedEventRepository {
             );
         }
 
-        return row.exists;
+        return +row.exists > 0;
     }
 
 }

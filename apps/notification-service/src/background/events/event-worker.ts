@@ -1,17 +1,10 @@
 import { parentPort, workerData } from "node:worker_threads";
-import { OutboxEventRepository }
-    from "../../repository/event/outbox_event-repository.repository.ts";
-import { ConsoleEventPublisher }
-    from "../../publisher/ConsoleEvent.publisher.js";
-import { env }
-    from "../../config/enviroment.js";
-import { PublishPendingEventsUseCase }
-    from "../../services/Publisher.service.js";
+import { OutboxEventRepository } from "../../repository/event/outbox_event-repository.repository.ts";
+import { env } from "../../config/enviroment.js";
+import { PublishPendingEventsUseCase } from "../../services/Publisher.service.js";
 import { RabbitEventPublisher } from "../../publisher/RabbitEvent.publisher.ts";
-
-import './consumer/consumer-bootstrap.ts';
 import { rabbitMQClient } from "../../config/rabbitmqClient.ts";
-
+import './consumer/consumer-bootstrap.ts';
 
 export class OutboxPublisherWorker {
     private timer?: NodeJS.Timeout;
@@ -126,4 +119,4 @@ async function startWorker(): Promise<void> {
     }
 }
 
-void startWorker();
+//void startWorker();

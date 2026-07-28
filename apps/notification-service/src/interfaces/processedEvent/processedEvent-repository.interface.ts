@@ -3,6 +3,5 @@ import { CreateProcessedEventDto } from "../../dto/processedEvents/create-proces
 
 export interface IProcessedEventRepository {
     exists(eventId: string): Promise<boolean>;
-    save(event: CreateProcessedEventDto
-    ): Promise<void>;
+    save(dto: CreateProcessedEventDto): Promise<void>;
 }
