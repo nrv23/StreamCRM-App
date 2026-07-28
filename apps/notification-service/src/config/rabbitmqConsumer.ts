@@ -122,7 +122,7 @@ export class RabbitMQConsumer {
 
                     */
 
-                    this._processIntegrationEvent.execute({
+                    await this._processIntegrationEvent.execute({
                         external_id: randomUUID(),
                         eventId: event.event_id,
                         eventName: event.event_name,

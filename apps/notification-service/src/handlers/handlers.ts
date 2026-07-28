@@ -13,27 +13,28 @@ import { CustomerStatusChangeHandler } from "./customerStatusChange.handler..ts"
 import { DeleteCustomerHandler } from "./deleteCustomer.handler.ts";
 import { UpdateCustomerHandler } from "./updateCustomer.handler.ts";
 
+const notificationRepository = new NotificationRepository();
 export const handlers = new Map<string, IntegrationEventHandler>([
     [
         CREATE_CUSTOMER,
-        new CreateCustomerHandler(new NotificationRepository()),
+        new CreateCustomerHandler(notificationRepository),
     ],
     [
         UPDATE_CUSTOMER,
-        new UpdateCustomerHandler(new NotificationRepository()),
+        new UpdateCustomerHandler(notificationRepository),
     ],
     [
         DELETE_CUSTOMER,
-        new DeleteCustomerHandler(new NotificationRepository()),
+        new DeleteCustomerHandler(notificationRepository),
     ],
     [
         CHANGE_CUSTOMER_STATUS,
-        new CustomerStatusChangeHandler(new NotificationRepository()),
+        new CustomerStatusChangeHandler(notificationRepository),
     ],
 
     [
         CREATE_TAG,
-        new CreateTagHandler(new NotificationRepository()),
+        new CreateTagHandler(notificationRepository),
     ],
 
 ]);

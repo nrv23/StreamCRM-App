@@ -1,19 +1,17 @@
-import RabbitMQConsumer from "../config/rabbitmqConsumer.ts";
+
+import { RabbitEventConsumer } from "../consumer/RabbitEvent.consumer.ts";
 
 export class ConsumePendingEventsUseCase {
 
-    private _rabbitMQConsumer: RabbitMQConsumer
+    private _rabbitEventConsumer: RabbitEventConsumer
 
     constructor(
-        rabbitMQConsumer: RabbitMQConsumer
+        rabbitEventConsumer: RabbitEventConsumer
     ) {
-        this._rabbitMQConsumer = rabbitMQConsumer;
+        this._rabbitEventConsumer = rabbitEventConsumer;
     }
 
     async execute(): Promise<void> {
-        console.log("llego")
-        await this._rabbitMQConsumer.connect();
-        const channel = await this._rabbitMQConsumer.getChannel();
-        await this._rabbitMQConsumer.consume(channel);
+        await this._rabbitEventConsumer.consume();
     }
 }
