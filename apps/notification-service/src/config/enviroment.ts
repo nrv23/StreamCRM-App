@@ -16,7 +16,7 @@ const validatedEnv = cleanEnv(process.env, {
     DB_PASSWORD: str(),
 
     API_VERSION: num({ default: 1 }),
-    SERVER_PORT: num({ default: 3000 }),
+    SERVER_PORT: num({}),
 
     SERVICE_NAME: str(),
     INTERVAL_WORKER_EXECUTION_TIME: num(),
@@ -25,7 +25,7 @@ const validatedEnv = cleanEnv(process.env, {
         default: "localhost"
     }),
     RABBITMQ_HOST_PORT: num({
-        default: 5672
+        default: 5673
     }),
     RABBITMQ_USER: str(),
     RABBITMQ_PASSWORD: str(),

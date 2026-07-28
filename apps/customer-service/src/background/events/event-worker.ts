@@ -9,7 +9,7 @@ import { PublishPendingEventsUseCase }
     from "../../services/Publisher.service.js";
 import { RabbitEventPublisher } from "../../publisher/RabbitEvent.publisher.ts";
 import { rabbitMQClient } from "../../config/raabbitmq.ts";
-import './consumer/consumer-bootstrap.ts';
+//import './consumer/consumer-bootstrap.ts';
 
 
 export class OutboxPublisherWorker {

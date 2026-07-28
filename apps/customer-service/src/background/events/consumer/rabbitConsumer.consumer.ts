@@ -87,7 +87,7 @@ export class RabbitMQConsumer {
 
 
 
-                    // channel.ack(message);
+                    channel.ack(message);
                 } catch (error) {
                     console.error(
                         '[CONSUMER] Event processing failed:',
