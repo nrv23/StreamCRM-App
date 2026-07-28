@@ -3,7 +3,7 @@ import amqp, {
     type ChannelModel,
     type ConsumeMessage,
 } from 'amqplib';
-import { env } from '../../../config/enviroment.ts';
+import { env } from './enviroment.ts';
 
 
 export class RabbitMQConsumer {
@@ -65,7 +65,17 @@ export class RabbitMQConsumer {
 
         return this.channel;
     }
+
+
+
+
     public async consume(channel: Channel) {
+
+        if (!channel) {
+            throw new Error(
+                '[RabbitMQ Consumer] Channel is not initialized.',
+            );
+        }
 
         await channel.consume(
             this.queueName,
@@ -85,9 +95,9 @@ export class RabbitMQConsumer {
                         event,
                     );
 
+                    channel.ack(message);
 
 
-                    // channel.ack(message);
                 } catch (error) {
                     console.error(
                         '[CONSUMER] Event processing failed:',

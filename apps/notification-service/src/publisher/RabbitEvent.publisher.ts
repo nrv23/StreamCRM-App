@@ -1,4 +1,4 @@
-import { RabbitMQClient, rabbitMQClient } from "../config/raabbitmq.ts";
+import { RabbitMQClient, rabbitMQClient } from "../config/rabbitmqClient.ts";
 import { OutBoxEvent } from "../entity/OutBoxEvent.entity.ts";
 import { EventPublisher } from "../interfaces/publisher/EventPublisher.interface.ts";
 

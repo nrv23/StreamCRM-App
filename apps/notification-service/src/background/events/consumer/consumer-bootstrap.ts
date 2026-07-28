@@ -1,3 +1,2 @@
-import { rabbitConsumer } from "./rabbitConsumer.consumer.ts";
-
+import { rabbitConsumer } from "../../../config/rabbitmqConsumer.ts";
 rabbitConsumer.start();
