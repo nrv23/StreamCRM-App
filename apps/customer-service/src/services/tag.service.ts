@@ -39,9 +39,10 @@ export class TagService {
                     aggregate_id: customer.id,
                     aggregate_type: EntityType.CUSTOMER_TAG,
                     payload: {
-                        customerId: customer.id,
-                        tagId: newTag.id,
-                        created_at: new Date().toISOString()
+                        customer_id: customer.id,
+                        tag_id: newTag.id,
+                        created_at: newTag.created_at,
+                        tag_name: dto.name
                     },
                     headers: {
                         source: env.service_name,
