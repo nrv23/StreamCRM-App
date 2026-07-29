@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { IEnvConfig } from "../interfaces/IEnvConfig.js";
-import { cleanEnv, num, str } from 'envalid';
+import { bool, cleanEnv, num, str } from 'envalid';
 
 dotenv.config();
 
@@ -29,7 +29,14 @@ const validatedEnv = cleanEnv(process.env, {
     }),
     RABBITMQ_USER: str(),
     RABBITMQ_PASSWORD: str(),
-    RABBITMQ_VHOST: str({ default: '/' })
+    RABBITMQ_VHOST: str({ default: '/' }),
+
+    SMTP_HOST: str({ default: 'smtp.gmail.com' }),
+    SMTP_PORT: num({ default: 587 }),
+    SMTP_SECURE: bool({ default: false }),
+    SMTP_USER: str({ default: '' }),
+    SMTP_PASS: str({ default: '' }),
+    SMTP_FROM: str({ default: '' }),
 });
 
 export const env: IEnvConfig = {
@@ -50,18 +57,16 @@ export const env: IEnvConfig = {
     rabbitmq_host_port: validatedEnv.RABBITMQ_HOST_PORT,
     rabbitmq_user: validatedEnv.RABBITMQ_USER,
     rabbitmq_password: validatedEnv.RABBITMQ_PASSWORD,
-    rabbitmq_vhost: validatedEnv.RABBITMQ_VHOST
+    rabbitmq_vhost: validatedEnv.RABBITMQ_VHOST,
+
+    nodemailer: {
+        host: validatedEnv.SMTP_HOST,
+        port: validatedEnv.SMTP_PORT,
+        secure: validatedEnv.SMTP_SECURE,
+        auth: {
+            user: validatedEnv.SMTP_USER,
+            pass: validatedEnv.SMTP_PASS,
+        },
+        from: validatedEnv.SMTP_FROM,
+    }
 };
-/*
-export const env: IEnvConfig = {
-    db: {
-        host: process.env.DB_HOST!,
-        port: Number(process.env.DB_PORT!),
-        database: process.env.DB_NAME!,
-        user: process.env.DB_USER!,
-        password: process.env.DB_PASSWORD!,
-    },
-    api_version: Number(process.env.API_VERSION) || 1,
-    server_port: Number(process.env.PORT!),
-    service_name: process.env.SERVICE_NAME!
-};*/

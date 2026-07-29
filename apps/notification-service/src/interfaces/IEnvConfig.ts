@@ -18,4 +18,14 @@ export interface IEnvConfig {
     rabbitmq_user: string;
     rabbitmq_password: string;
     rabbitmq_vhost: string;
+    nodemailer: {
+        host: string;
+        port: number;
+        secure: boolean;
+        auth: {
+            user: string;
+            pass: string;
+        };
+        from: string;
+    };
 }
