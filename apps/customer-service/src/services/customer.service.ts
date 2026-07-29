@@ -44,8 +44,8 @@ export class CustomerService {
                     aggregate_type: EntityType.CUSTOMER,
                     payload: {
                         customerId: customer.id,
-                        firstName: customer.firstName,
-                        lastName: customer.lastName,
+                        firstName: customer.first_name,
+                        lastName: customer.last_name,
                         email: customer.email,
                         phone: customer.phone,
                         country: customer.country,
@@ -126,8 +126,8 @@ export class CustomerService {
                     aggregate_type: EntityType.CUSTOMER,
                     payload: {
                         customerId: customer.id,
-                        firstName: customer.firstName,
-                        lastName: customer.lastName,
+                        firstName: customer.first_name,
+                        lastName: customer.last_name,
                         email: customer.email,
                         phone: customer.phone,
                         country: customer.country,
@@ -200,8 +200,8 @@ export class CustomerService {
 
                         payload: {
                             customerId: updatedCustomer.id,
-                            firstName: updatedCustomer.firstName,
-                            lastName: updatedCustomer.lastName,
+                            firstName: updatedCustomer.first_name,
+                            lastName: updatedCustomer.last_name,
                             email: updatedCustomer.email,
                             phone: updatedCustomer.phone,
                             country: updatedCustomer.country,

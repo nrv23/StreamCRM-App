@@ -20,7 +20,7 @@ export class CreateCustomerHandler implements IntegrationEventHandler {
             eventName: event.event_name,
             userId: +event.payload.user_id!,
             title: 'New Customer',
-            message: `Welcome ${event.payload.name}`,
+            message: `Welcome ${event.payload.firstName} ${event.payload.lastName}`,
             type: NotificationType.INFO,
             status: NotificationStatus.PENDING,
             metadata: event.payload

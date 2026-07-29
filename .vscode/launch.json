@@ -18,6 +18,24 @@
                 "<node_internals>/**",
                 "**/node_modules/**"
             ]
+        },
+        {
+            "name": "Notification Service",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "/home/nvm23/.nvm/versions/node/v22.22.2/bin/node",
+            "cwd": "${workspaceFolder}/apps/notification-service",
+            "program": "${workspaceFolder}/apps/notification-service/node_modules/tsx/dist/cli.mjs",
+            "args": [
+                "watch",
+                "src/main.ts"
+            ],
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/apps/notification-service/.env",
+            "skipFiles": [
+                "<node_internals>/**",
+                "**/node_modules/**"
+            ]
         }
     ]
 }
