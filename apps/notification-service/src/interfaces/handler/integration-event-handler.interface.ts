@@ -1,4 +1,5 @@
 import { CreateNotificationDto } from "../../dto/notifications/create-notification.dto.ts";
+import { RabbitEventDto } from "../../dto/outboxEvents/rabbitEvent.dto.ts";
 
 /*
 
@@ -10,5 +11,5 @@ import { CreateNotificationDto } from "../../dto/notifications/create-notificati
 
 */
 export interface IntegrationEventHandler {
-    handle(event: CreateNotificationDto): Promise<void>;
+    handle(event: RabbitEventDto): Promise<void>;
 }

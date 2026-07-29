@@ -1,4 +1,5 @@
 import { CreateNotificationDto } from "../dto/notifications/create-notification.dto.ts";
+import { RabbitEventDto } from "../dto/outboxEvents/rabbitEvent.dto.ts";
 import { IntegrationEventHandler } from "../interfaces/handler/integration-event-handler.interface.ts";
 import { INotificationRepository } from "../interfaces/notification/notification-repository.interface.ts";
 import { NotificationStatus } from "../shared/types/notification-status.type.ts";
@@ -11,12 +12,18 @@ export class CreateTagHandler implements IntegrationEventHandler {
     constructor(notificationRepository: INotificationRepository) {
         this._notificationRepository = notificationRepository
     }
-    async handle(event: CreateNotificationDto): Promise<void> {
+    async handle(event: RabbitEventDto): Promise<void> {
 
-        event.title = 'New Tag created';
-        event.message = `Tag created with name ${event.metadata.tag_name}`
-        event.type = NotificationType.INFO;
-        event.status = NotificationStatus.PENDING;
-        await this._notificationRepository.save(event)
+        await this._notificationRepository.save({
+            external_id: event.external_id,
+            eventId: event.event_id,
+            eventName: event.event_name,
+            userId: +event.payload.user_id!,
+            title: 'New Tag created',
+            message: `Tag created with name ${event.payload.tag_name}`,
+            type: NotificationType.INFO,
+            status: NotificationStatus.PENDING,
+            metadata: event.payload
+        });
     }
 }

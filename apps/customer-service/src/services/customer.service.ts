@@ -48,7 +48,8 @@ export class CustomerService {
                         lastName: customer.lastName,
                         email: customer.email,
                         phone: customer.phone,
-                        country: customer.country
+                        country: customer.country,
+                        user_id: dto.user_id
                     },
 
                     headers: {
@@ -129,7 +130,8 @@ export class CustomerService {
                         lastName: customer.lastName,
                         email: customer.email,
                         phone: customer.phone,
-                        country: customer.country
+                        country: customer.country,
+                        user_id: dto.user_id
                     },
 
                     headers: {
@@ -205,6 +207,7 @@ export class CustomerService {
                             country: updatedCustomer.country,
                             previousStatus: currentCustomer.status,
                             newStatus: status,
+                            user_id
                         },
 
                         headers: {

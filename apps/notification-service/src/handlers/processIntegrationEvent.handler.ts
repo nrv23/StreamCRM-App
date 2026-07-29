@@ -1,4 +1,5 @@
 import { CreateNotificationDto } from "../dto/notifications/create-notification.dto.ts";
+import { RabbitEventDto } from "../dto/outboxEvents/rabbitEvent.dto.ts";
 import { ProcessedEventRepository } from "../repository/processedEvent/processedEvent-repository.repository.ts";
 import { ProcessEventResult } from "../shared/types/process-event-result.type.ts";
 import { EventDispatcher } from "./EventDispatcher.ts";
@@ -13,13 +14,13 @@ export class ProcessIntegrationEvent {
     ) { }
 
     public async execute(
-        event: CreateNotificationDto,
+        event: RabbitEventDto,
     ): Promise<ProcessEventResult> {
         console.log(
-            `[ProcessIntegrationEvent] Evento recibido: ${event.eventName}`,
+            `[ProcessIntegrationEvent] Evento recibido: ${event.event_name}`,
         );
 
-        const alreadyProcessed = await this.processedEventRepository.exists(event.eventId);
+        const alreadyProcessed = await this.processedEventRepository.exists(event.event_id);
 
         if (alreadyProcessed) {
             console.log(
@@ -36,8 +37,8 @@ export class ProcessIntegrationEvent {
 
         // Solo se registra después de procesarlo correctamente.
         await this.processedEventRepository.save({
-            event_id: event.eventId,
-            event_name: event.eventName
+            event_id: event.event_id,
+            event_name: event.event_name
 
         });
 

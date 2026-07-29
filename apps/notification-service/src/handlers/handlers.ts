@@ -9,7 +9,7 @@ import {
 } from "../shared/types/events.type..ts";
 import { CreateCustomerHandler } from "./createCustomer.handler.ts";
 import { CreateTagHandler } from "./createTag.handler.ts";
-import { CustomerStatusChangeHandler } from "./customerStatusChange.handler..ts";
+import { CustomerStatusChangeHandler } from "./customerStatusChange.handler.ts";
 import { DeleteCustomerHandler } from "./deleteCustomer.handler.ts";
 import { UpdateCustomerHandler } from "./updateCustomer.handler.ts";
 

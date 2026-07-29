@@ -6,6 +6,7 @@ import amqp, {
 import { env } from './enviroment.ts';
 import { ProcessIntegrationEvent } from '../handlers/processIntegrationEvent.handler.ts';
 import { randomUUID } from 'node:crypto';
+import { RabbitEventDto } from '../dto/outboxEvents/rabbitEvent.dto.ts';
 
 
 export class RabbitMQConsumer {
@@ -95,16 +96,6 @@ export class RabbitMQConsumer {
                     );
                     /*
 
-                    external_id: string;
-                        eventId: string;
-                        eventName: string;
-                        userId: number | null;
-                        title: string;
-                        message: string;
-                        type: string;
-                        status: string;
-                        metadata: JsonObject;
-
                         id: 4,
                         event_id: '50564314-6554-47b1-892c-abc0d2a6a44d',
                         event_name: 'customer.created',
@@ -122,20 +113,18 @@ export class RabbitMQConsumer {
 
                     */
 
-                    await this._processIntegrationEvent.execute({
+
+                    const rabbitEvent: RabbitEventDto = {
                         external_id: randomUUID(),
-                        eventId: event.event_id,
-                        eventName: event.event_name,
-                        userId: null,
-                        title: '',
-                        message: '',
-                        type: 'success',
-                        status: 'pending',
-                        metadata: event.payload
-                    });
-
-
-
+                        aggregate_id: event.aggregate_id,
+                        aggregate_type: event.aggregate_type,
+                        event_id: event.event_id,
+                        event_name: event.event_name,
+                        user_id: event.payload.user_id,
+                        payload: event.payload,
+                        headers: event.headers,
+                    }
+                    await this._processIntegrationEvent.execute(rabbitEvent);
                     channel.ack(message);
 
 

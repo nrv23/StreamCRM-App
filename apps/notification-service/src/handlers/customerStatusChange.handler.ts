@@ -6,7 +6,7 @@ import { NotificationStatus } from "../shared/types/notification-status.type.ts"
 import { NotificationType } from "../shared/types/notification-type.type.ts";
 
 
-export class CreateCustomerHandler implements IntegrationEventHandler {
+export class CustomerStatusChangeHandler implements IntegrationEventHandler {
     private _notificationRepository: INotificationRepository;
 
     constructor(notificationRepository: INotificationRepository) {
@@ -19,8 +19,8 @@ export class CreateCustomerHandler implements IntegrationEventHandler {
             eventId: event.event_id,
             eventName: event.event_name,
             userId: +event.payload.user_id!,
-            title: 'New Customer',
-            message: `Welcome ${event.payload.name}`,
+            title: 'New Customer Status',
+            message: `previousStatus: ${event.payload.previousStatus} newStatus: ${event.payload.newStatus}`,
             type: NotificationType.INFO,
             status: NotificationStatus.PENDING,
             metadata: event.payload

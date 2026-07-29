@@ -1,6 +1,7 @@
 
 import { IntegrationEventHandler } from "../interfaces/handler/integration-event-handler.interface.ts";
 import { CreateNotificationDto } from "../dto/notifications/create-notification.dto.ts";
+import { RabbitEventDto } from "../dto/outboxEvents/rabbitEvent.dto.ts";
 
 export class EventDispatcher {
     constructor(
@@ -9,18 +10,18 @@ export class EventDispatcher {
     ) { }
 
     public async dispatch(
-        event: CreateNotificationDto,
+        event: RabbitEventDto,
     ): Promise<void> {
         console.log(
-            `[Dispatcher] Buscando handler para: ${event.eventName}`,
+            `[Dispatcher] Buscando handler para: ${event.event_name}`,
         );
 
         const handler =
-            this.handlers.get(event.eventName);
+            this.handlers.get(event.event_name);
 
         if (!handler) {
             throw new Error(
-                `No existe un handler para ${event.eventName}`,
+                `No existe un handler para ${event.event_name}`,
             );
         }
 
