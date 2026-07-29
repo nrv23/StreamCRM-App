@@ -6,7 +6,7 @@ import { NotificationStatus } from "../shared/types/notification-status.type.ts"
 import { NotificationType } from "../shared/types/notification-type.type.ts";
 
 
-export class CreateCustomerHandler implements IntegrationEventHandler {
+export class CreateCustomerHandler implements IntegrationEventHandler<RabbitEventDto> {
     private _notificationRepository: INotificationRepository;
 
     constructor(notificationRepository: INotificationRepository) {

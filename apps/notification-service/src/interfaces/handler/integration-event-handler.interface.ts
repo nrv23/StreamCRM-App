@@ -10,6 +10,6 @@ import { RabbitEventDto } from "../../dto/outboxEvents/rabbitEvent.dto.ts";
     customer.deleted
 
 */
-export interface IntegrationEventHandler {
-    handle(event: RabbitEventDto): Promise<void>;
+export interface IntegrationEventHandler<Tevent> {
+    handle(event: Tevent): Promise<void>;
 }

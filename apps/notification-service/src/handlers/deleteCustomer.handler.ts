@@ -5,7 +5,7 @@ import { INotificationRepository } from "../interfaces/notification/notification
 import { NotificationStatus } from "../shared/types/notification-status.type.ts";
 import { NotificationType } from "../shared/types/notification-type.type.ts";
 
-export class DeleteCustomerHandler implements IntegrationEventHandler {
+export class DeleteCustomerHandler implements IntegrationEventHandler<RabbitEventDto> {
     private _notificationRepository: INotificationRepository;
 
     constructor(notificationRepository: INotificationRepository) {

@@ -6,7 +6,7 @@ import { RabbitEventDto } from "../dto/outboxEvents/rabbitEvent.dto.ts";
 export class EventDispatcher {
     constructor(
         private readonly handlers:
-            Map<string, IntegrationEventHandler>,
+            Map<string, IntegrationEventHandler<RabbitEventDto>>,
     ) { }
 
     public async dispatch(
