@@ -1,3 +1,4 @@
+import { NotificationCommand } from "../enum/Notification-Command.enum.ts";
 import { INotificationCommand } from "../interfaces/notification-command.interface.ts";
 import { INotificationSender } from "../interfaces/sender/sender.interface.ts";
 import { EmailSender } from "../sender/email.sender.ts";
@@ -14,15 +15,15 @@ export class NotificationDispatcher implements INotificationDispatcher {
     ) { }
     async dispatch(command: INotificationCommand): Promise<void> {
         switch (command.channel) {
-            case 'email':
+            case NotificationCommand.EMAIL:
                 await this._emailSender.send(command);
                 break;
 
-            case 'sms':
+            case NotificationCommand.SMS:
                 await this._smsSender.send(command);
                 break;
 
-            case 'push':
+            case NotificationCommand.PUSH:
                 // await this.pushSender.sendPush(command);
                 break;
             default:
