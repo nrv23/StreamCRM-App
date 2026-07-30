@@ -7,7 +7,7 @@ import { NotificationCommand } from "../enum/Notification-Command.enum.ts";
 
 export class SmsSender implements INotificationSender {
     async send(command: ISendSmsCommand): Promise<void> {
-
+        console.log({ command })
         if (command.channel !== NotificationCommand.SMS) {
             console.warn(`[EmailSender] Se intentó procesar un comando de tipo ${command.channel} en el sender de Email`);
             return;
@@ -15,11 +15,11 @@ export class SmsSender implements INotificationSender {
 
         try {
             const { messageUUID } = await vonageClient.messages.send({
-                messageType: 'text',
+                messageType: "text",
                 channel: Channels.SMS,
-                text: command.text,
-                to: command.phoneNumber,
-                from: 'Stream CRM Service',
+                text: command.text.trim(),
+                to: command.phoneNumber.trim(),
+                from: "StreamCRM", // permite solo 11 caracteres
             });
 
             console.log(`Sms sended to ${command.phoneNumber} :) !!`)
