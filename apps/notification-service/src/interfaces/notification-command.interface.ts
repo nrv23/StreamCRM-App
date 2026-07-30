@@ -1,4 +1,5 @@
 import { NotificationCommand } from "../enum/Notification-Command.enum.ts";
+import { TemplateParameter } from "./templateEngine.interface.ts";
 
 // application/contracts/notification-commands.ts
 
@@ -6,7 +7,8 @@ export type ISendEmailCommand = {
     channel: NotificationCommand.EMAIL;
     to: string;
     subject: string;
-    html: string;
+    templatePath: string;
+    parameters: TemplateParameter[];
 };
 
 export type ISendSmsCommand = {

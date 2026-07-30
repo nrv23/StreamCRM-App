@@ -42,12 +42,33 @@ export class CreateCustomerHandler extends BaseNotificationEventHandler<RabbitEv
     ): INotificationCommand[] {
         const commands: INotificationCommand[] = [];
 
+        if (event.payload.phone) {
+            commands.push({
+                channel: NotificationCommand.SMS,
+                text: `Bienvido a Stream CRM ${event.payload!.firstName?.toString()} ${event.payload!.lastName?.toString()} `,
+                phoneNumber: event.payload!.phone?.toString()
+            });
+        }
+
         if (event.payload.email) {
             commands.push({
                 channel: NotificationCommand.EMAIL,
                 to: event.payload.email.toString(),
                 subject: notification.title,
-                html: `<h1>Welcome ${event.payload.firstName}</h1>`
+                templatePath: 'create-customer.handlebars',
+                parameters: [
+                    {
+                        placeholder: "firstName",
+                        value: event.payload!.firstName?.toString()
+                    }, {
+
+                        placeholder: "lastName",
+                        value: event.payload!.lastName?.toString()
+                    }, {
+                        placeholder: "email",
+                        value: event.payload!.email?.toString()
+                    }
+                ]
             });
         }
 

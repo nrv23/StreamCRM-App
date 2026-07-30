@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <title>Bienvenido a Stream CRM</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #1f2937;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        img {
+            border: 0;
+            display: block;
+            max-width: 100%;
+        }
+
+        .email-container {
+            width: 100%;
+            max-width: 620px;
+        }
+
+        .content-padding {
+            padding: 40px;
+        }
+
+        .customer-card {
+            padding: 24px;
+        }
+
+        @media screen and (max-width: 640px) {
+            .email-container {
+                width: 100% !important;
+            }
+
+            .content-padding {
+                padding: 28px 20px !important;
+            }
+
+            .customer-card {
+                padding: 20px !important;
+            }
+
+            .heading {
+                font-size: 27px !important;
+                line-height: 34px !important;
+            }
+
+            .paragraph {
+                font-size: 15px !important;
+                line-height: 24px !important;
+            }
+
+            .button {
+                display: block !important;
+                width: auto !important;
+                text-align: center !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+        style="width: 100%; background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 32px 12px;">
+                <table role="presentation" class="email-container" width="620" cellpadding="0" cellspacing="0" style="
+                        width: 100%;
+                        max-width: 620px;
+                        background-color: #ffffff;
+                        border-radius: 18px;
+                        overflow: hidden;
+                        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+                    ">
+                    <tr>
+                        <td align="center" style="
+                                padding: 42px 30px;
+                                background: linear-gradient(
+                                    135deg,
+                                    #111827 0%,
+                                    #1e3a8a 55%,
+                                    #2563eb 100%
+                                );
+                            ">
+                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="
+                                            width: 64px;
+                                            height: 64px;
+                                            border-radius: 18px;
+                                            background-color: rgba(255, 255, 255, 0.14);
+                                            font-size: 30px;
+                                            line-height: 64px;
+                                            color: #ffffff;
+                                        ">
+                                        ✓
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <div style="
+                                    margin-top: 22px;
+                                    font-size: 13px;
+                                    font-weight: 700;
+                                    letter-spacing: 2px;
+                                    text-transform: uppercase;
+                                    color: #bfdbfe;
+                                ">
+                                Stream CRM
+                            </div>
+
+                            <h1 class="heading" style="
+                                    margin: 12px 0 0;
+                                    font-size: 34px;
+                                    line-height: 42px;
+                                    font-weight: 700;
+                                    color: #ffffff;
+                                ">
+                                ¡Bienvenido, {{firstName}}!
+                            </h1>
+
+                            <p style="
+                                    margin: 14px 0 0;
+                                    font-size: 16px;
+                                    line-height: 25px;
+                                    color: #dbeafe;
+                                ">
+                                Tu perfil de cliente fue creado correctamente.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="content-padding">
+                            <p class="paragraph" style="
+                                    margin: 0;
+                                    font-size: 16px;
+                                    line-height: 26px;
+                                    color: #374151;
+                                ">
+                                Hola
+                                <strong style="color: #111827;">
+                                    {{firstName}} {{lastName}}
+                                </strong>,
+                            </p>
+
+                            <p class="paragraph" style="
+                                    margin: 16px 0 0;
+                                    font-size: 16px;
+                                    line-height: 26px;
+                                    color: #4b5563;
+                                ">
+                                Nos alegra informarte que tus datos fueron
+                                registrados exitosamente en nuestra plataforma.
+                                A partir de ahora podremos ofrecerte una atención
+                                más organizada, rápida y personalizada.
+                            </p>
+
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="
+                                    width: 100%;
+                                    margin-top: 30px;
+                                    border: 1px solid #e5e7eb;
+                                    border-radius: 14px;
+                                    background-color: #f8fafc;
+                                ">
+                                <tr>
+                                    <td class="customer-card">
+                                        <div style="
+                                                margin-bottom: 18px;
+                                                font-size: 12px;
+                                                font-weight: 700;
+                                                letter-spacing: 1.4px;
+                                                text-transform: uppercase;
+                                                color: #2563eb;
+                                            ">
+                                            Información registrada
+                                        </div>
+
+                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="
+                                                        padding: 0 0 16px;
+                                                        font-size: 14px;
+                                                        line-height: 20px;
+                                                        color: #6b7280;
+                                                    ">
+                                                    Nombre completo
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td style="
+                                                        padding: 0 0 22px;
+                                                        font-size: 17px;
+                                                        line-height: 24px;
+                                                        font-weight: 700;
+                                                        color: #111827;
+                                                    ">
+                                                    {{firstName}} {{lastName}}
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td style="
+                                                        padding: 0 0 16px;
+                                                        font-size: 14px;
+                                                        line-height: 20px;
+                                                        color: #6b7280;
+                                                    ">
+                                                    Correo electrónico
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td style="
+                                                        font-size: 16px;
+                                                        line-height: 24px;
+                                                        font-weight: 600;
+                                                        color: #1d4ed8;
+                                                        word-break: break-word;
+                                                    ">
+                                                    {{email}}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="
+                                    width: 100%;
+                                    margin-top: 30px;
+                                    border-radius: 12px;
+                                    background-color: #eff6ff;
+                                ">
+                                <tr>
+                                    <td style="
+                                            padding: 18px 20px;
+                                            font-size: 14px;
+                                            line-height: 23px;
+                                            color: #1e3a8a;
+                                        ">
+                                        <strong>Importante:</strong>
+                                        si reconoces esta información, no necesitas
+                                        realizar ninguna acción adicional.
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p class="paragraph" style="
+                                    margin: 30px 0 0;
+                                    font-size: 15px;
+                                    line-height: 25px;
+                                    color: #6b7280;
+                                ">
+                                Gracias por confiar en nosotros.
+                            </p>
+
+                            <p style="
+                                    margin: 8px 0 0;
+                                    font-size: 15px;
+                                    line-height: 24px;
+                                    font-weight: 700;
+                                    color: #111827;
+                                ">
+                                El equipo de Stream CRM
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="
+                                padding: 24px 30px;
+                                border-top: 1px solid #e5e7eb;
+                                background-color: #f9fafb;
+                            ">
+                            <p style="
+                                    margin: 0;
+                                    font-size: 12px;
+                                    line-height: 20px;
+                                    color: #9ca3af;
+                                ">
+                                Este es un mensaje automático generado por
+                                Stream CRM.
+                            </p>
+
+                            <p style="
+                                    margin: 6px 0 0;
+                                    font-size: 12px;
+                                    line-height: 20px;
+                                    color: #9ca3af;
+                                ">
+                                Por favor, no respondas directamente a este correo.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="
+                        margin: 18px 0 0;
+                        font-size: 11px;
+                        line-height: 18px;
+                        color: #9ca3af;
+                    ">
+                    © 2026 Stream CRM. Todos los derechos reservados.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

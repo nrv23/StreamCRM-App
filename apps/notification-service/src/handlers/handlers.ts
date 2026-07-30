@@ -1,4 +1,5 @@
-import { CreateNotificationDto } from "../dto/notifications/create-notification.dto.ts";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { RabbitEventDto } from "../dto/outboxEvents/rabbitEvent.dto.ts";
 import { IntegrationEventHandler } from "../interfaces/handler/integration-event-handler.interface.ts";
 import { NotificationDispatcher } from "./notification-dispatcher.ts";
@@ -16,10 +17,20 @@ import { CreateTagHandler } from "./createTag.handler.ts";
 import { CustomerStatusChangeHandler } from "./customerStatusChange.handler.ts";
 import { DeleteCustomerHandler } from "./deleteCustomer.handler.ts";
 import { UpdateCustomerHandler } from "./updateCustomer.handler.ts";
+import { HandlebarsTemplateEngine } from "../handlebars/handlebarsTemplateEngine.ts";
+import { SmsSender } from "../sender/sms.sender.ts";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// instancia de template engine
+const templatesDirectoryPath = path.join(__dirname, './../templates/');
+const templateEngine = new HandlebarsTemplateEngine(templatesDirectoryPath);
 // 2. Instancias el sender y tu nuevo NotificationDispatcher
-const emailSender = new EmailSender(); // (O la clase real que use nodemailer)
-const notificationDispatcher = new NotificationDispatcher(emailSender);
+const emailSender = new EmailSender(templateEngine); // (O la clase real que use nodemailer)
+const smsSender = new SmsSender();
+const notificationDispatcher = new NotificationDispatcher(emailSender, smsSender);
+
 
 const notificationRepository = new NotificationRepository();
 export const handlers = new Map<string, IntegrationEventHandler<RabbitEventDto>>([

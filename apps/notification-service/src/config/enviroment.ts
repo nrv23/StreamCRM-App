@@ -30,13 +30,15 @@ const validatedEnv = cleanEnv(process.env, {
     RABBITMQ_USER: str(),
     RABBITMQ_PASSWORD: str(),
     RABBITMQ_VHOST: str({ default: '/' }),
-
+    //datos de cliente para conexion a servidor de envio de correos
     SMTP_HOST: str({ default: 'smtp.gmail.com' }),
     SMTP_PORT: num({ default: 587 }),
     SMTP_SECURE: bool({ default: false }),
     SMTP_USER: str({ default: '' }),
     SMTP_PASS: str({ default: '' }),
     SMTP_FROM: str({ default: '' }),
+    SMS_API_KEY: str(),
+    SMS_API_SECRET: str(),
 });
 
 export const env: IEnvConfig = {
@@ -68,5 +70,9 @@ export const env: IEnvConfig = {
             pass: validatedEnv.SMTP_PASS,
         },
         from: validatedEnv.SMTP_FROM,
+    },
+    sms: {
+        api_key: validatedEnv.SMS_API_KEY,
+        api_secret: validatedEnv.SMS_API_SECRET
     }
 };

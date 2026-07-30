@@ -225,6 +225,9 @@ importers:
       express-validator:
         specifier: ^7.3.2
         version: 7.3.2
+      handlebars:
+        specifier: ^4.7.9
+        version: 4.7.9
       helmet:
         specifier: ^8.2.0
         version: 8.2.0

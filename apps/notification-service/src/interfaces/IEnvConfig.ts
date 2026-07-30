@@ -28,4 +28,8 @@ export interface IEnvConfig {
         };
         from: string;
     };
+    sms: {
+        api_key: string;
+        api_secret: string;
+    }
 }
