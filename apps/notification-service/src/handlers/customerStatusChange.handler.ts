@@ -1,20 +1,22 @@
 import { CreateNotificationDto } from "../dto/notifications/create-notification.dto.ts";
 import { RabbitEventDto } from "../dto/outboxEvents/rabbitEvent.dto.ts";
-import { IntegrationEventHandler } from "../interfaces/handler/integration-event-handler.interface.ts";
-import { INotificationRepository } from "../interfaces/notification/notification-repository.interface.ts";
+import { BaseNotificationEventHandler } from "./baseNotificationEventHandler.ts";
 import { NotificationStatus } from "../shared/types/notification-status.type.ts";
 import { NotificationType } from "../shared/types/notification-type.type.ts";
+import { INotificationRepository } from "../interfaces/notification/notification-repository.interface.ts";
+import { INotificationDispatcher } from './notification-dispatcher.ts'
 
+export class CustomerStatusChangeHandler extends BaseNotificationEventHandler<RabbitEventDto> {
 
-export class CustomerStatusChangeHandler implements IntegrationEventHandler<RabbitEventDto> {
-    private _notificationRepository: INotificationRepository;
-
-    constructor(notificationRepository: INotificationRepository) {
-        this._notificationRepository = notificationRepository
+    constructor(
+        notificationRepository: INotificationRepository,
+        notificationDispatcher: INotificationDispatcher
+    ) {
+        super(notificationRepository, notificationDispatcher);
     }
-    async handle(event: RabbitEventDto): Promise<void> {
 
-        await this._notificationRepository.save({
+    protected createNotification(event: RabbitEventDto): CreateNotificationDto {
+        return {
             external_id: event.external_id,
             eventId: event.event_id,
             eventName: event.event_name,
@@ -24,6 +26,6 @@ export class CustomerStatusChangeHandler implements IntegrationEventHandler<Rabb
             type: NotificationType.INFO,
             status: NotificationStatus.PENDING,
             metadata: event.payload
-        })
+        };
     }
 }

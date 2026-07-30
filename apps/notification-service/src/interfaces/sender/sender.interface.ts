@@ -1,9 +1,5 @@
-export interface INotificationSender {
-    send(command: SendNotificationCommand): Promise<void>;
-}
+import { INotificationCommand } from "../notification-command.interface.ts";
 
-export interface SendNotificationCommand {
-    to: string;
-    subject: string;
-    html: string;
+export interface INotificationSender {
+    send(command: INotificationCommand): Promise<void>;
 }

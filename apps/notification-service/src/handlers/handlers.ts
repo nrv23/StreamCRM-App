@@ -1,5 +1,9 @@
+import { CreateNotificationDto } from "../dto/notifications/create-notification.dto.ts";
+import { RabbitEventDto } from "../dto/outboxEvents/rabbitEvent.dto.ts";
 import { IntegrationEventHandler } from "../interfaces/handler/integration-event-handler.interface.ts";
+import { NotificationDispatcher } from "./notification-dispatcher.ts";
 import { NotificationRepository } from "../repository/notification/notification-repository.repository.ts";
+import { EmailSender } from "../sender/email.sender.ts";
 import {
     CHANGE_CUSTOMER_STATUS,
     CREATE_CUSTOMER,
@@ -13,28 +17,32 @@ import { CustomerStatusChangeHandler } from "./customerStatusChange.handler.ts";
 import { DeleteCustomerHandler } from "./deleteCustomer.handler.ts";
 import { UpdateCustomerHandler } from "./updateCustomer.handler.ts";
 
+// 2. Instancias el sender y tu nuevo NotificationDispatcher
+const emailSender = new EmailSender(); // (O la clase real que use nodemailer)
+const notificationDispatcher = new NotificationDispatcher(emailSender);
+
 const notificationRepository = new NotificationRepository();
-export const handlers = new Map<string, IntegrationEventHandler>([
+export const handlers = new Map<string, IntegrationEventHandler<RabbitEventDto>>([
     [
         CREATE_CUSTOMER,
-        new CreateCustomerHandler(notificationRepository),
+        new CreateCustomerHandler(notificationRepository, notificationDispatcher),
     ],
     [
         UPDATE_CUSTOMER,
-        new UpdateCustomerHandler(notificationRepository),
+        new UpdateCustomerHandler(notificationRepository, notificationDispatcher),
     ],
     [
         DELETE_CUSTOMER,
-        new DeleteCustomerHandler(notificationRepository),
+        new DeleteCustomerHandler(notificationRepository, notificationDispatcher),
     ],
     [
         CHANGE_CUSTOMER_STATUS,
-        new CustomerStatusChangeHandler(notificationRepository),
+        new CustomerStatusChangeHandler(notificationRepository, notificationDispatcher),
     ],
 
     [
         CREATE_TAG,
-        new CreateTagHandler(notificationRepository),
+        new CreateTagHandler(notificationRepository, notificationDispatcher),
     ],
 
 ]);
