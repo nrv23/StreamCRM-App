@@ -16,21 +16,24 @@ export class NotificationDispatcher implements INotificationDispatcher {
         // private readonly pushSender: IPushSender
     ) { }
     async dispatch(command: INotificationCommand): Promise<INotificationResponse> {
+        let response: INotificationResponse;
         switch (command.channel) {
             case NotificationCommand.EMAIL:
-                return await this._emailSender.send(command);
-
+                response = await this._emailSender.send(command);
+                break;
 
             case NotificationCommand.SMS:
-                return await this._smsSender.send(command);
-
+                response = await this._smsSender.send(command);
+                break;
 
             //case NotificationCommand.PUSH:
             // await this.pushSender.sendPush(command);
 
             default:
                 // TypeScript te avisará aquí si olvidas agregar un case
-                throw new Error(`Canal no soportado`);
+                throw new Error(`Channel not implemented`);
         }
+
+        return response;
     }
 }
