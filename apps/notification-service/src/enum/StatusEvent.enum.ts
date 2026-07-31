@@ -2,6 +2,6 @@
 
 export enum StatusEvent {
     pending = "pending",
-    published = "published",
+    published = "sent",
     failed = "failed"
 }
