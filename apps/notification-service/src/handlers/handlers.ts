@@ -3,7 +3,6 @@ import { fileURLToPath } from "node:url";
 import { RabbitEventDto } from "../dto/outboxEvents/rabbitEvent.dto.ts";
 import { IntegrationEventHandler } from "../interfaces/handler/integration-event-handler.interface.ts";
 import { NotificationDispatcher } from "./notification-dispatcher.ts";
-import { NotificationRepository } from "../repository/notification/notification-repository.repository.ts";
 import { EmailSender } from "../sender/email.sender.ts";
 import {
     CHANGE_CUSTOMER_STATUS,
@@ -19,6 +18,7 @@ import { DeleteCustomerHandler } from "./deleteCustomer.handler.ts";
 import { UpdateCustomerHandler } from "./updateCustomer.handler.ts";
 import { HandlebarsTemplateEngine } from "../handlebars/handlebarsTemplateEngine.ts";
 import { SmsSender } from "../sender/sms.sender.ts";
+import { UnitOfWork } from "../config/unitOfWork.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,31 +29,31 @@ const templateEngine = new HandlebarsTemplateEngine(templatesDirectoryPath);
 // 2. Instancias el sender y tu nuevo NotificationDispatcher
 const emailSender = new EmailSender(templateEngine); // (O la clase real que use nodemailer)
 const smsSender = new SmsSender();
-const notificationDispatcher = new NotificationDispatcher(emailSender, smsSender);
+//const notificationDispatcher = new NotificationDispatcher(emailSender, smsSender);
 
 
-const notificationRepository = new NotificationRepository();
+const unitOfWork = new UnitOfWork();
 export const handlers = new Map<string, IntegrationEventHandler<RabbitEventDto>>([
     [
         CREATE_CUSTOMER,
-        new CreateCustomerHandler(notificationRepository, notificationDispatcher),
+        new CreateCustomerHandler(unitOfWork),
     ],
     [
         UPDATE_CUSTOMER,
-        new UpdateCustomerHandler(notificationRepository, notificationDispatcher),
+        new UpdateCustomerHandler(unitOfWork),
     ],
     [
         DELETE_CUSTOMER,
-        new DeleteCustomerHandler(notificationRepository, notificationDispatcher),
+        new DeleteCustomerHandler(unitOfWork),
     ],
     [
         CHANGE_CUSTOMER_STATUS,
-        new CustomerStatusChangeHandler(notificationRepository, notificationDispatcher),
+        new CustomerStatusChangeHandler(unitOfWork),
     ],
 
     [
         CREATE_TAG,
-        new CreateTagHandler(notificationRepository, notificationDispatcher),
+        new CreateTagHandler(unitOfWork),
     ],
 
 ]);

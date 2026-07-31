@@ -5,4 +5,5 @@ export enum NotificationStatus {
     SENT = 'sent',
     READ = 'read',
     FAILED = 'failed',
+    PARTIALLYSENT = 'partiallysent'
 }

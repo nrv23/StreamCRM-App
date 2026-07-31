@@ -1,5 +1,6 @@
 export enum NotificationCommand {
     SMS = 'sms',
     EMAIL = 'email',
-    PUSH = 'push'
+    PUSH = 'push',
+    WEBSOCKET = 'websocket'
 }

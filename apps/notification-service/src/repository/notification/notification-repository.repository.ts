@@ -5,7 +5,7 @@ import { IDatabase } from "../../interfaces/database.interface.ts";
 import { INotificationRepository } from "../../interfaces/notification/notification-repository.interface.ts";
 import { ErrorFactory } from "../../shared/factory/error-factory.ts";
 
-interface NotificationCreatedRow {
+export type NotificationCreatedRow = {
     id: number;
     created_at: Date;
 }
@@ -19,7 +19,7 @@ export class NotificationRepository implements INotificationRepository {
         this._db = db ?? databaseInstance;
     }
 
-    async save(dto: CreateNotificationDto): Promise<void> {
+    async save(dto: CreateNotificationDto): Promise<NotificationCreatedRow> {
         const sql = `
         INSERT INTO notifications (
             external_id,
@@ -55,6 +55,8 @@ export class NotificationRepository implements INotificationRepository {
                 'There was an error when trying to insert a new notification'
             );
         }
+
+        return row;
     }
 
 }

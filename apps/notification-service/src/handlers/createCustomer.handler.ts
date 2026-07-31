@@ -3,20 +3,18 @@ import { RabbitEventDto } from "../dto/outboxEvents/rabbitEvent.dto.ts";
 import { BaseNotificationEventHandler } from "./baseNotificationEventHandler.ts";
 import { NotificationCommand } from "../enum/Notification-Command.enum.ts";
 import { INotificationCommand } from "../interfaces/notification-command.interface.ts";
-import { NotificationStatus } from "../shared/types/notification-status.type.ts";
-import { NotificationType } from "../shared/types/notification-type.type.ts";
-import { INotificationRepository } from "../interfaces/notification/notification-repository.interface.ts";
-import { INotificationDispatcher } from "./notification-dispatcher.ts";
+import { NotificationStatus } from "../enum/notification-status.enum.ts";
+import { NotificationType } from "../enum/notification-type.enum.ts";
+import { UnitOfWork } from "../config/unitOfWork.ts";
 
 export class CreateCustomerHandler extends BaseNotificationEventHandler<RabbitEventDto> {
 
     // AQUÍ INYECTAS TUS DEPENDENCIAS
     constructor(
-        notificationRepository: INotificationRepository,
-        notificationDispatcher: INotificationDispatcher
+        unitOfWork: UnitOfWork
     ) {
         // Y se las pasas a la clase base, para que ella pueda guardar en BD
-        super(notificationRepository, notificationDispatcher);
+        super(unitOfWork);
     }
 
     // Ya NO necesitas escribir el método handle() aquí, porque lo heredas del padre.
