@@ -21,6 +21,7 @@ const validatedEnv = cleanEnv(process.env, {
     SERVICE_NAME: str(),
     INTERVAL_WORKER_EXECUTION_TIME: num(),
     PAGINATION_RECORD_EVENTS_LIMIT: num(),
+    PAGINATION_RECORD_PENDING_NOTIFICATION_DELIVERIES: num(),
     RABBITMQ_HOST: str({
         default: "localhost"
     }),
@@ -55,6 +56,7 @@ export const env: IEnvConfig = {
     service_name: validatedEnv.SERVICE_NAME,
     interval_worker_execution_time: validatedEnv.INTERVAL_WORKER_EXECUTION_TIME,
     pagination_record_events_limit: validatedEnv.PAGINATION_RECORD_EVENTS_LIMIT,
+    pagination_record_notification_deliveries: validatedEnv.PAGINATION_RECORD_PENDING_NOTIFICATION_DELIVERIES,
     rabbitmq_host: validatedEnv.RABBITMQ_HOST,
     rabbitmq_host_port: validatedEnv.RABBITMQ_HOST_PORT,
     rabbitmq_user: validatedEnv.RABBITMQ_USER,

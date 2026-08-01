@@ -26,3 +26,8 @@ export type ISendPushCommand = {
 
 // Unión discriminada:
 export type INotificationCommand = ISendEmailCommand | ISendSmsCommand | ISendPushCommand;
+
+// Pendientes
+// cambiar metodo createCommand a createBodyNotificationDelivery
+// en el servicio de proceso de notiicaciones delivery crear el metodo para los bodies de los envios.
+// validar si todas las deliveries se procesaron bien para marcarlos delivered y la notficacion como sent.

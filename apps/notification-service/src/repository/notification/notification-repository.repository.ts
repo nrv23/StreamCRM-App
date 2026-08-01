@@ -1,6 +1,8 @@
 import { databaseInstance } from "../../config/query.ts";
 import { CreateNotificationDto } from "../../dto/notifications/create-notification.dto.ts";
+import { NotificationDelivery } from "../../entity/NotificationDeliveries.entity.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
+import { NotificationDeliveryStatus } from "../../enum/NotificationDeliveryStatus.enum.ts";
 import { IDatabase } from "../../interfaces/database.interface.ts";
 import { INotificationRepository } from "../../interfaces/notification/notification-repository.interface.ts";
 import { ErrorFactory } from "../../shared/factory/error-factory.ts";

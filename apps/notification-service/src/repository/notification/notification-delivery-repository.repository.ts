@@ -1,13 +1,25 @@
 import { databaseInstance } from "../../config/query.ts";
 import { CreateNotificationDeliveryDto } from "../../dto/notifications/create-notification-delivery.dto.ts";
+import { JsonObject } from "../../dto/outboxEvents/createOutboxEvent.dto.ts";
+import { NotificationDelivery } from "../../entity/NotificationDeliveries.entity.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
+import { NotificationCommand } from "../../enum/Notification-Command.enum.ts";
 import { NotificationDeliveryStatus } from "../../enum/NotificationDeliveryStatus.enum.ts";
 import { IDatabase } from "../../interfaces/database.interface.ts";
 import { INotificationDeliveryRepository } from "../../interfaces/notification/notification-delivery-repository.interface.ts";
 import { ErrorFactory } from "../../shared/factory/error-factory.ts";
 
-type NoificationDeliveryResponse = {
+export type NoificationDeliveryResponse = {
     id: number
+}
+
+export type GetNotificationDeliveriesResponse = {
+    notification_id: number;
+    channel: NotificationCommand;
+    delivery_id: number;
+    title: string;
+    message: string;
+    metadata: JsonObject;
 }
 
 export class NotificationDeliveryRepository implements INotificationDeliveryRepository {
@@ -16,6 +28,7 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
     }
+
     async save(dto: CreateNotificationDeliveryDto): Promise<void> {
         // crea el delivery y lo marca como pending
         const sql = 'insert into notification_deliveries(notification_id, status, channel) values($1,$2,$3) returning id;';
@@ -30,7 +43,7 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
     async markAsDelivered(notification_id: number, message_uuid: string): Promise<void> {
 
         const sql = `update notification_deliveries 
-                    set status = $1, delivered_at = now(), attempts = 0, provider_message_id = $2 
+                    set status = $1, failed_at = null, delivered_at = now(), attempts = 0, provider_message_id = $2 
                     where notification_id = $3 returning id;`;
         const [response] = await this._db.query<NoificationDeliveryResponse>(sql, [NotificationDeliveryStatus.DELIVERED, message_uuid, notification_id]);
         if (!response || !response.id)
@@ -41,15 +54,38 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
     }
     async markAsFailed(notification_id: number, error_message: string): Promise<void> {
         const sql = `update notification_deliveries 
-                    set status = $1, failed_at = now(), attempts = attempts + 1, error_message = $2 
-                    where notification_id = $3 returning id;`;
-        const [response] = await this._db.query<NoificationDeliveryResponse>(sql, [NotificationDeliveryStatus.FAILED, error_message, notification_id]);
+                    set status = CASE
+                        WHEN attempts >= 5 THEN $1
+                        ELSE $2
+                    END, 
+                    failed_at = now(), attempts = attempts + 1, error_message = $3 
+                    where notification_id = $4 returning id;`;
+        const [response] = await this._db.query<NoificationDeliveryResponse>(sql,
+            [NotificationDeliveryStatus.FAILED, NotificationDeliveryStatus.PENDING, error_message, notification_id]);
         if (!response || !response.id)
             throw ErrorFactory.build(
                 ApiErrorCode.INTERNAL_SERVER_ERROR,
                 'An error was ocurred while trying to mark as failed notification'
             );
     }
+    // agregar metodo para buscar deliveries en pending, 5 intentos marca el evento como failed.
 
+    async getNotficationDeliveries(status: NotificationDeliveryStatus, limit: number): Promise<GetNotificationDeliveriesResponse[]> {
 
+        const sql = `select 
+                n.id as notification_id,
+                nd.channel,
+                nd.id as delivery_id,
+                n.title ,
+                n.message,
+                n.metadata 
+            from notification_deliveries nd 
+            join notifications n on n.id = nd.notification_id 
+            where n.status in ($1)
+            limit $2
+            order by nd.id desc;
+        `;
+        const response = await this._db.query<GetNotificationDeliveriesResponse>(sql, [status, limit]);
+        return response
+    }
 }

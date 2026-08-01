@@ -1,6 +1,6 @@
 import { CreateNotificationDto } from "../dto/notifications/create-notification.dto.ts";
 import { RabbitEventDto } from "../dto/outboxEvents/rabbitEvent.dto.ts";
-import { BaseNotificationEventHandler } from "./baseNotificationEventHandler.ts";
+import { BaseNotificationEventHandler, CreateNotificationBodyDataResponse } from "./baseNotificationEventHandler.ts";
 import { NotificationCommand } from "../enum/Notification-Command.enum.ts";
 import { INotificationCommand } from "../interfaces/notification-command.interface.ts";
 import { NotificationStatus } from "../enum/notification-status.enum.ts";
@@ -33,43 +33,18 @@ export class CreateCustomerHandler extends BaseNotificationEventHandler<RabbitEv
         };
     }
 
-    // Y QUÉ notificaciones se van a enviar:
-    protected createSendCommands(
-        event: RabbitEventDto,
-        notification: CreateNotificationDto
-    ): INotificationCommand[] {
-        const commands: INotificationCommand[] = [];
+    protected createNotificationDeliveryBody(event: RabbitEventDto, notification_id: number): CreateNotificationBodyDataResponse[] {
+        const newNotificationDeliveries: CreateNotificationBodyDataResponse[] = [];
+        if (event.payload.email) newNotificationDeliveries.push({
+            notification_id,
+            channel: NotificationCommand.EMAIL
+        });
 
-        if (event.payload.phone) {
-            commands.push({
-                channel: NotificationCommand.SMS,
-                text: `Bienvido a Stream CRM ${event.payload!.firstName?.toString()} ${event.payload!.lastName?.toString()} `,
-                phoneNumber: event.payload!.phone?.toString()
-            });
-        }
+        if (event.payload.phone) newNotificationDeliveries.push({
+            notification_id,
+            channel: NotificationCommand.SMS
+        });
 
-        if (event.payload.email) {
-            commands.push({
-                channel: NotificationCommand.EMAIL,
-                to: event.payload.email.toString(),
-                subject: notification.title,
-                templatePath: 'create-customer.handlebars',
-                parameters: [
-                    {
-                        placeholder: "firstName",
-                        value: event.payload!.firstName?.toString()
-                    }, {
-
-                        placeholder: "lastName",
-                        value: event.payload!.lastName?.toString()
-                    }, {
-                        placeholder: "email",
-                        value: event.payload!.email?.toString()
-                    }
-                ]
-            });
-        }
-
-        return commands;
+        return newNotificationDeliveries;
     }
 }

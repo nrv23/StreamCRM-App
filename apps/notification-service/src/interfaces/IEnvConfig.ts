@@ -13,6 +13,7 @@ export interface IEnvConfig {
     service_name: string,
     interval_worker_execution_time: number;
     pagination_record_events_limit: number;
+    pagination_record_notification_deliveries: number;
     rabbitmq_host: string;
     rabbitmq_host_port: number;
     rabbitmq_user: string;

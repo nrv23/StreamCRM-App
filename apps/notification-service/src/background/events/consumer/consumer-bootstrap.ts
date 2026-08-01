@@ -13,3 +13,5 @@ const processIntegrationEvent = new ProcessIntegrationEvent(repository, dispatch
 const rabbitConsumer = new RabbitMQConsumer(processIntegrationEvent)
 const eventConsumer = new RabbitEventConsumer(rabbitConsumer);
 new ConsumePendingEventsUseCase(eventConsumer).execute();
+
+// generar un metodo que cargue todo de forma secuencial.

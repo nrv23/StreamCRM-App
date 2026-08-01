@@ -3,6 +3,7 @@ import { env } from "./config/enviroment.js";
 //import { rabbitMQClient } from "./config/raabbitmq.ts";
 // ejecucion del worker
 import './background/events';
+import './background/notifications';
 import { verifyTransporterConnection } from "./config/nodemailer.ts";
 
 async function bootstrap() {
