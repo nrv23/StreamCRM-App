@@ -1,8 +1,7 @@
 import { databaseInstance } from "../../config/query.ts";
 import { CreateNotificationDto } from "../../dto/notifications/create-notification.dto.ts";
-import { NotificationDelivery } from "../../entity/NotificationDeliveries.entity.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
-import { NotificationDeliveryStatus } from "../../enum/NotificationDeliveryStatus.enum.ts";
+import { NotificationStatus } from "../../enum/notification-status.enum.ts";
 import { IDatabase } from "../../interfaces/database.interface.ts";
 import { INotificationRepository } from "../../interfaces/notification/notification-repository.interface.ts";
 import { ErrorFactory } from "../../shared/factory/error-factory.ts";
@@ -20,6 +19,7 @@ export class NotificationRepository implements INotificationRepository {
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
     }
+
 
     async save(dto: CreateNotificationDto): Promise<NotificationCreatedRow> {
         const sql = `
@@ -61,4 +61,17 @@ export class NotificationRepository implements INotificationRepository {
         return row;
     }
 
+    async setNotificationStatus(notification_id: number, status: NotificationStatus): Promise<void> {
+
+        const sql = 'update notifications set status = $1 where id = $2 RETURNING id, created_at;';
+        console.log('setting notification status...')
+        const [row] = await this._db.query<NotificationCreatedRow>(sql, [status, notification_id]);
+
+        if (!row) {
+            throw ErrorFactory.build(
+                ApiErrorCode.INTERNAL_SERVER_ERROR,
+                'There was an error when trying to update notification status'
+            );
+        }
+    }
 }

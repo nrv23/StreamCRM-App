@@ -1,5 +1,6 @@
 import { UnitOfWork } from "../config/unitOfWork.ts";
 import { NotificationCommand } from "../enum/Notification-Command.enum.ts";
+import { NotificationStatus } from "../enum/notification-status.enum.ts";
 import { NotificationDeliveryStatus } from "../enum/NotificationDeliveryStatus.enum.ts";
 import { INotificationDispatcher } from "../handlers/notification-dispatcher.ts";
 import { INotificationCommand, ISendEmailCommand, ISendSmsCommand } from "../interfaces/notification-command.interface.ts";
@@ -24,25 +25,92 @@ export class ProcessNotificationDeliveryService {
     }
 
     async execute(): Promise<boolean> {
+        const pendingDeliveries =
+            await this.getPendingDeliveries();
 
-        return this._unitOfWork.execute(async ({ notification, notificationDelivery }) => {
+        if (!pendingDeliveries.length) {
+            return false;
+        }
 
-            const pendingDeliveries = await notificationDelivery.getNotficationDeliveries(NotificationDeliveryStatus.PENDING, this._limit);
+        for (const delivery of pendingDeliveries) {
+            const command = this.createBodySender(delivery);
 
-            if (!pendingDeliveries.length) return false;
+            // Fuera de la transacción
+            const response = await this._nofiticationDisptcher.dispatch(command);
 
-            for (const delivery of pendingDeliveries) {
-                const bodySender = this.createBodySender(delivery);
-                const sendNotificationResponse = await this._nofiticationDisptcher.dispatch(bodySender);
+            // Aquí sí abres transacción para guardar el resultado
+            await this._unitOfWork.execute(
+                async ({
+                    notification,
+                    notificationDelivery,
+                }) => {
+                    if (
+                        response.status ===
+                        NotificationDeliveryStatus.DELIVERED
+                    ) {
+                        await notificationDelivery.markAsDelivered(
+                            delivery.delivery_id,
+                            response.message_uuid!,
+                        );
+                    } else {
+                        await notificationDelivery.markAsFailed(
+                            delivery.delivery_id,
+                            response.error_message ?? "Unknown error",
+                        );
+                    }
 
-                if (sendNotificationResponse.status === NotificationDeliveryStatus.DELIVERED)
-                    await notificationDelivery.markAsDelivered(delivery.delivery_id, sendNotificationResponse.message_uuid!);
-                else
-                    await notificationDelivery.markAsFailed(delivery.delivery_id, sendNotificationResponse.error_message!);
-            }
+                    const statuses = await notificationDelivery.findStatusesByNotificationId(delivery.notification_id);
+                    const notificationStatus = this.resolveNotificationStatus(statuses);
 
-            return true;
-        })
+                    await notification.setNotificationStatus(
+                        delivery.notification_id,
+                        notificationStatus,
+                    );
+                },
+            );
+        }
+
+        return true;
+    }
+
+    private resolveNotificationStatus(deliveryStatuses: NotificationDeliveryStatus[]): NotificationStatus {
+        if (deliveryStatuses.length === 0) {
+            return NotificationStatus.PENDING;
+        }
+
+        const allDelivered = deliveryStatuses.every(
+            status =>
+                status === NotificationDeliveryStatus.DELIVERED,
+        );
+
+        if (allDelivered) {
+            return NotificationStatus.SENT;
+        }
+
+        const allFailed = deliveryStatuses.every(
+            status =>
+                status === NotificationDeliveryStatus.FAILED,
+        );
+
+        if (allFailed) {
+            return NotificationStatus.FAILED;
+        }
+
+        // Mezcla de delivered, failed o todavía pending.
+        return NotificationStatus.PENDING;
+    }
+
+    private async getPendingDeliveries():
+        Promise<GetNotificationDeliveriesResponse[]> {
+        return this._unitOfWork.execute(
+            async ({ notificationDelivery }) => {
+                return notificationDelivery
+                    .getNotficationDeliveries(
+                        NotificationDeliveryStatus.PENDING,
+                        this._limit,
+                    );
+            },
+        );
     }
 
     private createBodySender(notificationDelivery: GetNotificationDeliveriesResponse) {

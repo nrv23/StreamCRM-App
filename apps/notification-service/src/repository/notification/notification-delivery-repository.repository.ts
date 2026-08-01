@@ -22,6 +22,7 @@ export type GetNotificationDeliveriesResponse = {
     metadata: JsonObject;
 }
 
+
 export class NotificationDeliveryRepository implements INotificationDeliveryRepository {
 
     private _db: IDatabase;
@@ -46,6 +47,7 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
         const sql = `update notification_deliveries 
                     set status = $1, failed_at = null, delivered_at = now(), attempts = 0, provider_message_id = $2 
                     where id = $3 returning id;`;
+        console.log('marking as delivered...')
         const [response] = await this._db.query<NoificationDeliveryResponse>(sql, [NotificationDeliveryStatus.DELIVERED, message_uuid, notification_delivery_id]);
         if (!response || !response.id)
             throw ErrorFactory.build(
@@ -61,6 +63,7 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
                     END, 
                     failed_at = now(), attempts = attempts + 1, error_message = $3 
                     where id = $4 returning id;`;
+        console.log('marking as failed...')
         const [response] = await this._db.query<NoificationDeliveryResponse>(sql,
             [NotificationDeliveryStatus.FAILED, NotificationDeliveryStatus.PENDING, error_message, notification_delivery_id]);
         if (!response || !response.id)
@@ -88,7 +91,33 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
             ORDER BY nd.id DESC
             LIMIT $2;
         `;
+
+
+        console.log('getting NotficationDeliveries...')
         const response = await this._db.query<GetNotificationDeliveriesResponse>(sql, [status, limit]);
         return response
     }
+
+    async findStatusesByNotificationId(
+        notificationId: number,
+    ): Promise<NotificationDeliveryStatus[]> {
+        const sql = `
+        SELECT status
+        FROM notification_deliveries
+        WHERE notification_id = $1
+        ORDER BY id ASC;
+    `;
+
+        console.log('finding Statuses By NotificationId....')
+        const rows =
+            await this._db.query<{
+                status: NotificationDeliveryStatus;
+            }>(
+                sql,
+                [notificationId],
+            );
+
+        return rows.map(row => row.status);
+    }
+
 }
