@@ -1,5 +1,12 @@
-import { parentPort } from "node:worker_threads";
+import { parentPort, workerData } from "node:worker_threads";
 import { ProcessNotificationDeliveryService } from "../../services/ProcessNotificationDelivery.service.ts";
+import { UnitOfWork } from "../../config/unitOfWork.ts";
+import { NotificationDispatcher } from "../../handlers/notification-dispatcher.ts";
+import { EmailSender } from "../../sender/email.sender.ts";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { HandlebarsTemplateEngine } from "../../handlebars/handlebarsTemplateEngine.ts";
+import { SmsSender } from "../../sender/sms.sender.ts";
 
 
 export class ProcessNotificationWorker {
@@ -11,8 +18,7 @@ export class ProcessNotificationWorker {
 
     constructor(
         procesNotificationService: ProcessNotificationDeliveryService,
-        intervalMs = 5000,
-        limit: number
+        intervalMs = 5000
     ) {
 
         this._procesNotificationService = procesNotificationService;
@@ -74,3 +80,26 @@ export class ProcessNotificationWorker {
 
 
 
+async function startWorker(): Promise<void> {
+
+    const { pagination_record_notification_deliveries } = workerData;
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    // instancia de template engine
+    const templatesDirectoryPath = path.join(__dirname, './../../templates/');
+    const templateEngine = new HandlebarsTemplateEngine(templatesDirectoryPath);
+    // 2. Instancias el sender y tu nuevo NotificationDispatcher
+    const emailSender = new EmailSender(templateEngine); // (O la clase real que use nodemailer)
+    const smsSender = new SmsSender();
+    const dispatcher = new NotificationDispatcher(emailSender, smsSender)
+    const unitOfWork = new UnitOfWork()
+    const service = new ProcessNotificationDeliveryService(
+        unitOfWork,
+        dispatcher,
+        +pagination_record_notification_deliveries
+    );
+    const worker = new ProcessNotificationWorker(service, 60000);
+    await worker.start();
+}
+
+void startWorker();

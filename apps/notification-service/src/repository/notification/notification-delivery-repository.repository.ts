@@ -29,7 +29,7 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
         this._db = db ?? databaseInstance;
     }
 
-    async save(dto: CreateNotificationDeliveryDto): Promise<void> {
+    async save(dto: CreateNotificationDeliveryDto): Promise<NoificationDeliveryResponse> {
         // crea el delivery y lo marca como pending
         const sql = 'insert into notification_deliveries(notification_id, status, channel) values($1,$2,$3) returning id;';
         const [response] = await this._db.query<NoificationDeliveryResponse>(sql, [dto.notification_id, NotificationDeliveryStatus.PENDING, dto.channel]);
@@ -38,30 +38,31 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
                 ApiErrorCode.INTERNAL_SERVER_ERROR,
                 'An error was ocurred while trying to insert notification delivery'
             );
+        return response;
 
     }
-    async markAsDelivered(notification_id: number, message_uuid: string): Promise<void> {
+    async markAsDelivered(notification_delivery_id: number, message_uuid: string): Promise<void> {
 
         const sql = `update notification_deliveries 
                     set status = $1, failed_at = null, delivered_at = now(), attempts = 0, provider_message_id = $2 
-                    where notification_id = $3 returning id;`;
-        const [response] = await this._db.query<NoificationDeliveryResponse>(sql, [NotificationDeliveryStatus.DELIVERED, message_uuid, notification_id]);
+                    where id = $3 returning id;`;
+        const [response] = await this._db.query<NoificationDeliveryResponse>(sql, [NotificationDeliveryStatus.DELIVERED, message_uuid, notification_delivery_id]);
         if (!response || !response.id)
             throw ErrorFactory.build(
                 ApiErrorCode.INTERNAL_SERVER_ERROR,
                 'An error was ocurred while trying to mark as delivered notification'
             );
     }
-    async markAsFailed(notification_id: number, error_message: string): Promise<void> {
+    async markAsFailed(notification_delivery_id: number, error_message: string): Promise<void> {
         const sql = `update notification_deliveries 
                     set status = CASE
                         WHEN attempts >= 5 THEN $1
                         ELSE $2
                     END, 
                     failed_at = now(), attempts = attempts + 1, error_message = $3 
-                    where notification_id = $4 returning id;`;
+                    where id = $4 returning id;`;
         const [response] = await this._db.query<NoificationDeliveryResponse>(sql,
-            [NotificationDeliveryStatus.FAILED, NotificationDeliveryStatus.PENDING, error_message, notification_id]);
+            [NotificationDeliveryStatus.FAILED, NotificationDeliveryStatus.PENDING, error_message, notification_delivery_id]);
         if (!response || !response.id)
             throw ErrorFactory.build(
                 ApiErrorCode.INTERNAL_SERVER_ERROR,
@@ -72,18 +73,20 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
 
     async getNotficationDeliveries(status: NotificationDeliveryStatus, limit: number): Promise<GetNotificationDeliveriesResponse[]> {
 
-        const sql = `select 
-                n.id as notification_id,
+        const sql = `
+            SELECT
+                n.id AS notification_id,
+                nd.id AS delivery_id,
                 nd.channel,
-                nd.id as delivery_id,
-                n.title ,
+                n.title,
                 n.message,
-                n.metadata 
-            from notification_deliveries nd 
-            join notifications n on n.id = nd.notification_id 
-            where n.status in ($1)
-            limit $2
-            order by nd.id desc;
+                n.metadata
+            FROM notification_deliveries nd
+            INNER JOIN notifications n
+                ON n.id = nd.notification_id
+            WHERE nd.status = $1
+            ORDER BY nd.id DESC
+            LIMIT $2;
         `;
         const response = await this._db.query<GetNotificationDeliveriesResponse>(sql, [status, limit]);
         return response

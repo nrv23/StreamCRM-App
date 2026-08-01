@@ -32,11 +32,13 @@ export class ProcessNotificationDeliveryService {
             if (!pendingDeliveries.length) return false;
 
             for (const delivery of pendingDeliveries) {
-
                 const bodySender = this.createBodySender(delivery);
                 const sendNotificationResponse = await this._nofiticationDisptcher.dispatch(bodySender);
 
-                console.log({ sendNotificationResponse })
+                if (sendNotificationResponse.status === NotificationDeliveryStatus.DELIVERED)
+                    await notificationDelivery.markAsDelivered(delivery.delivery_id, sendNotificationResponse.message_uuid!);
+                else
+                    await notificationDelivery.markAsFailed(delivery.delivery_id, sendNotificationResponse.error_message!);
             }
 
             return true;
