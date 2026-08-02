@@ -120,4 +120,22 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
         return rows.map(row => row.status);
     }
 
+    async setStatusProcessing(deliveriesId: number[]): Promise<void> {
+
+        const sql = `
+            UPDATE notification_deliveries
+            SET status = $1
+            WHERE id = ANY($2::int[]) -- esto permite usar un array como lista de parametros
+            RETURNING id;
+        `;
+
+        await this._db.query<NoificationDeliveryResponse>(
+            sql,
+            [
+                NotificationDeliveryStatus.PROCESSING,
+                deliveriesId,
+            ],
+        );
+
+    }
 }

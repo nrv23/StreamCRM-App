@@ -4,7 +4,8 @@ export enum NotificationDeliveryStatus {
     PENDING = 'pending',
     DELIVERED = 'delivered',
     FAILED = 'failed',
-    ACCEPTED = 'accepted'
+    ACCEPTED = 'accepted',
+    PROCESSING = 'processing'
 }
 
 // Actualmente "delivered" significa:

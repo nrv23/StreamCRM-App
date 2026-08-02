@@ -8,4 +8,10 @@ export interface INotificationDeliveryRepository {
     markAsDelivered(notification_delivery_id: number, message_uuid: string): Promise<void>;
     markAsFailed(notification_delivery_id: number, error_message: string): Promise<void>;
     getNotficationDeliveries(status: NotificationDeliveryStatus, limit: number): Promise<GetNotificationDeliveriesResponse[]>;
+
+    findStatusesByNotificationId(
+        notificationId: number,
+    ): Promise<NotificationDeliveryStatus[]>;
+
+    setStatusProcessing(deliveries_id: Array<number>): Promise<void>;
 }

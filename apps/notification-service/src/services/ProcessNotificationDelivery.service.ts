@@ -25,8 +25,7 @@ export class ProcessNotificationDeliveryService {
     }
 
     async execute(): Promise<boolean> {
-        const pendingDeliveries =
-            await this.getPendingDeliveries();
+        const pendingDeliveries = await this.getPendingDeliveries();
 
         if (!pendingDeliveries.length) {
             return false;
@@ -102,14 +101,16 @@ export class ProcessNotificationDeliveryService {
 
     private async getPendingDeliveries():
         Promise<GetNotificationDeliveriesResponse[]> {
-        return this._unitOfWork.execute(
-            async ({ notificationDelivery }) => {
-                return notificationDelivery
-                    .getNotficationDeliveries(
-                        NotificationDeliveryStatus.PENDING,
-                        this._limit,
-                    );
-            },
+        return this._unitOfWork.execute(async ({ notificationDelivery }) => {
+            const pendingDeliveries = await notificationDelivery.getNotficationDeliveries(
+                NotificationDeliveryStatus.PENDING,
+                this._limit,
+            );
+            const processingDeliveriesId = pendingDeliveries.map(delivery => delivery.delivery_id);
+            await notificationDelivery.setStatusProcessing(processingDeliveriesId);
+
+            return pendingDeliveries;
+        },
         );
     }
 
