@@ -8,6 +8,7 @@ import { CustomerStatus } from '../../enum/CustomerStatus.enum.js';
 import { ICustomerRepository } from '../../interfaces/customer/customer-repository.interface.js';
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.js";
 import { ErrorFactory } from "../../shared/factory/error-factory.js";
+import format from 'pg-format';
 
 // aqui se implementa la parte de postgresql
 
@@ -111,42 +112,84 @@ export class CustomerRepository implements ICustomerRepository {
         );
         return response;
     }
-
-
-    async searchByFilters(options: GetCustomerDto): Promise<Customer[]> {
-        const page = options.page!;
-        const limit = options.limit!;
+    async searchByFilters(
+        options: GetCustomerDto,
+    ): Promise<Customer[]> {
+        const page = options.page ?? 1;
+        const limit = options.limit ?? 20;
         const offset = (page - 1) * limit;
 
-        const params: any[] = [];
+        const params: unknown[] = [];
+
         let query = `
-            select id, first_name, last_name, email, phone, country, status 
-            from customers 
-            where deleted_at is null
-        `;
+    SELECT
+        id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        country,
+        status
+    FROM customers
+    WHERE deleted_at IS NULL
+    `;
 
         if (options.search) {
             params.push(`%${options.search}%`);
-            query += ` and concat(first_name, ' ', last_name) ilike $${params.length}`;
+            query += `
+        AND CONCAT(first_name, ' ', last_name) ILIKE $${params.length}
+        `;
         }
+
         if (options.status) {
             params.push(options.status);
-            query += ` and status = $${params.length}`;
+            query += `
+        AND status = $${params.length}
+        `;
         }
+
         if (options.country) {
             params.push(options.country);
-            query += ` and country = $${params.length}`;
+            query += `
+        AND country = $${params.length}
+        `;
         }
 
-        const sortColumn = (options.sortBy && options.sortBy === 'name' ? "concat(first_name, ' ', last_name)" : options.sortBy) || 'id';
-        const sortOrder = options.orderBy?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+        // Lista blanca segura: la expresión SQL ya viene validada
+        const sortExpressions: Record<string, string> = {
+            id: "id",
+            name: "CONCAT(first_name, ' ', last_name)",
+            email: "email",
+            country: "country",
+            status: "status",
+            createdAt: "created_at",
+        };
 
-        query += ` order by ${sortColumn} ${sortOrder} limit ${limit} offset ${offset};`;
+        const requestedSort = options.sortBy ?? "id";
+        const sortExpression = sortExpressions[requestedSort] ?? sortExpressions.id;
 
-        const customers = await this._db.query<Customer>(query, params);
+        const sortOrder = options.orderBy?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+
+        // Agregamos SOLO limit y offset a params
+        params.push(limit);
+        const limitIndex = params.length;
+
+        params.push(offset);
+        const offsetIndex = params.length;
+
+        // Concatenamos sortExpression y sortOrder de la lista blanca directamente
+        query += `
+    ORDER BY ${sortExpression} ${sortOrder}
+    LIMIT $${limitIndex} OFFSET $${offsetIndex}
+    `;
+
+        const customers = await this._db.query<Customer>(
+            query,
+            params,
+        );
+
         return customers;
     }
-
     // count de registros
 
     async getTotalRecords(options: GetCustomerDto): Promise<number> {

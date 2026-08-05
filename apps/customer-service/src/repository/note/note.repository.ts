@@ -30,36 +30,44 @@ export class NoteRepository implements INoteRepository {
     }
 
     async searchByFilters(options: GetNoteDto): Promise<GetNoteDtoResponse[]> {
-        const page = options.page!;
-        const limit = options.limit!;
+        const page = options.page ?? 1;
+        const limit = options.limit ?? 20;
         const offset = (page - 1) * limit;
 
-        const params: Array<string | number> = [];
-        params.push(options.user_id);
-        let query = `
-            select 
-                c.id as customerId,
-                concat(c.first_name ,' ', c.last_name) as customerName,
-                c.email customerEmail,
-                c.external_id as customerExternalId,
-                cn.note,
-                 to_char(cn.created_at ,'YYYY-MM-DD') createdAt
-            from customer_notes cn
-            inner join customers c on c.id = cn.customer_id 
-            where cn.user_id = $${params.length}
-        `;
+        const params: unknown[] = [options.user_id];
 
+        let query = `
+        SELECT 
+            c.id AS "customerId",
+            CONCAT(c.first_name, ' ', c.last_name) AS "customerName",
+            c.email AS "customerEmail",
+            c.external_id AS "customerExternalId",
+            cn.note AS "note",
+            TO_CHAR(cn.created_at, 'YYYY-MM-DD') AS "createdAt"
+        FROM customer_notes cn
+        INNER JOIN customers c ON c.id = cn.customer_id 
+        WHERE cn.user_id = $${params.length}
+    `;
 
         if (options.customer_id) {
             params.push(options.customer_id);
-            query += ` and cn.customer_id = $${params.length}`;
-
+            query += ` AND cn.customer_id = $${params.length}`;
         }
 
-        params.push(limit, offset);
-        query += ` order by cn.created_at ${options.sortOrder ? options.sortOrder.toUpperCase() : 'ASC'} limit $${params.length - 1} offset $${params.length};`;
+        // Lista blanca estricta para el ordenamiento (evita SQL Injection)
+        const sortOrder = options.sortOrder?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
+        // Agregamos LIMIT y OFFSET ordenadamente al array de parámetros
+        params.push(limit);
+        const limitIndex = params.length;
 
+        params.push(offset);
+        const offsetIndex = params.length;
+
+        query += `
+        ORDER BY cn.created_at ${sortOrder}
+        LIMIT $${limitIndex} OFFSET $${offsetIndex};
+    `;
 
         const notes = await this._db.query<GetNoteDtoResponse>(query, params);
         return notes;

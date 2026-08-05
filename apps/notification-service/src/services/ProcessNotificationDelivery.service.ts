@@ -38,34 +38,33 @@ export class ProcessNotificationDeliveryService {
             const response = await this._nofiticationDisptcher.dispatch(command);
 
             // Aquí sí abres transacción para guardar el resultado
-            await this._unitOfWork.execute(
-                async ({
-                    notification,
-                    notificationDelivery,
-                }) => {
-                    if (
-                        response.status ===
-                        NotificationDeliveryStatus.DELIVERED
-                    ) {
-                        await notificationDelivery.markAsDelivered(
-                            delivery.delivery_id,
-                            response.message_uuid!,
-                        );
-                    } else {
-                        await notificationDelivery.markAsFailed(
-                            delivery.delivery_id,
-                            response.error_message ?? "Unknown error",
-                        );
-                    }
-
-                    const statuses = await notificationDelivery.findStatusesByNotificationId(delivery.notification_id);
-                    const notificationStatus = this.resolveNotificationStatus(statuses);
-
-                    await notification.setNotificationStatus(
-                        delivery.notification_id,
-                        notificationStatus,
+            await this._unitOfWork.execute(async ({
+                notification,
+                notificationDelivery,
+            }) => {
+                if (
+                    response.status ===
+                    NotificationDeliveryStatus.DELIVERED
+                ) {
+                    await notificationDelivery.markAsDelivered(
+                        delivery.delivery_id,
+                        response.message_uuid!,
                     );
-                },
+                } else {
+                    await notificationDelivery.markAsFailed(
+                        delivery.delivery_id,
+                        response.error_message ?? "Unknown error",
+                    );
+                }
+
+                const statuses = await notificationDelivery.findStatusesByNotificationId(delivery.notification_id);
+                const notificationStatus = this.resolveNotificationStatus(statuses);
+
+                await notification.setNotificationStatus(
+                    delivery.notification_id,
+                    notificationStatus,
+                );
+            },
             );
         }
 
@@ -99,8 +98,7 @@ export class ProcessNotificationDeliveryService {
         return NotificationStatus.PENDING;
     }
 
-    private async getPendingDeliveries():
-        Promise<GetNotificationDeliveriesResponse[]> {
+    private async getPendingDeliveries(): Promise<GetNotificationDeliveriesResponse[]> {
         return this._unitOfWork.execute(async ({ notificationDelivery }) => {
             const pendingDeliveries = await notificationDelivery.getNotficationDeliveries(
                 NotificationDeliveryStatus.PENDING,
@@ -110,8 +108,7 @@ export class ProcessNotificationDeliveryService {
             await notificationDelivery.setStatusProcessing(processingDeliveriesId);
 
             return pendingDeliveries;
-        },
-        );
+        });
     }
 
     private createBodySender(notificationDelivery: GetNotificationDeliveriesResponse) {
