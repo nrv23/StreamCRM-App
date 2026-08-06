@@ -61,7 +61,7 @@ export class RabbitMQConsumer {
             // si la cola no existe, rabbit la crea
         );
 
-        //await this.channel.prefetch(10);
+        await this.channel.prefetch(20); // envia 20 mensajes y conforme se van confirmado los mensajes va enviando uno a uno
 
         return this.channel;
     }
