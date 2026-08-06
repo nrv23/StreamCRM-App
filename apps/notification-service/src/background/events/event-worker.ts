@@ -6,6 +6,7 @@ import { RabbitEventPublisher } from "../../publisher/RabbitEvent.publisher.ts";
 import { rabbitMQClient } from "../../config/rabbitmqClient.ts";
 import './consumer/consumer-bootstrap.ts';
 
+
 export class OutboxPublisherWorker {
     private timer?: NodeJS.Timeout;
     private isStopping = false;

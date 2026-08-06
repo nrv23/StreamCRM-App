@@ -1,7 +1,6 @@
 import amqp, {
     type Channel,
     type ChannelModel,
-    type ConsumeMessage,
 } from 'amqplib';
 import { env } from './enviroment.ts';
 import { ProcessIntegrationEvent } from '../handlers/processIntegrationEvent.handler.ts';
@@ -9,19 +8,16 @@ import { randomUUID } from 'node:crypto';
 import { RabbitEventDto } from '../dto/outboxEvents/rabbitEvent.dto.ts';
 
 
-export class RabbitMQConsumer {
+export class RabbitMQDlq {
     private connection: ChannelModel | null = null;
     private channel: Channel | null = null;
-    private readonly _exchange = 'stream-crm.topic';
+    private readonly _exchange = 'stream-crm.dlx';
     private readonly _exchangeType = 'topic';
-    private readonly queueName = 'notification-service';
-    private readonly queueNameDql = 'notification-service.dlq';
-    private readonly _exchangeDlq = 'stream-crm.dlx';
+    private readonly queueName = 'notification-service.dlq';
+    private readonly _routingKey = "customer.#";
 
-    private readonly _processIntegrationEvent: ProcessIntegrationEvent;
+    constructor() {
 
-    constructor(processIntegrationEvent: ProcessIntegrationEvent) {
-        this._processIntegrationEvent = processIntegrationEvent;
     }
 
     public async connect(): Promise<void> {
@@ -32,67 +28,27 @@ export class RabbitMQConsumer {
         this.connection = await amqp.connect(url);
         this.channel = await this.connection.createChannel();
 
-        console.log('[RabbitMQ Consumer] Connected.');
+        console.log('[RabbitMQ DLQ] Connected.');
     }
     public async getChannel(): Promise<Channel> {
         if (!this.channel) {
             throw new Error(
-                '[RabbitMQ Consumer] Channel is not initialized.',
+                '[RabbitMQ DLQ] Channel is not initialized.',
             );
         }
 
         // configurar el consumidor
-
-        await this.channel.assertExchange(
-            this._exchange,
-            this._exchangeType,
-            {
-                durable: true,
-            },
-        );
-
-        // conectar con la cola dlq 
-        await this.channel.assertExchange(this._exchangeDlq, this._exchangeType, { durable: true });
-
-
-
-        await this.channel.assertQueue(
-            this.queueName,
-            {
-                durable: true,
-                arguments: {
-                    // aqui rabbit indica a cual cola dlq enviar si hay un error
-                    "x-dead-letter-exchange": this._exchangeDlq,
-                }
-            },
-        );
-
+        await this.channel.assertExchange(this._exchange, this._exchangeType, { durable: true, });
+        await this.channel.assertQueue(this.queueName, { durable: true, },);
         await this.channel.bindQueue(
             this.queueName,
             this._exchange,
-            'customer.#'
+            this._routingKey, // binding key indica a rabbit que cualquier evento con un routing key con un patron como este 
+            // se va a la cola en la variable queueName.
+            // si la cola no existe, rabbit la crea
         );
 
-
-        // cola dql 
-
-        await this.channel.assertQueue(
-            this.queueNameDql,
-            {
-                durable: true,
-            },
-        );
-
-        // vincular cola dlq
-        await this.channel.bindQueue(
-            this.queueNameDql,
-            this._exchangeDlq,
-            'customer.#'
-        );
-
-
-        // precargar lista limitada de mensajes
-        await this.channel.prefetch(20); // envia 20 mensajes y conforme se van confirmado los mensajes va enviando uno a uno
+        // configurar el dlq
 
         return this.channel;
     }
@@ -101,7 +57,7 @@ export class RabbitMQConsumer {
 
         if (!channel) {
             throw new Error(
-                '[RabbitMQ Consumer] Channel is not initialized.',
+                '[RabbitMQ DLQ] Channel is not initialized.',
             );
         }
 
@@ -118,7 +74,7 @@ export class RabbitMQConsumer {
                     )
 
                     console.log(
-                        '[CONSUMER] Event received: ewqe',
+                        '[DLQ MESSAGE] Event received:',
                         message.fields.routingKey,
                         event,
                     );
@@ -141,35 +97,19 @@ export class RabbitMQConsumer {
 
                     */
 
-
-                    const rabbitEvent: RabbitEventDto = {
-                        external_id: randomUUID(),
-                        aggregate_id: event.aggregate_id,
-                        aggregate_type: event.aggregate_type,
-                        event_id: event.event_id,
-                        event_name: event.event_name,
-                        user_id: event.payload.user_id,
-                        payload: event.payload,
-                        headers: event.headers,
-                    }
-
-                    if (rabbitEvent.payload.phone) channel.reject(message, false);  // Al poner false, RabbitMQ desvía automáticamente el mensaje al DLX
-                    else {
-                        await this._processIntegrationEvent.execute(rabbitEvent);
-                        channel.ack(message);
-                    }
+                    channel.ack(message);
 
 
                 } catch (error) {
                     console.error(
-                        '[CONSUMER] Event processing failed:',
+                        '[DLQ MESSAGE] Event processing failed:',
                         error,
                     );
 
                     channel.nack(
                         message,
                         false,
-                        false, // lo manda al dlq
+                        true,
                     );
                 }
             },
@@ -186,4 +126,4 @@ export class RabbitMQConsumer {
     }
 }
 
-export default RabbitMQConsumer;
+export default RabbitMQDlq;
