@@ -94,30 +94,43 @@ export class RabbitMQDqlConsumer {
                     );
                     /*
 
-                        id: 4,
-                        event_id: '50564314-6554-47b1-892c-abc0d2a6a44d',
+                        [DLQ CONSUMER] Event received: ewqe customer.created {
+                        id: 81,
+                        event_id: 'cb3427c2-9722-4ec6-95aa-56811947871c',
                         event_name: 'customer.created',
                         aggregate_type: 'customer',
-                        aggregate_id: 19,
+                        aggregate_id: 60,
                         payload: {
-                            email: 'correo12671231111sdasdasdsadsd1@test.com',
-                            phone: '123456784',
-                            country: 'DO',
-                            customerId: 19
+                            email: 'pefaf63041@da1voqq31ewqe11pa.com',
+                            phone: '32423423423422333',
+                            country: 'CR',
+                            user_id: 18,
+                            lastName: 'test finals',
+                            firstName: 'test final',
+                            customerId: 60
                         },
-                        headers: { source: 'customer-service', version: '1' },
+                        headers: { source: 'customer_service', version: 1 },
                         retry_count: 0,
-                        created_at: '2026-07-07T06:41:46.571Z'
+                        created_at: '2026-08-07T02:13:59.178Z'
+                        } { 'x-application-error': 'error test' }
+
 
                     */
 
+                    await this._deadLetterEventService.save({
+                        service_name: event.headers.source,
+                        queue_name: 'notification-service',
+                        exchange: message.fields.exchange,
+                        routing_key: message.fields.routingKey,
+                        event_id: event.event_id,
+                        event_name: event.event_name,
+                        payload: event.payload,
+                        headers: message.properties.headers || {},
+                        reason: message?.properties?.headers && message?.properties?.headers['x-application-error'] || 'unkown reason'
+                    })
 
-                    //await this._deadLetterEventService.save({
 
-                    //})
-
-
-                    // channel.ack(message);
+                    channel.ack(message);
 
 
                 } catch (error) {
