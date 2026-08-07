@@ -48,3 +48,6 @@ docker exec -it rabbitmq-stream-crm \
 # Ver consumidores
 docker exec -it rabbitmq-stream-crm \
   rabbitmqctl list_consumers
+
+  // meter archivos de consumer, publisher y dlq en una sola carpeta en background en su respectiva carpeta.
+  // para limpiar la arquiecttura

@@ -1,17 +1,14 @@
 import { Worker } from "node:worker_threads";
-import { env } from "../../config/enviroment.js";
+import { env } from "../../../config/enviroment.ts";
 
 const isDevelopment = import.meta.url.endsWith(".ts");
 
 const workerUrl = isDevelopment
     ? new URL("./event-worker.bootstrap.mjs", import.meta.url)
-    : new URL("./event-worker.js", import.meta.url);
+    : new URL("./consumer-bootstrap.ts", import.meta.url);
 
 const outboxWorker = new Worker(workerUrl, {
-    workerData: {
-        pagination_record_events_limit:
-            env.pagination_record_events_limit,
-    },
+    workerData: {},
 });
 
 outboxWorker.on("message", (message: unknown) => {

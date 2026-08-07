@@ -153,7 +153,7 @@ export class RabbitMQConsumer {
                         headers: event.headers,
                     }
 
-                    if (rabbitEvent.payload.phone) channel.reject(message, false);  // Al poner false, RabbitMQ desvía automáticamente el mensaje al DLX
+                    if (rabbitEvent.payload.phone) throw new Error('error test') //channel.reject(message, false);  // Al poner false, RabbitMQ desvía automáticamente el mensaje al DLX
                     else {
                         await this._processIntegrationEvent.execute(rabbitEvent);
                         channel.ack(message);
@@ -161,16 +161,68 @@ export class RabbitMQConsumer {
 
 
                 } catch (error) {
+
+
                     console.error(
                         '[CONSUMER] Event processing failed:',
                         error,
                     );
 
-                    channel.nack(
-                        message,
-                        false,
-                        false, // lo manda al dlq
-                    );
+                    try {
+                        const reason =
+                            error instanceof Error
+                                ? error.message
+                                : String(error);
+
+                        const headers = {
+                            ...(message.properties.headers ?? {}),
+                            'x-application-error': reason,
+                        };
+
+                        const published = channel.publish(
+                            this._exchangeDlq,
+                            message.fields.routingKey,
+                            message.content,
+                            {
+                                ...message.properties,
+                                headers,
+                                persistent: true,
+                            },
+                        );
+
+                        if (!published) {
+                            throw new Error(
+                                'Could not publish failed message to DLX',
+                            );
+                        }
+
+                        // Como nosotros mismos republicamos el mensaje al DLX,
+                        // confirmamos el mensaje original para que no vuelva
+                        // a la cola principal.
+                        channel.ack(message);
+
+                        console.log(
+                            '[CONSUMER] Event manually published to DLQ:',
+                            {
+                                routingKey: message.fields.routingKey,
+                                reason,
+                            },
+                        );
+
+                    } catch (dlqError) {
+                        console.error(
+                            '[CONSUMER] Failed to publish message to DLQ:',
+                            dlqError,
+                        );
+
+                        /*
+                         * IMPORTANTE:
+                         * no hacemos ACK del mensaje original.
+                         *
+                         * Si el canal/proceso se cierra, RabbitMQ
+                         * volverá a ponerlo disponible en la cola principal.
+                         */
+                    }
                 }
             },
             {

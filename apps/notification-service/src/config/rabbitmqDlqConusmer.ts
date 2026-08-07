@@ -3,21 +3,23 @@ import amqp, {
     type ChannelModel,
 } from 'amqplib';
 import { env } from './enviroment.ts';
-import { ProcessIntegrationEvent } from '../handlers/processIntegrationEvent.handler.ts';
-import { randomUUID } from 'node:crypto';
-import { RabbitEventDto } from '../dto/outboxEvents/rabbitEvent.dto.ts';
+import { DeadLetterEventService } from '../services/DeadLetterEvent.service.ts';
+import { CreateDeadLetterEventDto } from '../dto/deadLetterEvents/create-dead-letter-event.dto.ts';
 
 
-export class RabbitMQDlq {
+
+export class RabbitMQDqlConsumer {
     private connection: ChannelModel | null = null;
     private channel: Channel | null = null;
-    private readonly _exchange = 'stream-crm.dlx';
     private readonly _exchangeType = 'topic';
-    private readonly queueName = 'notification-service.dlq';
-    private readonly _routingKey = "customer.#";
+    private readonly queueNameDql = 'notification-service.dlq';
+    private readonly _exchangeDlq = 'stream-crm.dlx';
+    private _deadLetterEventService: DeadLetterEventService;
 
-    constructor() {
 
+    constructor(deadLetterEventService: DeadLetterEventService) {
+        // agregar un servicio para guardar en db
+        this._deadLetterEventService = deadLetterEventService;
     }
 
     public async connect(): Promise<void> {
@@ -28,27 +30,38 @@ export class RabbitMQDlq {
         this.connection = await amqp.connect(url);
         this.channel = await this.connection.createChannel();
 
-        console.log('[RabbitMQ DLQ] Connected.');
+        console.log('[RabbitMQ DLQ Consumer] Connected.');
     }
     public async getChannel(): Promise<Channel> {
         if (!this.channel) {
             throw new Error(
-                '[RabbitMQ DLQ] Channel is not initialized.',
+                '[RabbitMQ DLQ Consumer] Channel is not initialized.',
             );
         }
 
-        // configurar el consumidor
-        await this.channel.assertExchange(this._exchange, this._exchangeType, { durable: true, });
-        await this.channel.assertQueue(this.queueName, { durable: true, },);
-        await this.channel.bindQueue(
-            this.queueName,
-            this._exchange,
-            this._routingKey, // binding key indica a rabbit que cualquier evento con un routing key con un patron como este 
-            // se va a la cola en la variable queueName.
-            // si la cola no existe, rabbit la crea
+
+        // conectar con la cola dlq 
+        await this.channel.assertExchange(this._exchangeDlq, this._exchangeType, { durable: true });
+
+        // cola dql 
+
+        await this.channel.assertQueue(
+            this.queueNameDql,
+            {
+                durable: true,
+            },
         );
 
-        // configurar el dlq
+        // vincular cola dlq
+        await this.channel.bindQueue(
+            this.queueNameDql,
+            this._exchangeDlq,
+            'customer.#'
+        );
+
+
+        // precargar lista limitada de mensajes
+        await this.channel.prefetch(20); // envia 20 mensajes y conforme se van confirmado los mensajes va enviando uno a uno
 
         return this.channel;
     }
@@ -57,12 +70,12 @@ export class RabbitMQDlq {
 
         if (!channel) {
             throw new Error(
-                '[RabbitMQ DLQ] Channel is not initialized.',
+                '[RabbitMQ DLQ Consumer] Channel is not initialized.',
             );
         }
 
         await channel.consume(
-            this.queueName,
+            this.queueNameDql,
             async (message) => {
                 if (!message) {
                     return;
@@ -74,9 +87,10 @@ export class RabbitMQDlq {
                     )
 
                     console.log(
-                        '[DLQ MESSAGE] Event received:',
+                        '[DLQ CONSUMER] Event received: ewqe',
                         message.fields.routingKey,
                         event,
+                        message.properties.headers
                     );
                     /*
 
@@ -97,19 +111,25 @@ export class RabbitMQDlq {
 
                     */
 
-                    channel.ack(message);
+
+                    //await this._deadLetterEventService.save({
+
+                    //})
+
+
+                    // channel.ack(message);
 
 
                 } catch (error) {
                     console.error(
-                        '[DLQ MESSAGE] Event processing failed:',
+                        '[DLQ CONSUMER] Event processing failed:',
                         error,
                     );
 
                     channel.nack(
                         message,
                         false,
-                        true,
+                        false
                     );
                 }
             },
@@ -126,4 +146,4 @@ export class RabbitMQDlq {
     }
 }
 
-export default RabbitMQDlq;
+export default RabbitMQDqlConsumer;

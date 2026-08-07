@@ -7,11 +7,24 @@ import { ProcessedEventRepository } from "../../../repository/processedEvent/pro
 import { ConsumePendingEventsUseCase } from "../../../services/Consumer.service.ts";
 
 
-const repository = new ProcessedEventRepository();
-const dispatcher = new EventDispatcher(handlers)
-const processIntegrationEvent = new ProcessIntegrationEvent(repository, dispatcher)
-const rabbitConsumer = new RabbitMQConsumer(processIntegrationEvent)
-const eventConsumer = new RabbitEventConsumer(rabbitConsumer);
-new ConsumePendingEventsUseCase(eventConsumer).execute();
+async function startWorker() {
+    try {
+        const repository = new ProcessedEventRepository();
+        const dispatcher = new EventDispatcher(handlers)
+        const processIntegrationEvent = new ProcessIntegrationEvent(repository, dispatcher)
+        const rabbitConsumer = new RabbitMQConsumer(processIntegrationEvent)
+        const eventConsumer = new RabbitEventConsumer(rabbitConsumer);
+        new ConsumePendingEventsUseCase(eventConsumer).execute();
 
-// generar un metodo que cargue todo de forma secuencial.
+        // generar un metodo que cargue todo de forma secuencial.
+    } catch (error) {
+        console.error(
+            "[CONSUMER EVENT] Failed to initialize:",
+            error,
+        );
+
+        throw error;
+    }
+}
+
+void startWorker();
