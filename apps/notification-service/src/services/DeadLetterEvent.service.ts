@@ -18,4 +18,8 @@ export class DeadLetterEventService {
     async save(dto: CreateDeadLetterEventDto): Promise<DeadLetterEventEntity> {
         return await this._deadLetterEventRepository.save(dto);
     }
+
+    async find(event_id: string) {
+        return await this._deadLetterEventRepository.findByEventId(event_id);
+    }
 }

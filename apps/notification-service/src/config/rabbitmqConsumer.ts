@@ -153,11 +153,9 @@ export class RabbitMQConsumer {
                         headers: event.headers,
                     }
 
-                    if (rabbitEvent.payload.phone) throw new Error('error test') //channel.reject(message, false);  // Al poner false, RabbitMQ desvía automáticamente el mensaje al DLX
-                    else {
-                        await this._processIntegrationEvent.execute(rabbitEvent);
-                        channel.ack(message);
-                    }
+                    await this._processIntegrationEvent.execute(rabbitEvent);
+                    channel.ack(message);
+
 
 
                 } catch (error) {

@@ -7,12 +7,21 @@ import { IDatabase } from "../../interfaces/database.interface.ts";
 import { IDeadLetterEventRepository } from "../../interfaces/event/dead_letter_event-repository.interface.ts";
 import { ErrorFactory } from "../../shared/factory/error-factory.ts";
 
+type findByEventIdResponse = {
+    found: number
+}
 
 export class DeadLetterEventRepository implements IDeadLetterEventRepository {
 
     private _db: IDatabase;
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
+    }
+    async findByEventId(event_id: string): Promise<number> {
+
+        const sql = 'select count(1) as found from dead_letter_events where event_id =$1';
+        const [response] = await this._db.query<findByEventIdResponse>(sql, [event_id]);
+        return response!.found;
     }
     public async save(
         dto: CreateDeadLetterEventDto,

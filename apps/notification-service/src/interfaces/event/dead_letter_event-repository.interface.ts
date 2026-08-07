@@ -3,5 +3,6 @@ import { DeadLetterEventEntity } from "../../entity/DeadLetterEvent.entity.ts";
 
 
 export interface IDeadLetterEventRepository {
-    save(dto: CreateDeadLetterEventDto): Promise<DeadLetterEventEntity>
+    save(dto: CreateDeadLetterEventDto): Promise<DeadLetterEventEntity>;
+    findByEventId(event_id: string): Promise<number>;
 }

@@ -117,20 +117,25 @@ export class RabbitMQDqlConsumer {
 
                     */
 
-                    await this._deadLetterEventService.save({
-                        service_name: event.headers.source,
-                        queue_name: 'notification-service',
-                        exchange: message.fields.exchange,
-                        routing_key: message.fields.routingKey,
-                        event_id: event.event_id,
-                        event_name: event.event_name,
-                        payload: event.payload,
-                        headers: message.properties.headers || {},
-                        reason: message?.properties?.headers && message?.properties?.headers['x-application-error'] || 'unkown reason'
-                    })
+                    const isEventExists = await this._deadLetterEventService.find(event.event_id);
 
+                    if (isEventExists > 0) channel.ack(message);
+                    else {
 
-                    channel.ack(message);
+                        await this._deadLetterEventService.save({
+                            service_name: event.headers.source,
+                            queue_name: 'notification-service',
+                            exchange: message.fields.exchange,
+                            routing_key: message.fields.routingKey,
+                            event_id: event.event_id,
+                            event_name: event.event_name,
+                            payload: event.payload,
+                            headers: message.properties.headers || {},
+                            reason: message?.properties?.headers && message?.properties?.headers['x-application-error'] || 'unkown reason'
+                        });
+
+                        channel.ack(message);
+                    }
 
 
                 } catch (error) {
