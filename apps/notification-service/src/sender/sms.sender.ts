@@ -43,11 +43,11 @@ export class SmsSender implements INotificationSender {
                     ? error.message
                     : 'Unknown email delivery error';
 
-            console.error(
-                `[EmailSender] Error enviando sms a ${command.phoneNumber}:`,
-                error,
-            );
-            console.error(`[EmailSender] Error enviando sms a ${command.phoneNumber}:`, error);
+            /* console.error(
+                 `[EmailSender] Error enviando sms a ${command.phoneNumber}:`,
+                 error,
+             );
+             console.error(`[EmailSender] Error enviando sms a ${command.phoneNumber}:`, error);*/
             // Lanzamos el error para que RabbitMQ pueda marcarlo como fallido y reintentar (NACK)
             response.status = NotificationDeliveryStatus.FAILED;
             response.error_message = errorMessage;

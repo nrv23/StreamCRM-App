@@ -36,7 +36,9 @@ export class ProcessNotificationDeliveryService {
 
             // Fuera de la transacción
             const response = await this._nofiticationDisptcher.dispatch(command);
-
+            console.log({
+                processNotificationResponse: response
+            })
             // Aquí sí abres transacción para guardar el resultado
             await this._unitOfWork.execute(async ({
                 notification,
