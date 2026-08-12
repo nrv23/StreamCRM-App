@@ -8,46 +8,79 @@ import {
     TransformedData
 } from "winston-elasticsearch";
 
-const esTransformer = (logData: LogData): TransformedData => {
+export class WinstonLogger {
 
-    return ElasticsearchTransformer(logData)
-}
-export const winstonLogger = (
-    elasticSearchNode: string,
-    service: string,
-    level: string,
-    indexPrefix: string
-): Logger => {
+    private static _loggerInstance: Logger | null = null;
 
-    const esTransport = new ElasticsearchTransport({
-        level,
-        indexPrefix,
-        transformer: esTransformer,
+    private constructor() { }
 
-        clientOpts: {
-            node: elasticSearchNode,
-            maxRetries: 2,
-            requestTimeout: 10000,
-            sniffOnStart: false
+    public static getInstance(
+        elasticSearchNode: string,
+        service: string,
+        level: string,
+        indexPrefix: string
+    ): Logger {
+
+        if (!WinstonLogger._loggerInstance) {
+            WinstonLogger._loggerInstance = WinstonLogger.createLogger(
+                elasticSearchNode,
+                service,
+                level,
+                indexPrefix
+            );
         }
-    });
 
-    esTransport.on('error', (error) => {
-        console.error('[ELASTIC TRANSPORT ERROR]', error);
-    });
+        return WinstonLogger._loggerInstance;
+    }
 
-    return winston.createLogger({
-        exitOnError: false,
+    private static esTransformer(
+        logData: LogData
+    ): TransformedData {
 
-        defaultMeta: {
-            service
-        },
+        return ElasticsearchTransformer(logData);
+    }
 
-        transports: [
-            new winston.transports.Console({
-                level
-            }),
-            esTransport
-        ]
-    });
-};
+    private static createLogger(
+        elasticSearchNode: string,
+        service: string,
+        level: string,
+        indexPrefix: string
+    ): Logger {
+
+        const esTransport = new ElasticsearchTransport({
+            level,
+            indexPrefix,
+            transformer: WinstonLogger.esTransformer,
+
+            clientOpts: {
+                node: elasticSearchNode,
+                maxRetries: 2,
+                requestTimeout: 10000,
+                sniffOnStart: false
+            }
+        });
+
+        esTransport.on('error', (error) => {
+            console.error(
+                '[ELASTIC TRANSPORT ERROR]',
+                error
+            );
+        });
+
+        return winston.createLogger({
+            exitOnError: false,
+
+            defaultMeta: {
+                service
+            },
+
+            transports: [
+                new winston.transports.Console({
+                    level
+                }),
+
+                esTransport
+            ]
+        });
+    }
+}

@@ -10,8 +10,9 @@ import { deleteCustomerValidator } from "../validators/customer/delete-customer.
 import { UnitOfWork } from "../config/unitOfWork.js";
 import { IRoutes } from "../interfaces/routes.interface.js";
 import { fakeAuth } from "../shared/middleware/fake-user.middleware.js";
-import { winstonLogger } from "../shared/utils/winstonLogger.ts";
+
 import { env } from "../config/enviroment.ts";
+import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 
 export class CustomerRoutes implements IRoutes {
 
@@ -28,10 +29,12 @@ export class CustomerRoutes implements IRoutes {
         this._customerService = new CustomerService(
             this._customerRepository,
             this._unitOfWork,
-            winstonLogger(env.elastic_search_url,
+            WinstonLogger.getInstance(
+                env.elastic_search_url,
                 'customerElasticSearchServer',
                 'debug',
-                env.index_elastic_search_name)
+                env.index_elastic_search_name
+            )
         );
         this._router = Router();
         this._controller = new CustomerController(this._customerService)

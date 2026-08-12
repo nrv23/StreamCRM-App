@@ -14,6 +14,7 @@ import { CREATE_CUSTOMER, CHANGE_CUSTOMER_STATUS, UPDATE_CUSTOMER, DELETE_CUSTOM
 import { EntityType } from "../enum/EntityType.enum.js";
 import { Logger } from "winston";
 import { ILogMetadata } from "../interfaces/iLog.interface.ts";
+import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 
 export class CustomerService {
 
@@ -85,7 +86,6 @@ export class CustomerService {
             };
 
             this._logger.info('customer created', log);
-
             return customer;
         });
     }

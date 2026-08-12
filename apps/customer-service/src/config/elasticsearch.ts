@@ -2,16 +2,15 @@ import { Client } from '@elastic/elasticsearch';
 import { Logger } from 'winston';
 import { ClusterHealthHealthResponseBody } from '@elastic/elasticsearch/lib/api/types'
 //'@elastic/elasticsearch/lib/api/typesWithBodyKey';
-import { winstonLogger } from '../shared/utils/winstonLogger.ts';
+
 import { env } from './enviroment.ts';
+import { WinstonLogger } from '../shared/utils/winstonLogger.ts';
 
-export const INDEX_NAME = 'app-logs-customer-service';
-
-const log: Logger = winstonLogger(
+const log: Logger = WinstonLogger.getInstance(
     env.elastic_search_url,
     'customerElasticSearchServer',
     'debug',
-    INDEX_NAME
+    env.index_elastic_search_name
 );
 
 export const elasticSearchClient = new Client({
@@ -21,16 +20,16 @@ export const elasticSearchClient = new Client({
 async function createLogIndex(): Promise<void> {
 
     const exists = await elasticSearchClient.indices.exists({
-        index: INDEX_NAME
+        index: env.index_elastic_search_name
     });
 
     if (exists) {
-        log.info(`Elasticsearch index [${INDEX_NAME}] already exists`);
+        log.info(`Elasticsearch index [${env.index_elastic_search_name}] already exists`);
         return;
     }
 
     await elasticSearchClient.indices.create({
-        index: INDEX_NAME,
+        index: env.index_elastic_search_name,
         mappings: {
             properties: {
                 '@timestamp': {
@@ -55,7 +54,7 @@ async function createLogIndex(): Promise<void> {
         }
     });
 
-    log.info(`Elasticsearch index [${INDEX_NAME}] created`);
+    log.info(`Elasticsearch index [${env.index_elastic_search_name}] created`);
 }
 
 export async function connect(): Promise<void> {
