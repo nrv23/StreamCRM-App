@@ -8,10 +8,7 @@ export interface ILogMetadata {
     method?: string;
     route?: string;
     status_code?: number;
-    error?: {
-        name?: string;
-        message: string;
-        stack?: string;
-    };
-    timestamp: string
+    error_name?: string;
+    error_message?: string;
+    error_stack?: string;
 }

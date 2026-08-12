@@ -14,7 +14,6 @@ import { CREATE_CUSTOMER, CHANGE_CUSTOMER_STATUS, UPDATE_CUSTOMER, DELETE_CUSTOM
 import { EntityType } from "../enum/EntityType.enum.js";
 import { Logger } from "winston";
 import { ILogMetadata } from "../interfaces/iLog.interface.ts";
-import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 
 export class CustomerService {
 
@@ -81,8 +80,7 @@ export class CustomerService {
                 customer_id: customer.id,
                 method: 'POST',
                 route: 'api/v1/customers',
-                status_code: 201,
-                timestamp: new Date().toISOString()
+                status_code: 201
             };
 
             this._logger.info('customer created', log);

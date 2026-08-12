@@ -1,16 +1,35 @@
+import winston, { Logger } from 'winston';
 
-
-import winston, { Logger } from "winston";
 import {
     ElasticsearchTransformer,
     ElasticsearchTransport,
-    LogData,
-    TransformedData
-} from "winston-elasticsearch";
+    LogData
+} from 'winston-elasticsearch';
+
+interface IElasticLogDocument {
+    '@timestamp': string;
+    level: string;
+    message: string;
+
+    service?: string;
+    event?: string;
+    event_id?: string;
+    correlation_id?: string;
+    request_id?: string;
+    customer_id?: number;
+    method?: string;
+    route?: string;
+    status_code?: number;
+    error_name?: string;
+    error_message?: string;
+    error_stack?: string;
+
+    [key: string]: unknown;
+}
 
 export class WinstonLogger {
 
-    private static _loggerInstance: Logger | null = null;
+    private static instance: Logger | null = null;
 
     private constructor() { }
 
@@ -21,23 +40,33 @@ export class WinstonLogger {
         indexPrefix: string
     ): Logger {
 
-        if (!WinstonLogger._loggerInstance) {
-            WinstonLogger._loggerInstance = WinstonLogger.createLogger(
-                elasticSearchNode,
-                service,
-                level,
-                indexPrefix
-            );
+        if (WinstonLogger.instance) {
+            return WinstonLogger.instance;
         }
 
-        return WinstonLogger._loggerInstance;
+        WinstonLogger.instance = WinstonLogger.createLogger(
+            elasticSearchNode,
+            service,
+            level,
+            indexPrefix
+        );
+
+        return WinstonLogger.instance;
     }
 
-    private static esTransformer(
+    private static transform(
         logData: LogData
-    ): TransformedData {
+    ): IElasticLogDocument {
+        const metadata = Object.fromEntries(
+            Object.entries(logData.meta ?? {})
+        );
 
-        return ElasticsearchTransformer(logData);
+        return {
+            '@timestamp': logData.timestamp ?? new Date().toISOString(),
+            level: logData.level,
+            message: logData.message,
+            ...metadata
+        };
     }
 
     private static createLogger(
@@ -50,7 +79,7 @@ export class WinstonLogger {
         const esTransport = new ElasticsearchTransport({
             level,
             indexPrefix,
-            transformer: WinstonLogger.esTransformer,
+            transformer: WinstonLogger.transform,
 
             clientOpts: {
                 node: elasticSearchNode,
@@ -67,7 +96,16 @@ export class WinstonLogger {
             );
         });
 
+        esTransport.on('error', (error) => {
+            console.error('[ELASTIC TRANSPORT ERROR]', error);
+        });
+
+        esTransport.on('warning', (warning) => {
+            console.warn('[ELASTIC TRANSPORT WARNING]', warning);
+        });
+
         return winston.createLogger({
+            level,
             exitOnError: false,
 
             defaultMeta: {
@@ -75,10 +113,7 @@ export class WinstonLogger {
             },
 
             transports: [
-                new winston.transports.Console({
-                    level
-                }),
-
+                new winston.transports.Console(),
                 esTransport
             ]
         });
