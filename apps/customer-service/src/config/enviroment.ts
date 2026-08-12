@@ -29,7 +29,11 @@ const validatedEnv = cleanEnv(process.env, {
     }),
     RABBITMQ_USER: str(),
     RABBITMQ_PASSWORD: str(),
-    RABBITMQ_VHOST: str({ default: '/' })
+    RABBITMQ_VHOST: str({ default: '/' }),
+    ELASTIC_SEARCH_URL: str({
+        default: 'http://localhost:9200'
+    }),
+    INDEX_ELASTIC_SEARCH_NAME: str()
 });
 
 export const env: IEnvConfig = {
@@ -50,7 +54,9 @@ export const env: IEnvConfig = {
     rabbitmq_host_port: validatedEnv.RABBITMQ_HOST_PORT,
     rabbitmq_user: validatedEnv.RABBITMQ_USER,
     rabbitmq_password: validatedEnv.RABBITMQ_PASSWORD,
-    rabbitmq_vhost: validatedEnv.RABBITMQ_VHOST
+    rabbitmq_vhost: validatedEnv.RABBITMQ_VHOST,
+    elastic_search_url: validatedEnv.ELASTIC_SEARCH_URL,
+    index_elastic_search_name: validatedEnv.INDEX_ELASTIC_SEARCH_NAME
 };
 /*
 export const env: IEnvConfig = {

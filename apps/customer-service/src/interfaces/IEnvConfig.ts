@@ -18,4 +18,6 @@ export interface IEnvConfig {
     rabbitmq_user: string;
     rabbitmq_password: string;
     rabbitmq_vhost: string;
+    elastic_search_url: string;
+    index_elastic_search_name: string;
 }

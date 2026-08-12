@@ -12,15 +12,19 @@ import { CreateCustomerDto } from '../dto/customer/createCustomer.dto.js'
 import { env } from "../config/enviroment.js";
 import { CREATE_CUSTOMER, CHANGE_CUSTOMER_STATUS, UPDATE_CUSTOMER, DELETE_CUSTOMER } from "../shared/types/events.type.js";
 import { EntityType } from "../enum/EntityType.enum.js";
+import { Logger } from "winston";
+import { ILogMetadata } from "../interfaces/iLog.interface.ts";
 
 export class CustomerService {
 
     private _unitOfWork: UnitOfWork
     private _customerRepository: ICustomerRepository;
+    private _logger: Logger;
 
-    constructor(customerRepository: ICustomerRepository, unitOfWork: UnitOfWork) {
+    constructor(customerRepository: ICustomerRepository, unitOfWork: UnitOfWork, logger: Logger) {
         this._customerRepository = customerRepository;
         this._unitOfWork = unitOfWork;
+        this._logger = logger;
     }
 
 
@@ -35,10 +39,10 @@ export class CustomerService {
             const customer = await customers.save(dto);
 
             // Promise all para ejecutar eventos y logs de auditoria
-
+            const event_id = randomUUID();
             await Promise.all([
                 events.save({
-                    event_id: randomUUID(),
+                    event_id,
                     event_name: CREATE_CUSTOMER,
                     aggregate_id: customer.id,
                     aggregate_type: EntityType.CUSTOMER,
@@ -68,6 +72,19 @@ export class CustomerService {
                     user_agent: dto.user_agent
                 })
             ]);
+
+            const log: ILogMetadata = {
+                service: env.service_name,
+                event: CREATE_CUSTOMER,
+                event_id,
+                customer_id: customer.id,
+                method: 'POST',
+                route: 'api/v1/customers',
+                status_code: 201,
+                timestamp: new Date().toISOString()
+            };
+
+            this._logger.info('customer created', log);
 
             return customer;
         });

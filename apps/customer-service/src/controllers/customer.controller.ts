@@ -9,6 +9,8 @@ import { IPaginationResponse } from '../interfaces/pagination.interface.js';
 import { UpdateCustomerDto } from '../dto/customer/updateCustomer.dto.js';
 import { CustomerStatus } from '../enum/CustomerStatus.enum.js';
 
+
+
 export class CustomerController {
 
     private _customerService: CustomerService;
@@ -38,6 +40,7 @@ export class CustomerController {
             },
             success: true
         }
+
 
         res.status(201).json(response);
         return;

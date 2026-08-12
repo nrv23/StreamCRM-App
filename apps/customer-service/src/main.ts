@@ -3,11 +3,15 @@ import { env } from "./config/enviroment.js";
 //import { rabbitMQClient } from "./config/raabbitmq.ts";
 // ejecucion del worker
 import './background/events';
+import { connect, elasticSearchClient } from "./config/elasticsearch.ts";
 
 async function bootstrap() {
     const app = createApp();
     //await rabbitMQClient.connect()
     const port = Number(env.server_port);
+    // conecion con elastic search
+
+    await connect();
 
     app.listen(port, () => {
         console.log(`Customer Service running on port ${port}`);
