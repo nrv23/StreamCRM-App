@@ -21,6 +21,7 @@
     }
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^9.5.0",
     "amqplib": "^2.0.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -30,7 +31,9 @@
     "helmet": "^8.2.0",
     "pg": "^8.22.0",
     "pg-format": "^1.0.4",
-    "pino": "^10.3.1"
+    "pino": "^10.3.1",
+    "winston": "^3.19.0",
+    "winston-elasticsearch": "^0.19.0"
   },
   "devDependencies": {
     "@jest/globals": "^30.4.1",
