@@ -184,7 +184,7 @@ export class RabbitMQConsumer {
                     this._logger.info('[RabbitMQ Consumer] event consumed', log);
 
                 } catch (error) {
-
+                    let event;
                     try {
                         let log: ILogMetadata;
                         let errorObject = {
@@ -192,7 +192,7 @@ export class RabbitMQConsumer {
                             name: "",
                             stack: ""
                         }
-                        const event = JSON.parse(
+                        event = JSON.parse(
                             message.content.toString('utf8'),
                         )
 
@@ -211,6 +211,7 @@ export class RabbitMQConsumer {
                             error_message: errorObject.message,
                             error_name: errorObject.name,
                             error_stack: errorObject.stack,
+                            event_id: event.event_id,
                         }
                         this._logger.error('[CONSUMER] Event processing failed:', log);
                         //
@@ -261,7 +262,8 @@ export class RabbitMQConsumer {
                                 ? JSON.parse(JSON.stringify(dlqError))
                                 : { message: String(dlqError) },
                             service: env.service_name,
-                            created_at: new Date().toISOString()
+                            created_at: new Date().toISOString(),
+                            event_id: event.event_id,
                         }
                         this._logger.error('[CONSUMER] Failed to publish message to DLQ:', log);
 

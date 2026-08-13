@@ -7,6 +7,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { HandlebarsTemplateEngine } from "../../handlebars/handlebarsTemplateEngine.ts";
 import { SmsSender } from "../../sender/sms.sender.ts";
+import { env } from "../../config/enviroment.ts";
+import { WinstonLogger } from "../../shared/utils/winstonLogger.ts";
 
 
 export class ProcessNotificationWorker {
@@ -85,19 +87,33 @@ async function startWorker(): Promise<void> {
     const { pagination_record_notification_deliveries } = workerData;
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
+    const loggerServiceInstance = WinstonLogger.getInstance(
+        env.elastic_search_url,
+        'process-notification-delivery-service',
+        'debug',
+        env.index_elastic_search_name
+    );
+    const loggerSenderInstance = WinstonLogger.getInstance(
+        env.elastic_search_url,
+        'sender-service',
+        'debug',
+        env.index_elastic_search_name
+    );
     // instancia de template engine
     const templatesDirectoryPath = path.join(__dirname, './../../templates/');
     const templateEngine = new HandlebarsTemplateEngine(templatesDirectoryPath);
     // 2. Instancias el sender y tu nuevo NotificationDispatcher
-    const emailSender = new EmailSender(templateEngine); // (O la clase real que use nodemailer)
-    const smsSender = new SmsSender();
+    const emailSender = new EmailSender(templateEngine, loggerSenderInstance); // (O la clase real que use nodemailer)
+    const smsSender = new SmsSender(loggerSenderInstance);
     const dispatcher = new NotificationDispatcher(emailSender, smsSender)
     const unitOfWork = new UnitOfWork()
     const service = new ProcessNotificationDeliveryService(
         unitOfWork,
         dispatcher,
-        +pagination_record_notification_deliveries
-    );
+        +pagination_record_notification_deliveries,
+        loggerServiceInstance
+    )
+
     const worker = new ProcessNotificationWorker(service, 60000);
     await worker.start();
 }

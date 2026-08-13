@@ -5,6 +5,8 @@ import amqp, {
 import { env } from './enviroment.ts';
 import { DeadLetterEventService } from '../services/DeadLetterEvent.service.ts';
 import { CreateDeadLetterEventDto } from '../dto/deadLetterEvents/create-dead-letter-event.dto.ts';
+import { Logger } from 'winston';
+import { ILogMetadata } from '../interfaces/iLog.interface.ts';
 
 
 
@@ -15,11 +17,12 @@ export class RabbitMQDqlConsumer {
     private readonly queueNameDql = 'notification-service.dlq';
     private readonly _exchangeDlq = 'stream-crm.dlx';
     private _deadLetterEventService: DeadLetterEventService;
+    private _logger: Logger;
 
-
-    constructor(deadLetterEventService: DeadLetterEventService) {
+    constructor(deadLetterEventService: DeadLetterEventService, logger: Logger) {
         // agregar un servicio para guardar en db
         this._deadLetterEventService = deadLetterEventService;
+        this._logger = logger;
     }
 
     public async connect(): Promise<void> {
@@ -30,7 +33,12 @@ export class RabbitMQDqlConsumer {
         this.connection = await amqp.connect(url);
         this.channel = await this.connection.createChannel();
 
-        console.log('[RabbitMQ DLQ Consumer] Connected.');
+        const log: ILogMetadata = {
+            service: env.service_name,
+            created_at: new Date().toISOString()
+        }
+
+        this._logger.info('[RabbitMQ DLQ Consumer] Connected.', log);
     }
     public async getChannel(): Promise<Channel> {
         if (!this.channel) {
@@ -81,19 +89,29 @@ export class RabbitMQDqlConsumer {
                     return;
                 }
 
+                let event;
+
                 try {
-                    const event = JSON.parse(
+                    let log: ILogMetadata;
+                    event = JSON.parse(
                         message.content.toString('utf8'),
                     )
 
-                    console.log(
-                        '[DLQ CONSUMER] Event received: ewqe',
-                        message.fields.routingKey,
-                        event,
-                        message.properties.headers
-                    );
-                    /*
+                    log = {
+                        service: env.service_name,
+                        created_at: new Date().toISOString(),
+                        event_id: event.id,
+                        event: event.event_name,
+                        entity_id: event.aggregate_id,
+                        payload: JSON.parse(JSON.stringify({
+                            ...message.properties,
+                            ...message.fields
+                        }))
+                    }
 
+                    this._logger.info('[DLQ CONSUMER] Event received:', log);
+
+                    /*
                         [DLQ CONSUMER] Event received: ewqe customer.created {
                         id: 81,
                         event_id: 'cb3427c2-9722-4ec6-95aa-56811947871c',
@@ -113,8 +131,6 @@ export class RabbitMQDqlConsumer {
                         retry_count: 0,
                         created_at: '2026-08-07T02:13:59.178Z'
                         } { 'x-application-error': 'error test' }
-
-
                     */
 
                     const isEventExists = await this._deadLetterEventService.find(event.event_id);
@@ -137,12 +153,36 @@ export class RabbitMQDqlConsumer {
                         channel.ack(message);
                     }
 
+                    this._logger.info('[DLQ CONSUMER] Event consumed:', log);
+
 
                 } catch (error) {
-                    console.error(
-                        '[DLQ CONSUMER] Event processing failed:',
-                        error,
-                    );
+
+                    let log: ILogMetadata;
+                    let errorObject = {
+                        message: "",
+                        name: "",
+                        stack: ""
+                    }
+
+                    if (error instanceof Error) {
+                        errorObject = {
+                            message: error.message,
+                            name: error.name,
+                            stack: error.stack ?? 'unkown stack trace error'
+                        };
+                    }
+                    else errorObject.message = String(error);
+
+                    log = {
+                        service: env.service_name,
+                        created_at: new Date().toISOString(),
+                        error_message: errorObject.message,
+                        error_name: errorObject.name,
+                        error_stack: errorObject.stack,
+                        event_id: event.event_id,
+                    }
+                    this._logger.error('[DLQ CONSUMER] Event processing failed:', log);
 
                     channel.nack(
                         message,

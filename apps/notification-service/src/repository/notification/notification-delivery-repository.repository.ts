@@ -17,6 +17,7 @@ export type GetNotificationDeliveriesResponse = {
     notification_id: number;
     channel: NotificationCommand;
     delivery_id: number;
+    notification_external_id: string;
     title: string;
     message: string;
     metadata: JsonObject;
@@ -79,6 +80,7 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
         const sql = `
             SELECT
                 n.id AS notification_id,
+                n.external_id as notification_external_id,
                 nd.id AS delivery_id,
                 nd.channel,
                 n.title,

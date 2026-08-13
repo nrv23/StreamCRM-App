@@ -17,7 +17,7 @@ async function startWorker() {
         const rabbitConsumer = new RabbitMQConsumer(processIntegrationEvent,
             WinstonLogger.getInstance(
                 env.elastic_search_url,
-                'consumner-boostrap',
+                'consumer-boostrap',
                 'debug',
                 env.index_elastic_search_name
             ))

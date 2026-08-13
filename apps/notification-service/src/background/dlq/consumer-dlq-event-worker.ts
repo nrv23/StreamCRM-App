@@ -4,6 +4,8 @@ import { DeadLetterEventService } from "../../services/DeadLetterEvent.service.t
 import { RabbitDeadLetterEventDlqConsumer } from "../../consumer/RabbitDeadLetterEvent.consumer.ts";
 import RabbitMQDqlConsumer from "../../config/rabbitmqDlqConusmer.ts";
 import { DeadLetterEventRepository } from "../../repository/event/dead_letter_event-repository.repository.ts";
+import { env } from "../../config/enviroment.ts";
+import { WinstonLogger } from "../../shared/utils/winstonLogger.ts";
 
 
 async function startWoker() {
@@ -13,7 +15,12 @@ async function startWoker() {
 
         const repository = new DeadLetterEventRepository
         const deadLetterEventService = new DeadLetterEventService(repository)
-        const rabbitDqlConsumer = new RabbitMQDqlConsumer(deadLetterEventService);
+        const rabbitDqlConsumer = new RabbitMQDqlConsumer(deadLetterEventService, WinstonLogger.getInstance(
+            env.elastic_search_url,
+            'consumer-dlq',
+            'debug',
+            env.index_elastic_search_name
+        ));
         const rabbitDeadLetterEventDlqConsumer = new RabbitDeadLetterEventDlqConsumer(rabbitDqlConsumer)
         const dqlConsumerService = new DlqConsumerService(rabbitDeadLetterEventDlqConsumer);
         await dqlConsumerService.execute();
