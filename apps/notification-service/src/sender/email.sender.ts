@@ -98,7 +98,7 @@ export class EmailSender implements INotificationSender {
                 payload: JSON.parse(JSON.stringify(command))
             }
 
-            this._logger.info('[EmailSender] Error sending email:', log);
+            this._logger.error('[EmailSender] Error sending email:', log);
         }
 
         return response;
