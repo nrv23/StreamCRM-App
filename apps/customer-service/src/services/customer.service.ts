@@ -76,11 +76,11 @@ export class CustomerService {
             const log: ILogMetadata = {
                 service: env.service_name,
                 event: CREATE_CUSTOMER,
-                event_id,
-                customer_id: customer.id,
+                entity_id: customer.id,
                 method: 'POST',
                 route: 'api/v1/customers',
-                status_code: 201
+                status_code: 201,
+                event_id
             };
 
             this._logger.info('customer created', log);
@@ -132,10 +132,10 @@ export class CustomerService {
 
 
             const customer = await customers.update(dto);
-
+            const event_id = randomUUID();
             await Promise.all([
                 events.save({
-                    event_id: randomUUID(),
+                    event_id,
                     event_name: UPDATE_CUSTOMER,
                     aggregate_id: customer.id,
                     aggregate_type: EntityType.CUSTOMER,
@@ -166,6 +166,18 @@ export class CustomerService {
                 })
             ]);
 
+            const log: ILogMetadata = {
+                service: env.service_name,
+                event: UPDATE_CUSTOMER,
+                event_id,
+                entity_id: customer.id,
+                method: 'PUT',
+                route: `api/v1/customers/${customer.id}`,
+                status_code: 200
+            };
+
+            this._logger.info('customer updated', log);
+
             return customer;
         });
     }
@@ -192,7 +204,7 @@ export class CustomerService {
                 }
 
                 const updatedCustomer = await customers.setStatus(customer_id, status);
-
+                const event_id = randomUUID();
 
 
                 await Promise.all([
@@ -204,7 +216,7 @@ export class CustomerService {
                     }),
 
                     events.save({
-                        event_id: randomUUID(),
+                        event_id,
                         event_name:
                             status === CustomerStatus.blocked
                                 ? DELETE_CUSTOMER
@@ -245,6 +257,18 @@ export class CustomerService {
                         user_agent
                     })
                 ]);
+
+                const log: ILogMetadata = {
+                    service: env.service_name,
+                    event: CHANGE_CUSTOMER_STATUS,
+                    event_id,
+                    entity_id: updatedCustomer.id,
+                    method: 'PATCH',
+                    route: `api/v1/customers/status/${updatedCustomer.id}`,
+                    status_code: 200
+                };
+
+                this._logger.info('customer status updated', log);
 
                 return updatedCustomer;
             },

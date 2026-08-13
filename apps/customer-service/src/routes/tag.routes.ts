@@ -7,6 +7,8 @@ import { createTagValidator } from "../validators/tag/create-tag.validator.js";
 import { validateRequest } from "../shared/middleware/validate-errors.middleware.js";
 import { IRoutes } from "../interfaces/routes.interface.js";
 import { fakeAuth } from "../shared/middleware/fake-user.middleware.js";
+import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
+import { env } from "../config/enviroment.ts";
 
 
 
@@ -23,7 +25,13 @@ export class TagRoutes implements IRoutes {
         //this._tagRepository = new TagRepository();
         this._unitOfWork = new UnitOfWork();
         this._tagService = new TagService(
-            this._unitOfWork
+            this._unitOfWork,
+            WinstonLogger.getInstance(
+                env.elastic_search_url,
+                'tag-module',
+                'debug',
+                env.index_elastic_search_name
+            )
         );
         this._router = Router();
         this._controller = new TagController(this._tagService)

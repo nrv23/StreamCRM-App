@@ -8,12 +8,18 @@ import { IPaginationResponse } from "../interfaces/pagination.interface.js";
 import { ErrorFactory } from "../shared/factory/error-factory.js";
 import { CREATE_NOTE } from "../shared/types/events.type.js";
 import { EntityType } from "../enum/EntityType.enum.js";
+import { Logger } from "winston";
+import { ILogMetadata } from "../interfaces/iLog.interface.ts";
+import { env } from "../config/enviroment.ts";
 
 export class NoteService {
 
     private _unitOfWork: UnitOfWork;
-    constructor(unitOfWork: UnitOfWork) {
+    private _logger: Logger;
+
+    constructor(unitOfWork: UnitOfWork, logger: Logger) {
         this._unitOfWork = unitOfWork;
+        this._logger = logger;
     }
 
     async save(dto: CreateNoteDto): Promise<Note> {
@@ -33,7 +39,18 @@ export class NoteService {
                 new_values: { ...newNote },
                 ip_address: dto.ip_address,
                 user_agent: dto.user_agent
-            })
+            });
+
+            const log: ILogMetadata = {
+                service: env.service_name,
+                event: CREATE_NOTE,
+                entity_id: newNote.id,
+                method: 'POST',
+                route: `api/v1/notes/${dto.customer_id}`,
+                status_code: 201
+            };
+
+            this._logger.info('note created', log);
 
             return newNote;
         })

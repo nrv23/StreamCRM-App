@@ -31,7 +31,7 @@ export class CustomerRoutes implements IRoutes {
             this._unitOfWork,
             WinstonLogger.getInstance(
                 env.elastic_search_url,
-                'customerElasticSearchServer',
+                'customer-module',
                 'debug',
                 env.index_elastic_search_name
             )

@@ -6,13 +6,17 @@ import { ErrorFactory } from '../shared/factory/error-factory.js';
 import { CREATE_TAG } from '../shared/types/events.type.js';
 import { env } from '../config/enviroment.js';
 import { EntityType } from '../enum/EntityType.enum.js';
+import { Logger } from 'winston';
+import { ILogMetadata } from '../interfaces/iLog.interface.ts';
 
 export class TagService {
 
     private _unitOfWork: UnitOfWork;
+    private _logger: Logger;
 
-    constructor(unitOfWork: UnitOfWork) {
+    constructor(unitOfWork: UnitOfWork, logger: Logger) {
         this._unitOfWork = unitOfWork;
+        this._logger = logger;
     }
 
     async save(dto: CreateTagDto) {
@@ -61,6 +65,17 @@ export class TagService {
                     user_agent: dto.user_agent
                 })
             ]);
+
+            const log: ILogMetadata = {
+                service: env.service_name,
+                event: CREATE_TAG,
+                entity_id: newTag.id,
+                method: 'POST',
+                route: `api/v1/tags/${dto.customerId}`,
+                status_code: 201
+            }
+
+            this._logger.info('Tag created', log);
 
             return newTag;
         });

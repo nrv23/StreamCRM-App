@@ -7,6 +7,8 @@ import { createNoteValidator } from "../validators/notes/create-note.validator.j
 import { validateRequest } from "../shared/middleware/validate-errors.middleware.js";
 import { fakeAuth } from "../shared/middleware/fake-user.middleware.js";
 import { getNoteValidator } from "../validators/notes/get-note.validator.js";
+import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
+import { env } from "../config/enviroment.ts";
 
 
 export class NotesRoutes implements IRoutes {
@@ -19,7 +21,12 @@ export class NotesRoutes implements IRoutes {
     constructor() {
 
         this._unitOfWork = new UnitOfWork();
-        this._noteService = new NoteService(this._unitOfWork);
+        this._noteService = new NoteService(this._unitOfWork, WinstonLogger.getInstance(
+            env.elastic_search_url,
+            'notes-module',
+            'debug',
+            env.index_elastic_search_name
+        ));
         this._noteController = new NoteController(this._noteService);
         this._router = Router();
     }
