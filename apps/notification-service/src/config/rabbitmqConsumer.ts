@@ -7,6 +7,8 @@ import { env } from './enviroment.ts';
 import { ProcessIntegrationEvent } from '../handlers/processIntegrationEvent.handler.ts';
 import { randomUUID } from 'node:crypto';
 import { RabbitEventDto } from '../dto/outboxEvents/rabbitEvent.dto.ts';
+import { Logger } from 'winston';
+import { ILogMetadata } from '../interfaces/iLog.interface.ts';
 
 
 export class RabbitMQConsumer {
@@ -19,9 +21,10 @@ export class RabbitMQConsumer {
     private readonly _exchangeDlq = 'stream-crm.dlx';
 
     private readonly _processIntegrationEvent: ProcessIntegrationEvent;
-
-    constructor(processIntegrationEvent: ProcessIntegrationEvent) {
+    private readonly _logger: Logger;
+    constructor(processIntegrationEvent: ProcessIntegrationEvent, logger: Logger) {
         this._processIntegrationEvent = processIntegrationEvent;
+        this._logger = logger;
     }
 
     public async connect(): Promise<void> {
@@ -33,6 +36,14 @@ export class RabbitMQConsumer {
         this.channel = await this.connection.createChannel();
 
         console.log('[RabbitMQ Consumer] Connected.');
+
+        const log: ILogMetadata = {
+            service: env.service_name,
+            created_at: new Date().toISOString()
+        }
+
+        this._logger.info('[RabbitMQ Consumer]', log);
+
     }
     public async getChannel(): Promise<Channel> {
         if (!this.channel) {
@@ -113,15 +124,17 @@ export class RabbitMQConsumer {
                 }
 
                 try {
+                    let log: ILogMetadata;
                     const event = JSON.parse(
                         message.content.toString('utf8'),
                     )
-
+                    /*
                     console.log(
                         '[CONSUMER] Event received: ewqe',
                         message.fields.routingKey,
                         event,
-                    );
+                    );*/
+
                     /*
 
                         id: 4,
@@ -153,28 +166,58 @@ export class RabbitMQConsumer {
                         headers: event.headers,
                     }
 
+                    log = {
+                        service: env.service_name,
+                        event: event.event_name,
+                        entity_id: event.payload.customerId,
+                        event_id: event.event_id,
+                        created_at: event.created_at,
+                        payload: event.payload
+                    }
+
+                    this._logger.info('[RabbitMQ Consumer] consuming event...', log);
+
                     await this._processIntegrationEvent.execute(rabbitEvent);
+
                     channel.ack(message);
 
-
+                    this._logger.info('[RabbitMQ Consumer] event consumed', log);
 
                 } catch (error) {
 
-
-                    console.error(
-                        '[CONSUMER] Event processing failed:',
-                        error,
-                    );
-
                     try {
-                        const reason =
-                            error instanceof Error
-                                ? error.message
-                                : String(error);
+                        let log: ILogMetadata;
+                        let errorObject = {
+                            message: "",
+                            name: "",
+                            stack: ""
+                        }
+                        const event = JSON.parse(
+                            message.content.toString('utf8'),
+                        )
+
+                        if (error instanceof Error) {
+                            errorObject = {
+                                message: error.message,
+                                name: error.name,
+                                stack: error.stack ?? 'unkown stack trace error'
+                            };
+                        }
+                        else errorObject.message = String(error);
+                        // publicar log de error 
+                        log = {
+                            service: env.service_name,
+                            created_at: new Date().toISOString(),
+                            error_message: errorObject.message,
+                            error_name: errorObject.name,
+                            error_stack: errorObject.stack,
+                        }
+                        this._logger.error('[CONSUMER] Event processing failed:', log);
+                        //
 
                         const headers = {
                             ...(message.properties.headers ?? {}),
-                            'x-application-error': reason,
+                            'x-application-error': errorObject.message,
                         };
 
                         const published = channel.publish(
@@ -199,27 +242,36 @@ export class RabbitMQConsumer {
                         // a la cola principal.
                         channel.ack(message);
 
-                        console.log(
-                            '[CONSUMER] Event manually published to DLQ:',
-                            {
-                                routingKey: message.fields.routingKey,
-                                reason,
-                            },
-                        );
+                        log = {
+                            service: env.service_name,
+                            created_at: new Date().toISOString(),
+                            event: event.event_name,
+                            entity_id: event.payload.customerId,
+                            event_id: event.event_id,
+                            payload: JSON.parse(JSON.stringify(message.properties))
+                        };
+
+                        this._logger.info('[CONSUMER] Event manually published to DLQ:', log);
+
 
                     } catch (dlqError) {
-                        console.error(
-                            '[CONSUMER] Failed to publish message to DLQ:',
-                            dlqError,
-                        );
+
+                        const log: ILogMetadata = {
+                            payload: dlqError instanceof Error
+                                ? JSON.parse(JSON.stringify(dlqError))
+                                : { message: String(dlqError) },
+                            service: env.service_name,
+                            created_at: new Date().toISOString()
+                        }
+                        this._logger.error('[CONSUMER] Failed to publish message to DLQ:', log);
 
                         /*
-                         * IMPORTANTE:
-                         * no hacemos ACK del mensaje original.
-                         *
-                         * Si el canal/proceso se cierra, RabbitMQ
-                         * volverá a ponerlo disponible en la cola principal.
-                         */
+                        * IMPORTANTE:
+                        * no hacemos ACK del mensaje original.
+                        *
+                        * Si el canal/proceso se cierra, RabbitMQ
+                        * volverá a ponerlo disponible en la cola principal.
+                        */
                     }
                 }
             },

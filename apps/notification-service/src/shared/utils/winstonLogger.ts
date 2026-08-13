@@ -5,6 +5,7 @@ import {
     ElasticsearchTransport,
     LogData
 } from 'winston-elasticsearch';
+import { JsonObject } from '../../dto/outboxEvents/createOutboxEvent.dto.ts';
 // esta es la estrcutura en como kibana lee los logs enviados
 interface IElasticLogDocument {
     '@timestamp': string;
@@ -14,12 +15,10 @@ interface IElasticLogDocument {
     service?: string;
     event?: string;
     event_id?: string;
-    correlation_id?: string;
-    request_id?: string;
     entity_id?: number;
     method?: string;
-    route?: string;
-    status_code?: number;
+    payload?: JsonObject;
+    create_at: string;
     error_name?: string;
     error_message?: string;
     error_stack?: string;
@@ -66,7 +65,9 @@ export class WinstonLogger {
             '@timestamp': logData.timestamp ?? new Date().toISOString(),
             level: logData.level,
             message: logData.message,
-            ...metadata
+            create_at: '',
+            payload: {},
+            ...metadata,
         };
     }
 
