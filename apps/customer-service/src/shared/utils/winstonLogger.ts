@@ -5,7 +5,7 @@ import {
     ElasticsearchTransport,
     LogData
 } from 'winston-elasticsearch';
-
+// esta es la estrcutura en como kibana lee los logs enviados
 interface IElasticLogDocument {
     '@timestamp': string;
     level: string;
@@ -55,6 +55,7 @@ export class WinstonLogger {
     }
 
     private static transform(
+        // este metodo convierte los logs a la estructura custome 
         logData: LogData
     ): IElasticLogDocument {
         const metadata = Object.fromEntries(
