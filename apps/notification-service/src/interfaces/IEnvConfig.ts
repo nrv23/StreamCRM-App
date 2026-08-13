@@ -32,5 +32,7 @@ export interface IEnvConfig {
     sms: {
         api_key: string;
         api_secret: string;
-    }
+    },
+    elastic_search_url: string;
+    index_elastic_search_name: string;
 }

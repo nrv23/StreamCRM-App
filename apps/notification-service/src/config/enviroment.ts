@@ -40,6 +40,10 @@ const validatedEnv = cleanEnv(process.env, {
     SMTP_FROM: str({ default: '' }),
     SMS_API_KEY: str(),
     SMS_API_SECRET: str(),
+    ELASTIC_SEARCH_URL: str({
+        default: 'http://localhost:9200'
+    }),
+    INDEX_ELASTIC_SEARCH_NAME: str()
 });
 
 export const env: IEnvConfig = {
@@ -76,5 +80,7 @@ export const env: IEnvConfig = {
     sms: {
         api_key: validatedEnv.SMS_API_KEY,
         api_secret: validatedEnv.SMS_API_SECRET
-    }
+    },
+    elastic_search_url: validatedEnv.ELASTIC_SEARCH_URL,
+    index_elastic_search_name: validatedEnv.INDEX_ELASTIC_SEARCH_NAME
 };
