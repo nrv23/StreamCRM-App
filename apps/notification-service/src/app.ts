@@ -3,6 +3,9 @@ import { errorHandler } from "./shared/utils/error-handler.js";
 import { notFoundRouteHandler } from "./shared/utils/not-found-route-handler.js";
 
 import { requestDataInfo } from "./shared/middleware/client-info.middleware.js";
+import { MetricsController } from "./controllers/metrics.controller.ts";
+import { MetricsRoutes } from "./routes/metrics.route.ts";
+import MetricsService from "./services/metrics.service.ts";
 
 export function createApp(): Application {
     const app = express();
@@ -26,6 +29,9 @@ export function createApp(): Application {
             status: "ok",
         });
     });
+
+    app.use(new MetricsController(new MetricsService()).metricsCounter);
+    app.use(new MetricsRoutes().BuildRoutes())
 
     app.use(notFoundRouteHandler); // ruta no encontrada
     app.use(errorHandler); // manejador de errores generico
