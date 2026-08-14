@@ -1,6 +1,6 @@
 # 🔔 Notification Service - StreamCRM
 
-Servicio asíncrono y reactivo orientado a eventos (**Event-Driven Architecture**) en **StreamCRM**. Su función principal es consumir eventos emitidos por otros microservicios (como `customer-service`) a través de **RabbitMQ** y gestionar el procesamiento y envío de notificaciones multicanal (**Email**, **SMS**) mediante plantillas HTML dinámicas (**Handlebars**), garantizando **idempotencia** y resiliencia con **Dead Letter Queue (DLQ)**.
+Servicio asíncrono y reactivo orientado a eventos (**Event-Driven Architecture**) en **StreamCRM**. Su función principal es consumir eventos emitidos por otros microservicios (como `customer-service`) a través de **RabbitMQ** y gestionar el procesamiento y envío de notificaciones multicanal (**Email**, **SMS**) mediante plantillas HTML dinámicas (**Handlebars**), garantizando **idempotencia** y resiliencia con **Dead Letter Queue (DLQ)**, respaldado con observabilidad continua mediante **Prometheus** y **Grafana**.
 
 ---
 
@@ -11,6 +11,8 @@ Servicio asíncrono y reactivo orientado a eventos (**Event-Driven Architecture*
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Patrones de Diseño Implementados](#-patrones-de-diseño-implementados)
 - [Eventos Manejados](#-eventos-manejados)
+- [Rutas y API Endpoints](#-rutas-y-api-endpoints)
+- [Monitoreo y Observabilidad](#-monitoreo-y-observabilidad)
 - [Configuración y Variables de Entorno](#-configuración-y-variables-de-entorno)
 - [Comandos y Ejecución](#-comandos-y-ejecución)
 
@@ -23,13 +25,14 @@ Servicio asíncrono y reactivo orientado a eventos (**Event-Driven Architecture*
 - **Motor de Plantillas Dinámicas**: Renderizado de mensajes HTML utilizando **Handlebars**.
 - **Garantía de Idempotencia**: Verificación de eventos procesados en PostgreSQL (`processed_events`) para evitar notificaciones duplicadas.
 - **Manejo Resiliente de Fallos (DLQ)**: Cola de mensajes fallidos (Dead Letter Queue) para auditoría y reintentos automatizados.
-- **Trazabilidad y Observabilidad**: Envío de logs estructurados a **Elasticsearch** mediante **Winston**.
+- **Observabilidad y Métricas (Prometheus & Grafana)**: Recolección y exposición de métricas del sistema y peticiones HTTP a través de `prom-client` en el endpoint `/metrics`.
+- **Trazabilidad y Log Centralizado**: Envío de logs estructurados a **Elasticsearch** / **Kibana** mediante **Winston**.
 
 ---
 
 ## 🏗️ Arquitectura del Microservicio
 
-El servicio opera principalmente como un **Event Consumer / Background Worker** que responde a eventos del sistema:
+El servicio opera principalmente como un **Event Consumer / Background Worker** que responde a eventos del sistema y expone métricas HTTP:
 
 ```text
 ┌──────────────────────────────────────────────────────────┐
@@ -61,7 +64,7 @@ El servicio opera principalmente como un **Event Consumer / Background Worker** 
 
 ## 📐 Diagramas de Arquitectura y Flujos
 
-### 1. Diagrama del Flujo Event-Driven y Envíos
+### 1. Diagrama del Flujo Event-Driven, Envíos y Monitoreo
 
 ```mermaid
 graph TD
@@ -78,7 +81,13 @@ graph TD
         Sender --> DB[("🐘 PostgreSQL (processed_events & notifications)")]
     end
 
-    Sender --> Log["📝 Winston Logger -> Elasticsearch"]
+    subgraph Observability ["📊 Observability Stack"]
+        MetricsMiddleware["⏱️ Metrics Middleware"] --> PromClient["📈 prom-client (/metrics)"]
+        Prometheus["🔥 Prometheus (Port 9090)"] -->|Scrape /metrics| PromClient
+        Grafana["📊 Grafana (Port 3005)"] -->|Query| Prometheus
+        Sender --> Log["📝 Winston Logger -> Elasticsearch"]
+        Kibana["📊 Kibana"] -->|Query Logs| Log
+    end
 ```
 
 ### 2. Diagrama de Manejo de Errores y DLQ (Dead Letter Queue)
@@ -111,22 +120,23 @@ sequenceDiagram
 
 ```text
 src/
-├── app.ts                  # Configuración de Express para endpoints de salud (/health)
+├── app.ts                  # Configuración de Express para endpoints de salud (/health) y métricas (/metrics)
 ├── main.ts                 # Bootstrap del servicio y arranque de workers de RabbitMQ
 ├── background/             # Workers en segundo plano (events, notifications, dlq)
 ├── config/                 # Configuración de entorno, Nodemailer, PostgreSQL, Elastic, RabbitMQ
 ├── consumer/               # Consumidores de colas de RabbitMQ (Normal & DLQ)
-├── controllers/            # Controladores opcionales para gestión interna
+├── controllers/            # Controladores HTTP (MetricsController, etc.)
 ├── dto/                    # Data Transfer Objects
 ├── entity/                 # Entidades del dominio (Notification, ProcessedEvent)
-├── enum/                   # Enums (NotificationType, Channel, EventTypes)
+├── enum/                   # Enums (NotificationType, Channel, EventTypes, NotificationCommand)
 ├── handlebars/             # Helpers y utilidades para compilación de Handlebars
 ├── handlers/               # Event Handlers (CreateCustomer, UpdateCustomer, DeleteCustomer, StatusChange)
 ├── interfaces/             # Interfaces y contratos del servicio
 ├── publisher/              # Publicadores de eventos secundarios
 ├── repository/             # Persistencia de eventos procesados y notificaciones
+├── routes/                 # Rutas de Express (metrics, etc.)
 ├── sender/                 # Adaptadores de envío (EmailSender via Nodemailer, SmsSender)
-├── services/               # Servicios principales (Delivery Processing, Consumer Service)
+├── services/               # Servicios principales (Delivery Processing, Consumer Service, MetricsService)
 ├── shared/                 # Middlewares, utilidades, logger y manejador de errores
 └── templates/              # Plantillas HTML Handlebars para emails
 ```
@@ -143,6 +153,7 @@ src/
    - Registrar la notificación y marcar el evento como procesado.
 3. **Idempotent Consumer**: Garantiza que el procesamiento repetido del mismo evento no genere notificaciones duplicadas al usuario.
 4. **Dead Letter Queue (DLQ)**: Aislamiento de mensajes no procesables para evitar el bloqueo de la cola principal.
+5. **Observability Pattern (Prometheus Integration)**: Middleware e instrumentalización mediante `prom-client` para rastrear latencias de endpoint y métricas de proceso.
 
 ---
 
@@ -158,23 +169,51 @@ src/
 
 ---
 
+## 🛣️ Rutas y API Endpoints
+
+### 📊 Métricas y Observabilidad (`/metrics`)
+- `GET /metrics` - Exposición de métricas en formato Prometheus (`prom-client`).
+
+### 🩺 Healthcheck
+- `GET /health` - Estado de salud del microservicio de notificaciones.
+
+---
+
+## 📊 Monitoreo y Observabilidad
+
+El microservicio está instrumentado con **Prometheus** y **Grafana**:
+
+1. **Métricas por Defecto (`collectDefaultMetrics`)**:
+   - Estadísticas del proceso Node.js (CPU, Heap usado/total, RSS, Event Loop delay).
+   - Uso de memoria por Garbage Collector y sockets de red activos.
+
+2. **Métricas Personalizadas**:
+   - `http_requests_total`: Contador total de peticiones HTTP en el servicio con etiquetas de método, ruta y código de estado.
+   - `http_request_duration_seconds`: Histograma de tiempo de respuesta de peticiones HTTP en segundos.
+
+3. **Arquitectura de Métricas en Docker**:
+   - **Prometheus Container (Puerto `9090`)**: Scrapea `http://host.docker.internal:3001/metrics` cada 5 segundos según la configuración en `prometheus.yml`.
+   - **Grafana Container (Puerto `3005`)**: Permite la visualización de paneles en tiempo real para alertamiento y rendimiento del servicio.
+
+---
+
 ## ⚙️ Configuración y Variables de Entorno
 
 Crear un archivo `.env` en la raíz de `apps/notification-service/`:
 
 ```env
 NODE_ENV=development
-SERVER_PORT=3002
+SERVER_PORT=3001
 
 # PostgreSQL
 DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=stream_crm_db
+DB_PORT=5433
+DB_USER=streamCRMServerAdmin
+DB_PASSWORD=admin
+DB_NAME=postgres
 
 # RabbitMQ
-RABBITMQ_URL=amqp://localhost:5672
+RABBITMQ_URL=amqp://localhost:5673
 
 # Nodemailer / SMTP Email Config
 SMTP_HOST=smtp.mailtrap.io

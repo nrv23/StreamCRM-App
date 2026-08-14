@@ -1,6 +1,6 @@
 # 🏢 Customer Service - StreamCRM
 
-Servicio centralizado para la gestión de clientes, notas, etiquetas, auditoría y cambios de estado en **StreamCRM**. Diseñado bajo principios de **Clean Architecture**, con persistencia transaccional en **PostgreSQL** y comunicación asíncrona mediante el patrón **Transactional Outbox** y **RabbitMQ**.
+Servicio centralizado para la gestión de clientes, notas, etiquetas, auditoría y cambios de estado en **StreamCRM**. Diseñado bajo principios de **Clean Architecture**, con persistencia transaccional en **PostgreSQL**, comunicación asíncrona mediante el patrón **Transactional Outbox** y **RabbitMQ**, y monitoreo continuo mediante **Prometheus** y **Grafana**.
 
 ---
 
@@ -11,6 +11,7 @@ Servicio centralizado para la gestión de clientes, notas, etiquetas, auditoría
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Patrones de Diseño Implementados](#-patrones-de-diseño-implementados)
 - [Rutas y API Endpoints](#-rutas-y-api-endpoints)
+- [Monitoreo y Observabilidad](#-monitoreo-y-observabilidad)
 - [Configuración y Variables de Entorno](#-configuración-y-variables-de-entorno)
 - [Comandos y Ejecución](#-comandos-y-ejecución)
 
@@ -22,7 +23,8 @@ Servicio centralizado para la gestión de clientes, notas, etiquetas, auditoría
 - **Notas y Auditoría**: Registro de notas asociadas a clientes e historial completo de auditoría (`AuditLogs`) e historial de estados (`CustomerStatusHistory`).
 - **Etiquetado (Tags)**: Clasificación de clientes para mejor segmentación.
 - **Transactional Outbox Pattern**: Garantía de consistencia eventual al registrar los eventos del dominio en la tabla `outbox_events` dentro de la misma transacción SQL antes de ser publicados a RabbitMQ.
-- **Log Centralizado**: Integración con **Winston** y **Elasticsearch** para monitoreo y trazabilidad.
+- **Observabilidad y Métricas (Prometheus & Grafana)**: Recolección y exposición de métricas de rendimiento (RPS, latencia, CPU, memoria) mediante `prom-client` en el endpoint `/metrics`.
+- **Log Centralizado**: Integración con **Winston** y **Elasticsearch** / **Kibana** para monitoreo y trazabilidad de logs.
 
 ---
 
@@ -39,7 +41,7 @@ El proyecto sigue una estructura por capas (Layered / Clean Architecture):
                              ▼
 ┌──────────────────────────────────────────────────────────┐
 │                    Application Layer                     │
-│            (Services, DTOs, Unit of Work)                │
+│    (Services, DTOs, Unit of Work, MetricsService)        │
 └────────────────────────────┬─────────────────────────────┘
                              │
                              ▼
@@ -51,7 +53,7 @@ El proyecto sigue una estructura por capas (Layered / Clean Architecture):
                              ▼
 ┌──────────────────────────────────────────────────────────┐
 │                Infrastructure & Data                     │
-│    (PostgreSQL Repositories, Outbox Relay, RabbitMQ)     │
+│ (PostgreSQL Repositories, Outbox Relay, Prometheus, ES)  │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -80,9 +82,14 @@ graph TD
         Publisher --> RabbitMQ[("🐇 RabbitMQ Exchange")]
     end
 
-    subgraph Logging ["📊 Observability"]
+    subgraph Observability ["📊 Observability Stack"]
+        API --> MetricsMiddleware["⏱️ Metrics Middleware"]
+        MetricsMiddleware --> PromClient["📈 prom-client (/metrics)"]
+        Prometheus["🔥 Prometheus (Port 9090)"] -->|Scrape /metrics| PromClient
+        Grafana["📊 Grafana (Port 3005)"] -->|Query| Prometheus
         Service --> Logger["📝 Winston Logger"]
         Logger --> ES[("🔍 Elasticsearch")]
+        Kibana["📊 Kibana"] -->|Query Logs| ES
     end
 ```
 
@@ -120,11 +127,11 @@ sequenceDiagram
 
 ```text
 src/
-├── app.ts                  # Configuración de Express, middlewares y rutas
+├── app.ts                  # Configuración de Express, middlewares, métricas y rutas
 ├── main.ts                 # Bootstrap de la aplicación y conexiones DB/Elasticsearch
 ├── background/             # Workers en segundo plano (Outbox Relay)
 ├── config/                 # Configuración de entorno (env, postgres, elasticsearch, rabbitmq)
-├── controllers/            # Controladores HTTP (Customer, Note, Tag)
+├── controllers/            # Controladores HTTP (Customer, Note, Tag, MetricsController)
 ├── dto/                    # Objetos de Transferencia de Datos
 ├── entity/                 # Entidades del dominio (Customer, Note, Tag, AuditLogs, OutBoxEvent)
 ├── enum/                   # Enums del sistema (CustomerStatus, Events, etc.)
@@ -132,9 +139,9 @@ src/
 ├── publisher/              # Implementaciones de Event Publishers (RabbitMQ, Console)
 ├── repository/             # Implementación de acceso a datos con PostgreSQL
 ├── responses/              # Formateadores estandarizados de respuestas HTTP
-├── routes/                 # Rutas de Express para cada recurso
-├── services/               # Lógica de negocio principal (Customer, Note, Tag)
-├── shared/                 # Middlewares globales, utilidades, logger y manejo de errores
+├── routes/                 # Rutas de Express para cada recurso (customer, tag, notes, metrics)
+├── services/               # Lógica de negocio principal (Customer, Note, Tag, MetricsService)
+├── shared/                 # Middlewares globales (client-info, logger, error-handler)
 └── validators/             # Reglas de validación con express-validator
 ```
 
@@ -146,6 +153,7 @@ src/
 2. **Repository Pattern**: Abstrae las consultas SQL tras interfaces para desacoplar el motor de base de datos de la lógica de negocio.
 3. **Unit of Work**: Gestiona transacciones compuestas para garantizar la atomicidad en operaciones complejas (ej. Crear Cliente + Auditoría + Outbox Event).
 4. **DTO (Data Transfer Object)**: Valida y transporta únicamente la información requerida en cada petición HTTP.
+5. **Observability Middleware**: Mide automáticamente la duración y frecuencia de cada petición HTTP (`MetricsController.metricsCounter`) mediante histogramas y contadores.
 
 ---
 
@@ -169,8 +177,30 @@ src/
 - `GET /` - Listar etiquetas.
 - `DELETE /:id` - Eliminar etiqueta.
 
+### 📊 Métricas y Observabilidad (`/metrics`)
+- `GET /metrics` - Exposición de métricas en formato texto de Prometheus (`prom-client`).
+
 ### 🩺 Healthcheck
 - `GET /health` - Estado de salud del microservicio.
+
+---
+
+## 📊 Monitoreo y Observabilidad
+
+El servicio integra **Prometheus** y **Grafana** para monitoreo de métricas en tiempo real:
+
+1. **Métricas del Sistema (Default Metrics)**:
+   - Uso de CPU, memoria Heap y RSS del proceso Node.js.
+   - Latencia del Event Loop y estado del Garbage Collector.
+   - Cantidad de handles y sockets activos.
+
+2. **Métricas Personalizadas HTTP**:
+   - `http_requests_total`: Contador total de peticiones HTTP con etiquetas de `method`, `route` y `status`.
+   - `http_request_duration_seconds`: Histograma de latencia en segundos con buckets configurados (`[0.05, 0.1, 0.3, 0.5, 1, 2, 5]`).
+
+3. **Arquitectura de Monitoreo**:
+   - **Prometheus Container (Puerto `9090`)**: Realiza scraping cada 5 segundos al endpoint `/metrics`.
+   - **Grafana Container (Puerto `3005`)**: Visualización gráfica de peticiones por segundo (RPS), tasa de errores y percentiles de latencia (p95, p99).
 
 ---
 
@@ -180,17 +210,17 @@ Crear un archivo `.env` en la raíz de `apps/customer-service/` con el siguiente
 
 ```env
 NODE_ENV=development
-SERVER_PORT=3001
+SERVER_PORT=3000
 
 # PostgreSQL
 DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=stream_crm_db
+DB_PORT=5433
+DB_USER=streamCRMServerAdmin
+DB_PASSWORD=admin
+DB_NAME=postgres
 
 # RabbitMQ
-RABBITMQ_URL=amqp://localhost:5672
+RABBITMQ_URL=amqp://localhost:5673
 
 # Elasticsearch
 ELASTICSEARCH_NODE=http://localhost:9200
