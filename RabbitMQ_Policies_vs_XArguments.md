@@ -122,6 +122,44 @@ Aplicar Policy
 La cola conserva sus mensajes
 ```
 
+  # Ver usuarios
+docker exec -it rabbitmq-stream-crm \
+  rabbitmqctl list_users
+
+# Crear usuario
+docker exec -it rabbitmq-stream-crm \
+  rabbitmqctl add_user nvm2391 nvm2391
+
+# Dar permisos en el vhost /
+docker exec -it rabbitmq-stream-crm \
+  rabbitmqctl set_permissions -p / nvm2391 ".*" ".*" ".*"
+
+# Dar acceso administrativo al panel web
+docker exec -it rabbitmq-stream-crm \
+  rabbitmqctl set_user_tags nvm2391 administrator
+
+# Verificar usuario y tag
+docker exec -it rabbitmq-stream-crm \
+  rabbitmqctl list_users
+
+# Verificar permisos
+docker exec -it rabbitmq-stream-crm \
+  rabbitmqctl list_permissions -p /
+
+# Probar credenciales
+docker exec -it rabbitmq-stream-crm \
+  rabbitmqctl authenticate_user nvm2391 nvm2391
+
+# Ver conexiones activas
+docker exec -it rabbitmq-stream-crm \
+  rabbitmqctl list_connections user peer_host peer_port state
+
+# Ver consumidores
+docker exec -it rabbitmq-stream-crm \
+  rabbitmqctl list_consumers
+
+  // meter archivos de consumer, publisher y dlq en una sola carpeta en background en su respectiva carpeta.
+  // para limpiar la arquiecttura
 ------------------------------------------------------------------------
 
 # Conclusión

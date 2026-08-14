@@ -52,7 +52,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-
   kibana:
     image: docker.elastic.co/kibana/kibana:9.5.0
     container_name: kibana-local
@@ -66,7 +65,25 @@ services:
         condition: service_healthy
     networks:
       - stream-crm-network
-
+  prometheus:
+    image: prom/prometheus:v2.54.0
+    container_name: prometheus-local
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - promdata:/prometheus
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana-local
+    ports:
+      - "3005:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafanadata:/var/lib/grafana
+    depends_on:
+      - prometheus
 volumes:
   postgres_projects_data:
     external: true
@@ -74,6 +91,8 @@ volumes:
 
   rabbitmq_streamcrm_data:
   esdata:
+  promdata:
+  grafanadata:
 networks:
   stream-crm-network:
     driver: bridge

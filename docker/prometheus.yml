@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  # host.docker.internal mapea localhost de la maquina local con docker. Se usa cuando el api no esta dockerizada
+  # Microservicio 1: Customer
+  - job_name: 'customers-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:3000'] # Si están en Docker Compose se usan los nombres de servicio
+
+  # Microservicio 2: Notificaciones
+  - job_name: 'notification-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:3001']
