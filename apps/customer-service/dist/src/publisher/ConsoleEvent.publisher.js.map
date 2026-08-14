@@ -1,0 +1,1 @@
+{"version":3,"file":"ConsoleEvent.publisher.js","sourceRoot":"","sources":["../../../src/publisher/ConsoleEvent.publisher.ts"],"names":[],"mappings":"AAIA,MAAM,OAAO,qBAAqB;IAE9B,KAAK,CAAC,OAAO,CAAC,KAAkB;QAC5B,OAAO,CAAC,GAAG,CACP,uBAAuB,KAAK,CAAC,UAAU,EAAE,EACzC,KAAK,CAAC,OAAO,CAChB,CAAC;QAEF,OAAO,IAAI,CAAC;IAChB,CAAC;CACJ"}

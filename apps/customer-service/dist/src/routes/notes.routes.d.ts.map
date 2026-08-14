@@ -1,0 +1,1 @@
+{"version":3,"file":"notes.routes.d.ts","sourceRoot":"","sources":["../../../src/routes/notes.routes.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AACjC,OAAO,EAAE,OAAO,EAAE,MAAM,mCAAmC,CAAC;AAY5D,qBAAa,WAAY,YAAW,OAAO;IAEvC,OAAO,CAAC,WAAW,CAAa;IAChC,OAAO,CAAC,eAAe,CAAiB;IACxC,OAAO,CAAC,YAAY,CAAc;IAClC,OAAO,CAAC,OAAO,CAAS;;IAexB,WAAW,IAAI,MAAM;CAoBxB"}

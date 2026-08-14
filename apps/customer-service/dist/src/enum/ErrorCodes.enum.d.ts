@@ -1,0 +1,10 @@
+export declare enum ApiErrorCode {
+    NOT_FOUND = "CTMR-0002",
+    CONFLICT_ERROR = "CTMR-0003",
+    BAD_REQUEST = "CTMR-0004",
+    CUSTOMER_EMAIL_DUPLICATED = "CTMR-0005",
+    INTERNAL_SERVER_ERROR = "CTMR-0001",
+    INVALID_PASSWORD = "CTMR-0006",
+    ROUTE_NOT_FOUND = "CTMR-0007"
+}
+//# sourceMappingURL=ErrorCodes.enum.d.ts.map

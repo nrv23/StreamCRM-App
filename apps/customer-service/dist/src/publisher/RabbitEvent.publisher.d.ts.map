@@ -1,0 +1,1 @@
+{"version":3,"file":"RabbitEvent.publisher.d.ts","sourceRoot":"","sources":["../../../src/publisher/RabbitEvent.publisher.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,WAAW,EAAE,MAAM,iCAAiC,CAAC;AAC9D,OAAO,EAAE,cAAc,EAAE,MAAM,qDAAqD,CAAC;AAGrF,qBAAa,oBAAqB,YAAW,cAAc;IAEvD,OAAO,CAAC,aAAa,CAAiB;;IAMhC,OAAO,CAAC,KAAK,EAAE,WAAW,GAAG,OAAO,CAAC,OAAO,CAAC;CAItD"}

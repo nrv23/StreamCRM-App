@@ -122,6 +122,8 @@ Aplicar Policy
 La cola conserva sus mensajes
 ```
 
+comandos para revisar usuarios y permisos de rabbitmq
+
   # Ver usuarios
 docker exec -it rabbitmq-stream-crm \
   rabbitmqctl list_users

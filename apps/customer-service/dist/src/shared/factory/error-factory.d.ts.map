@@ -1,0 +1,1 @@
+{"version":3,"file":"error-factory.d.ts","sourceRoot":"","sources":["../../../../src/shared/factory/error-factory.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,YAAY,EAAE,MAAM,+BAA+B,CAAC;AAC7D,OAAO,EAAE,QAAQ,EAAE,MAAM,yBAAyB,CAAC;AAGnD,qBAAa,YAAY;IACrB;;OAEG;WACW,KAAK,CAAC,aAAa,EAAE,YAAY,EAAE,aAAa,CAAC,EAAE,MAAM,GAAG,QAAQ;CAgCrF"}

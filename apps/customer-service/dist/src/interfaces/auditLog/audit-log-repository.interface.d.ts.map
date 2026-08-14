@@ -1,0 +1,1 @@
+{"version":3,"file":"audit-log-repository.interface.d.ts","sourceRoot":"","sources":["../../../../src/interfaces/auditLog/audit-log-repository.interface.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,YAAY,EAAE,MAAM,sCAAsC,CAAC;AACpE,OAAO,EAAE,SAAS,EAAE,MAAM,kCAAkC,CAAC;AAE7D,MAAM,WAAW,oBAAoB;IACjC,IAAI,CAAC,GAAG,EAAE,YAAY,GAAG,OAAO,CAAC,SAAS,CAAC,CAAC;CAC/C"}

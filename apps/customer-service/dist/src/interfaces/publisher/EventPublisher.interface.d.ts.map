@@ -1,0 +1,1 @@
+{"version":3,"file":"EventPublisher.interface.d.ts","sourceRoot":"","sources":["../../../../src/interfaces/publisher/EventPublisher.interface.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,WAAW,EAAE,MAAM,oCAAoC,CAAC;AAEjE,MAAM,WAAW,cAAc;IAC3B,OAAO,CAAC,KAAK,EAAE,WAAW,GAAG,OAAO,CAAC,OAAO,CAAC,CAAC;CACjD"}

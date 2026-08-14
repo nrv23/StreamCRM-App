@@ -1,0 +1,1 @@
+{"version":3,"file":"fake-user.middleware.js","sourceRoot":"","sources":["../../../../src/shared/middleware/fake-user.middleware.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,MAAM,QAAQ,GAAG,CACpB,GAAY,EACZ,GAAa,EACb,IAAkB,EACpB,EAAE;IAEA,GAAG,CAAC,IAAI,GAAG;QACP,EAAE,EAAE,EAAE;QACN,KAAK,EAAE,gBAAgB;QACvB,KAAK,EAAE,EAAE;KACZ,CAAC;IAEF,IAAI,EAAE,CAAC;AAEX,CAAC,CAAA"}

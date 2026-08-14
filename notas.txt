@@ -11,4 +11,3 @@ git for-each-ref --sort=-committerdate refs/heads/ \
   No se puede reutilizar conexiones de rabbitmq de un main process a un worker thread o child process.
   Cada uno tiene su contexto de procesamiento e instancia propia
 
-  comandos para revisar usuarios y permisos de rabbitmq

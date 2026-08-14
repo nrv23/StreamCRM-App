@@ -1,0 +1,1 @@
+{"version":3,"file":"changeCustomerStatusHistory,dto.d.ts","sourceRoot":"","sources":["../../../../src/dto/customer/changeCustomerStatusHistory,dto.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,cAAc,EAAE,MAAM,mCAAmC,CAAC;AAGnE,MAAM,WAAW,8BAA8B;IAC3C,WAAW,EAAE,MAAM,CAAC;IACpB,eAAe,EAAE,cAAc,CAAC;IAChC,UAAU,EAAE,cAAc,CAAC;IAC3B,iBAAiB,EAAE,MAAM,CAAC;CAC7B"}
