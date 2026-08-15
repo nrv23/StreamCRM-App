@@ -6,20 +6,19 @@ import { requestDataInfo } from "./shared/middleware/client-info.middleware.js";
 import { MetricsController } from "./controllers/metrics.controller.ts";
 import { MetricsRoutes } from "./routes/metrics.route.ts";
 import MetricsService from "./services/metrics.service.ts";
+import { NotificationRoutes } from "./routes/notifications.route.ts";
 
 export function createApp(): Application {
     const app = express();
 
-    // Confiar en el proxy para que req.ip funcione bien si estás detrás de Nginx/Docker
-    app.enable('trust proxy')
-
-    // 1. Para parsear peticiones con formato JSON (el estándar de tu API / Postman)
+    // 1. Parsers SIEMPRE de primero
     app.use(express.json());
-
-    // 2. Para parsear peticiones con formato "application/x-www-form-urlencoded"
     app.use(express.urlencoded({ extended: true }));
 
-    // 3. Extraer IP y User Agent globalmente
+    // 2. Configuración de Express
+    app.enable('trust proxy');
+
+    // 3. Middlewares globales
     app.use(requestDataInfo);
 
     app.get("/health", (_req, res) => {
@@ -31,8 +30,8 @@ export function createApp(): Application {
     });
 
     app.use(new MetricsController(new MetricsService()).metricsCounter);
-    app.use(new MetricsRoutes().BuildRoutes())
-
+    app.use(new MetricsRoutes().BuildRoutes());
+    app.use('/api/v1/notifications', new NotificationRoutes().BuildRoutes());
     app.use(notFoundRouteHandler); // ruta no encontrada
     app.use(errorHandler); // manejador de errores generico
 
