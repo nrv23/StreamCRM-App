@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { NotificationService } from "../services/Notification.service.ts";
 import { GetNotificationsDto } from '../dto/notifications/get-notifications.dto.ts';
 import { ApiResponse } from '../shared/types/api-response.ts';
-import { GetNotificationsResponse } from '../repository/notification/notification-repository.repository.ts';
+import { GetNotificationsResponse, GetUnReadNotificationsCount } from '../repository/notification/notification-repository.repository.ts';
 import { IPaginationResponse } from '../interfaces/pagination.interface.ts';
 
 
@@ -56,6 +56,21 @@ export class NotificationController {
             },
             success: true
         };
+
+        res.status(200).json(response);
+        return;
+    }
+
+    async getUnreadNotifications(req: Request, res: Response) {
+
+        const { id: user_id } = req.user;
+        const unreadNotificationsCount = await this._notificationService.geUnreadNotificactionsCount(user_id);
+        const response: ApiResponse<GetUnReadNotificationsCount> = {
+            success: true,
+            response: {
+                details: unreadNotificationsCount
+            }
+        }
 
         res.status(200).json(response);
         return;

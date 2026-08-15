@@ -3,6 +3,7 @@ import { CreateNotificationDto } from "../../dto/notifications/create-notificati
 import { GetNotificationsDto } from "../../dto/notifications/get-notifications.dto.js";
 import { NotificationEntity } from "../../entity/Notification.entity.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.js";
+import { NotificationCommand } from "../../enum/Notification-Command.enum.ts";
 import { NotificationStatus } from "../../enum/notification-status.enum.js";
 import { NotificationType } from "../../enum/notification-type.enum.js";
 import { IDatabase } from "../../interfaces/database.interface.js";
@@ -30,10 +31,15 @@ export type GetNotificationsCountResponse = {
     count: number;
 }
 
+export type GetUnReadNotificationsCount = {
+    unread_count: number;
+}
+
+
 export type MarkAsReadNotification = {
     id: number;
 }
-
+//unread_count
 export type GetNotficationByIdResponse = {
     notification_id: number;
     user_id: number;
@@ -41,10 +47,35 @@ export type GetNotficationByIdResponse = {
 
 export class NotificationRepository implements INotificationRepository {
 
-
     private _db: IDatabase;
+
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
+    }
+
+    async geUnreadNotificactionsCount(user_id: number, channel: NotificationCommand): Promise<GetUnReadNotificationsCount> {
+
+        const sql = ` 
+            SELECT COUNT(DISTINCT n.id) as unread_count
+			FROM notifications n
+			JOIN notification_deliveries nd
+			  ON nd.notification_id = n.id
+			WHERE n.user_id = $1
+			AND n.read_at IS NULL
+			AND nd.channel = $2;
+        `;
+
+        const [response] = await this._db.query<GetUnReadNotificationsCount>(sql, [user_id, channel]);
+        if (!response || !response.unread_count) {
+            throw ErrorFactory.build(
+                ApiErrorCode.INTERNAL_SERVER_ERROR,
+                'There was an error when trying to update notification status'
+            );
+        }
+
+        return {
+            unread_count: +response.unread_count
+        };
     }
     async getNotficationById(notification_id: number, user_id: number): Promise<GetNotficationByIdResponse[]> {
         const sql = 'select id as notification_id, user_id from notifications where id =$1 and user_id = $2';

@@ -26,8 +26,11 @@ export class NotificationRoutes implements IRoutes {
     }
 
     BuildRoutes(): Router {
+
         this._router.post('/', getNotificationValidator, validateRequest, fakeAuth, this._notificationController.search.bind(this._notificationController));
         this._router.patch('/:notification_id', markAsReadNotificationValidator, validateRequest, fakeAuth, this._notificationController.markAsRead.bind(this._notificationController));
+        this._router.get('/unread-count', fakeAuth, this._notificationController.getUnreadNotifications.bind(this._notificationController));
+
         return this._router;
     }
 }
