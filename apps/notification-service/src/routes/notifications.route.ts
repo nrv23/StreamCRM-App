@@ -7,6 +7,7 @@ import { UnitOfWork } from "../config/unitOfWork.js";
 import { NotificationRepository } from "../repository/notification/notification-repository.repository.js";
 import { NotificationService } from "../services/Notification.service.js";
 import { NotificationController } from "../controllers/notifications.controller.js";
+import { markAsReadNotificationValidator } from "../validators/notification/mark-as-read-notification.validator.ts";
 
 export class NotificationRoutes implements IRoutes {
 
@@ -26,6 +27,7 @@ export class NotificationRoutes implements IRoutes {
 
     BuildRoutes(): Router {
         this._router.post('/', getNotificationValidator, validateRequest, fakeAuth, this._notificationController.search.bind(this._notificationController));
+        this._router.patch('/:notification_id', markAsReadNotificationValidator, validateRequest, fakeAuth, this._notificationController.markAsRead.bind(this._notificationController));
         return this._router;
     }
 }

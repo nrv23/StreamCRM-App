@@ -1,4 +1,4 @@
-import { buildCheckFunction, body } from 'express-validator';
+import { body } from 'express-validator';
 import { NotificationStatus } from '../../enum/notification-status.enum.ts';
 import { NotificationType } from '../../enum/notification-type.enum.ts';
 

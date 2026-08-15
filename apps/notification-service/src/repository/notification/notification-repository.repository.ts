@@ -1,6 +1,7 @@
 import { databaseInstance } from "../../config/query.js";
 import { CreateNotificationDto } from "../../dto/notifications/create-notification.dto.js";
 import { GetNotificationsDto } from "../../dto/notifications/get-notifications.dto.js";
+import { NotificationEntity } from "../../entity/Notification.entity.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.js";
 import { NotificationStatus } from "../../enum/notification-status.enum.js";
 import { NotificationType } from "../../enum/notification-type.enum.js";
@@ -29,12 +30,26 @@ export type GetNotificationsCountResponse = {
     count: number;
 }
 
+export type MarkAsReadNotification = {
+    id: number;
+}
+
+export type GetNotficationByIdResponse = {
+    notification_id: number;
+    user_id: number;
+}
+
 export class NotificationRepository implements INotificationRepository {
 
 
     private _db: IDatabase;
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
+    }
+    async getNotficationById(notification_id: number, user_id: number): Promise<GetNotficationByIdResponse[]> {
+        const sql = 'select id as notification_id, user_id from notifications where id =$1 and user_id = $2';
+        const response = await this._db.query<GetNotficationByIdResponse>(sql, [notification_id, user_id]);
+        return response
     }
 
     async save(dto: CreateNotificationDto): Promise<NotificationCreatedRow> {
@@ -130,7 +145,7 @@ export class NotificationRepository implements INotificationRepository {
 
         if (dto.type) {
             params.push(dto.type);
-            sql += ` and n.status = $${params.length}`;
+            sql += ` and n.type = $${params.length}`;
         }
 
         const limitIndex = params.push(limit);
@@ -177,5 +192,17 @@ export class NotificationRepository implements INotificationRepository {
 
         const [response] = await this._db.query<GetNotificationsCountResponse>(sql, params);
         return +response!.count;
+    }
+
+    async markAsRead(notification_id: number, user_id: number): Promise<void> {
+
+        const sql = 'update notifications set status = $1, read_at = now() where id = $2 and user_id = $3 returning id;';
+        const [response] = await this._db.query<MarkAsReadNotification>(sql, [NotificationStatus.READ, notification_id, user_id]);
+        if (!response || !response.id) {
+            throw ErrorFactory.build(
+                ApiErrorCode.INTERNAL_SERVER_ERROR,
+                'There was an error when trying to update notification status'
+            );
+        }
     }
 }

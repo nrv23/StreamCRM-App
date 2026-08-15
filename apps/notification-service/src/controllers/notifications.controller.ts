@@ -39,7 +39,25 @@ export class NotificationController {
         }
 
 
-        res.status(201).json(response);
+        res.status(200).json(response);
+        return;
+    }
+
+    async markAsRead(req: Request, res: Response) {
+
+        const { notification_id } = req.params;
+        const { id: user_id } = req.user;
+
+        await this._notificationService.markAsRead(+notification_id!, user_id)
+
+        const response: ApiResponse<null> = {
+            response: {
+                message: "Notification was marked as read"
+            },
+            success: true
+        };
+
+        res.status(200).json(response);
         return;
     }
 }
