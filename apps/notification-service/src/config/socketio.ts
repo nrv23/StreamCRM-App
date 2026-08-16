@@ -13,6 +13,8 @@ export class SocketServer {
     private _logger: Logger;
     private readonly _namespace: string = '/notifications';
     private _notificationsNamespace!: Namespace;
+    //private _roomsMap: Map<Record<string,string>>;
+
     // Constructor privado para forzar el uso de Singleton
     private constructor(app: Server, logger: Logger) {
         this._app = app;
@@ -43,11 +45,13 @@ export class SocketServer {
         this._notificationsNamespace = this._io.of(this._namespace);
 
         this._notificationsNamespace.on("connection", (socket: Socket) => {
+
+            //const room = socket.handshake.query.room! as string;
             this.logEvent(SOCKET_CONNECTED, socket, "socket connected");
 
             this.emitToAll('notification.created',
                 {
-                    message: 'Hola desde Notification Service',
+                    message: 'New cliente connected ' + socket.id,
                     created_at: new Date().toISOString()
                 }
             );
