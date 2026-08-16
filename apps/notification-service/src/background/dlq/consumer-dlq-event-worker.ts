@@ -13,7 +13,7 @@ async function startWoker() {
     try {
         const { } = workerData;
 
-        const repository = new DeadLetterEventRepository
+        const repository = new DeadLetterEventRepository();
         const deadLetterEventService = new DeadLetterEventService(repository)
         const rabbitDqlConsumer = new RabbitMQDqlConsumer(deadLetterEventService, WinstonLogger.getInstance(
             env.elastic_search_url,

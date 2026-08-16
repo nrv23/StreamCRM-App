@@ -3,6 +3,7 @@ import { env } from "./enviroment.js";
 import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 import { ILogMetadata } from "../interfaces/iLog.interface.ts";
 import { Logger } from "winston";
+import { DB_CONNECTED } from "../shared/types/events.type..ts";
 
 export const pool = new Pool({
     host: env.db.host,
@@ -25,7 +26,7 @@ pool.on("connect", async client => {
     await client.query(`SET TIME ZONE 'America/Costa_Rica';`);
     const log: ILogMetadata = {
         service: env.service_name,
-        event: "db-module",
+        event: DB_CONNECTED,
         created_at: new Date().toISOString()
     }
 
@@ -54,7 +55,7 @@ pool.on("error", (err) => {
         error_message: errorObject.message,
         error_name: errorObject.name,
         error_stack: errorObject.stack,
-        event: "db-module",
+        event: DB_CONNECTED,
         created_at: new Date().toISOString()
     }
 

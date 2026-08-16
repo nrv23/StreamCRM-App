@@ -10,3 +10,12 @@ export const DELETE_CUSTOMER = "customer.deleted";
 
 export const CREATE_TAG = "customer.tag.added";
 export const CREATE_NOTE = "customer.note.added";
+//sockets 
+
+export const SOCKET_CONNECTED = "socket-connected";
+export const SOCKET_DISCONNECTED = "socket-disconnected";
+
+
+// db
+
+export const DB_CONNECTED = "db_connected";

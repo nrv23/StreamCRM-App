@@ -8,6 +8,9 @@ import './background/dlq';
 
 import { verifyTransporterConnection } from "./config/nodemailer.ts";
 import { connect as elasticSearchConnect } from "./config/elasticsearch.ts";
+import { createServer } from "http";
+import { SocketServer } from "./config/socketio.ts";
+import { WinstonLogger } from "./shared/utils/winstonLogger.ts";
 
 async function bootstrap() {
     const app = createApp();
@@ -15,7 +18,19 @@ async function bootstrap() {
     const port = Number(env.server_port);
     await verifyTransporterConnection();
     await elasticSearchConnect();
-    app.listen(port, () => {
+
+    const httpServer = createServer(app);
+
+    SocketServer.init( // esta clase es singleton porque solo maneja una conexion que se va distribuir por toda la api
+        httpServer,
+        WinstonLogger.getInstance(env.elastic_search_url,
+            'server-socket',
+            'debug',
+            env.index_elastic_search_name
+        )
+    );
+
+    httpServer.listen(port, () => {
         console.log(`Notification Service running on port ${port}`);
     });
 }
