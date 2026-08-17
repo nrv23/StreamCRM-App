@@ -53,7 +53,8 @@ export class CustomerService {
                         email: customer.email,
                         phone: customer.phone,
                         country: customer.country,
-                        user_id: dto.user_id
+                        user_id: dto.user_id,
+                        event: CREATE_CUSTOMER
                     },
 
                     headers: {
@@ -146,7 +147,8 @@ export class CustomerService {
                         email: customer.email,
                         phone: customer.phone,
                         country: customer.country,
-                        user_id: dto.user_id
+                        user_id: dto.user_id,
+                        event: UPDATE_CUSTOMER
                     },
 
                     headers: {
@@ -234,7 +236,10 @@ export class CustomerService {
                             country: updatedCustomer.country,
                             previousStatus: currentCustomer.status,
                             newStatus: status,
-                            user_id
+                            user_id,
+                            event: status === CustomerStatus.blocked
+                                ? DELETE_CUSTOMER
+                                : CHANGE_CUSTOMER_STATUS
                         },
 
                         headers: {

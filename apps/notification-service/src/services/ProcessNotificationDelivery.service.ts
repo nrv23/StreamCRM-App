@@ -135,6 +135,7 @@ export class ProcessNotificationDeliveryService {
             const pendingDeliveries = await notificationDelivery.getNotficationDeliveries(
                 NotificationDeliveryStatus.PENDING,
                 this._limit,
+                [NotificationCommand.EMAIL, NotificationCommand.SMS]
             );
             const processingDeliveriesId = pendingDeliveries.map(delivery => delivery.delivery_id);
             await notificationDelivery.setStatusProcessing(processingDeliveriesId);

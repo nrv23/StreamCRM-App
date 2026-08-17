@@ -27,8 +27,8 @@ const __dirname = path.dirname(__filename);
 const templatesDirectoryPath = path.join(__dirname, './../templates/');
 const templateEngine = new HandlebarsTemplateEngine(templatesDirectoryPath);
 // 2. Instancias el sender y tu nuevo NotificationDispatcher
-const emailSender = new EmailSender(templateEngine); // (O la clase real que use nodemailer)
-const smsSender = new SmsSender();
+//const emailSender = new EmailSender(templateEngine); // (O la clase real que use nodemailer)
+//const smsSender = new SmsSender();
 //const notificationDispatcher = new NotificationDispatcher(emailSender, smsSender);
 
 
@@ -38,6 +38,7 @@ export const handlers = new Map<string, IntegrationEventHandler<RabbitEventDto>>
         CREATE_CUSTOMER,
         new CreateCustomerHandler(unitOfWork),
     ],
+    // notificaciones que llegan a userId y adminIds
     [
         UPDATE_CUSTOMER,
         new UpdateCustomerHandler(unitOfWork),

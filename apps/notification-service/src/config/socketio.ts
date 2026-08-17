@@ -4,6 +4,7 @@ import { Logger } from "winston";
 import { ILogMetadata } from "../interfaces/iLog.interface.ts";
 import { SOCKET_CONNECTED, SOCKET_DISCONNECTED } from "../shared/types/events.type..ts";
 import { env } from "./enviroment.ts";
+import { SocketPayload } from "../publisher/Socket.publsher.ts";
 
 
 export class SocketServer {
@@ -49,7 +50,7 @@ export class SocketServer {
             //const room = socket.handshake.query.room! as string;
             this.logEvent(SOCKET_CONNECTED, socket, "socket connected");
 
-            this.emitToAll('notification.created',
+            this.emitToAll(SOCKET_CONNECTED,
                 {
                     message: 'New cliente connected ' + socket.id,
                     created_at: new Date().toISOString()
@@ -72,7 +73,7 @@ export class SocketServer {
     }
 
     // Emitir a una sala/room específica
-    public emitToRoom(room: string, event: string, payload: unknown): void {
+    public emitToRoom(room: string, event: string, payload: SocketPayload): void {
         this._logger.info(`[SocketServer] Emitiendo a room ${room}: ${event}`, { payload });
         this._notificationsNamespace.to(room).emit(event, payload);
     }

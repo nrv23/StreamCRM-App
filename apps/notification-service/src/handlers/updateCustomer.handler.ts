@@ -1,9 +1,10 @@
 import { CreateNotificationDto } from "../dto/notifications/create-notification.dto.ts";
 import { RabbitEventDto } from "../dto/outboxEvents/rabbitEvent.dto.ts";
-import { BaseNotificationEventHandler } from "./baseNotificationEventHandler.ts";
+import { BaseNotificationEventHandler, CreateNotificationBodyDataResponse } from "./baseNotificationEventHandler.ts";
 import { NotificationStatus } from "../enum/notification-status.enum.ts";
 import { NotificationType } from "../enum/notification-type.enum.ts";
 import { UnitOfWork } from "../config/unitOfWork.ts";
+import { NotificationCommand } from "../enum/Notification-Command.enum.ts";
 
 export class UpdateCustomerHandler extends BaseNotificationEventHandler<RabbitEventDto> {
 
@@ -26,5 +27,15 @@ export class UpdateCustomerHandler extends BaseNotificationEventHandler<RabbitEv
             status: NotificationStatus.PENDING,
             metadata: event.payload
         };
+    }
+
+    protected createNotificationDeliveryBody(event: RabbitEventDto, notification_id: number): CreateNotificationBodyDataResponse[] {
+        const newNotificationDeliveries: CreateNotificationBodyDataResponse[] = [];
+        newNotificationDeliveries.push({
+            notification_id,
+            channel: NotificationCommand.INAPP
+        });
+
+        return newNotificationDeliveries;
     }
 }

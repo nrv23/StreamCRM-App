@@ -75,7 +75,7 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
     }
     // agregar metodo para buscar deliveries en pending, 5 intentos marca el evento como failed.
 
-    async getNotficationDeliveries(status: NotificationDeliveryStatus, limit: number): Promise<GetNotificationDeliveriesResponse[]> {
+    async getNotficationDeliveries(status: NotificationDeliveryStatus, limit: number, allowedDeliveryChannel: NotificationCommand[]): Promise<GetNotificationDeliveriesResponse[]> {
 
         const sql = `
             SELECT
@@ -90,13 +90,14 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
             INNER JOIN notifications n
                 ON n.id = nd.notification_id
             WHERE nd.status = $1
+            AND nd.channel =  ANY($2::varchar[]) -- obtiene los deliveries de channel email o sms
             ORDER BY nd.id DESC
-            LIMIT $2;
+            LIMIT $3;
         `;
 
 
         console.log('getting NotficationDeliveries...')
-        const response = await this._db.query<GetNotificationDeliveriesResponse>(sql, [status, limit]);
+        const response = await this._db.query<GetNotificationDeliveriesResponse>(sql, [status, limit, allowedDeliveryChannel]);
         return response
     }
 

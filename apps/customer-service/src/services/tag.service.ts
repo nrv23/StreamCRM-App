@@ -47,7 +47,8 @@ export class TagService {
                         tag_id: newTag.id,
                         created_at: newTag.created_at,
                         tag_name: dto.name,
-                        user_id: dto.user_id
+                        user_id: dto.user_id,
+                        event: CREATE_TAG
                     },
                     headers: {
                         source: env.service_name,

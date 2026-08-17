@@ -39,7 +39,6 @@ export class ProcessIntegrationEvent {
         await this.processedEventRepository.save({
             event_id: event.event_id,
             event_name: event.event_name
-
         });
 
         return {
