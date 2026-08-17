@@ -19,7 +19,11 @@ import { UpdateCustomerHandler } from "./updateCustomer.handler.ts";
 import { HandlebarsTemplateEngine } from "../handlebars/handlebarsTemplateEngine.ts";
 import { SmsSender } from "../sender/sms.sender.ts";
 import { UnitOfWork } from "../config/unitOfWork.ts";
-
+import { SocketServer } from "../config/socketio.ts";
+import { SocketPublisher } from "../publisher/Socket.publsher.ts";
+import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
+import { env } from "../config/enviroment.ts";
+env
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -31,30 +35,38 @@ const templateEngine = new HandlebarsTemplateEngine(templatesDirectoryPath);
 //const smsSender = new SmsSender();
 //const notificationDispatcher = new NotificationDispatcher(emailSender, smsSender);
 
-
+//const socketServer = SocketServer.getInstance();
+const logger = WinstonLogger.getInstance(
+    env.elastic_search_url,
+    'handlers',
+    'debug',
+    env.index_elastic_search_name
+)
+const socketPublisher = new SocketPublisher(logger)
 const unitOfWork = new UnitOfWork();
+const limit = 20;
 export const handlers = new Map<string, IntegrationEventHandler<RabbitEventDto>>([
     [
         CREATE_CUSTOMER,
-        new CreateCustomerHandler(unitOfWork),
+        new CreateCustomerHandler(unitOfWork, socketPublisher, limit),
     ],
     // notificaciones que llegan a userId y adminIds
     [
         UPDATE_CUSTOMER,
-        new UpdateCustomerHandler(unitOfWork),
+        new UpdateCustomerHandler(unitOfWork, socketPublisher, limit),
     ],
     [
         DELETE_CUSTOMER,
-        new DeleteCustomerHandler(unitOfWork),
+        new DeleteCustomerHandler(unitOfWork, socketPublisher, limit),
     ],
     [
         CHANGE_CUSTOMER_STATUS,
-        new CustomerStatusChangeHandler(unitOfWork),
+        new CustomerStatusChangeHandler(unitOfWork, socketPublisher, limit),
     ],
 
     [
         CREATE_TAG,
-        new CreateTagHandler(unitOfWork),
+        new CreateTagHandler(unitOfWork, socketPublisher, limit),
     ],
 
 ]);

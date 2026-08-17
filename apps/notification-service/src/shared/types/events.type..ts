@@ -23,3 +23,7 @@ export const DB_CONNECTED = "db_connected";
 // notifications
 
 export const NOTIFICATION_CREATED = "notification-created";
+
+// sockets 
+
+export const SOCKET_EMMIT = "socket-emmit";

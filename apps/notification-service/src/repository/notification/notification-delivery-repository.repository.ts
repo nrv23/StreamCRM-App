@@ -97,7 +97,7 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
 
 
         console.log('getting NotficationDeliveries...')
-        const response = await this._db.query<GetNotificationDeliveriesResponse>(sql, [status, limit, allowedDeliveryChannel]);
+        const response = await this._db.query<GetNotificationDeliveriesResponse>(sql, [status, allowedDeliveryChannel, limit]);
         return response
     }
 

@@ -49,7 +49,10 @@ export class SocketServer {
 
             //const room = socket.handshake.query.room! as string;
             this.logEvent(SOCKET_CONNECTED, socket, "socket connected");
-
+            console.log({
+                room: socket.handshake.query!.room!
+            })
+            this.joinRoom(socket.id, socket.handshake.query!.room!.toString())
             this.emitToAll(SOCKET_CONNECTED,
                 {
                     message: 'New cliente connected ' + socket.id,

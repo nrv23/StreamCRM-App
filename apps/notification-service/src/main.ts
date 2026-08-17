@@ -2,15 +2,17 @@ import { createApp } from "./app.js";
 import { env } from "./config/enviroment.js";
 //import { rabbitMQClient } from "./config/raabbitmq.ts";
 // ejecucion del worker
-import './background/events/consumer';
+
 import './background/notifications';
 import './background/dlq';
+
 
 import { verifyTransporterConnection } from "./config/nodemailer.ts";
 import { connect as elasticSearchConnect } from "./config/elasticsearch.ts";
 import { createServer } from "http";
 import { SocketServer } from "./config/socketio.ts";
 import { WinstonLogger } from "./shared/utils/winstonLogger.ts";
+
 
 async function bootstrap() {
     const app = createApp();
@@ -21,7 +23,7 @@ async function bootstrap() {
 
     const httpServer = createServer(app);
 
-    SocketServer.init( // esta clase es singleton porque solo maneja una conexion que se va distribuir por toda la api
+    const socketServer = SocketServer.init( // esta clase es singleton porque solo maneja una conexion que se va distribuir por toda la api
         httpServer,
         WinstonLogger.getInstance(env.elastic_search_url,
             'server-socket',
@@ -29,6 +31,12 @@ async function bootstrap() {
             env.index_elastic_search_name
         )
     );
+
+    const { startEventWorker } = await import(
+        "./background/events/consumer/index.ts"
+    );
+
+    startEventWorker(socketServer);
 
     httpServer.listen(port, () => {
         console.log(`Notification Service running on port ${port}`);
