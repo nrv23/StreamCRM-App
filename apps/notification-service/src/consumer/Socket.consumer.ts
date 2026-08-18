@@ -19,7 +19,7 @@ export class SocketConsumer implements ISocketConsumer {
 
             this.socketServer.emitToRoom(
                 message.room,
-                message.event,
+                message.payload.data.event!.toString(),
                 message.payload
             );
         });

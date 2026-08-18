@@ -67,27 +67,34 @@ export abstract class BaseNotificationEventHandler<TEvent> implements Integratio
 
     private async processInAppNotificationDeliveries() {
 
-        const pendingDeliveries = await this.getPendingDeliveries();
+        let pendingDeliveries = await this.getPendingDeliveries();
         for (const delivery of pendingDeliveries) {
-
+            // meter aqui un catch para manejar el error 
             // Aquí sí abres transacción para guardar el resultado
             await this.unitOfWork.execute(async ({
                 notification,
                 notificationDelivery,
             }) => {
 
-                await notificationDelivery.markAsDelivered(
-                    delivery.delivery_id,
-                    '',
-                );
+                try {
+                    await notificationDelivery.markAsDelivered(
+                        delivery.delivery_id,
+                        '',
+                    );
 
-                const statuses = await notificationDelivery.findStatusesByNotificationId(delivery.notification_id);
-                const notificationStatus = this.resolveNotificationStatus(statuses);
+                    const statuses = await notificationDelivery.findStatusesByNotificationId(delivery.notification_id);
+                    const notificationStatus = this.resolveNotificationStatus(statuses);
 
-                await notification.setNotificationStatus(
-                    delivery.notification_id,
-                    notificationStatus,
-                );
+                    await notification.setNotificationStatus(
+                        delivery.notification_id,
+                        notificationStatus,
+                    );
+                } catch (err) {
+
+                    const error = err instanceof Error ? err.message : String(err);
+                    await notificationDelivery.markAsFailed(delivery.delivery_id, error);
+                    pendingDeliveries = pendingDeliveries.filter((pd) => pd.delivery_id !== delivery.delivery_id);
+                }
             });
         }
         return pendingDeliveries;

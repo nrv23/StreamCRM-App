@@ -70,6 +70,7 @@ export class SocketPublisher implements ISocketPublisher {
                     data: {
                         email: delivery.metadata!.email!.toString(),
                         fullName: ''.concat(delivery.metadata!.firstName!.toString(), ' ', delivery.metadata!.lastName!.toString()),
+                        event: delivery.metadata!.event!.toString()
                     }
                 }
                 break;
@@ -82,6 +83,7 @@ export class SocketPublisher implements ISocketPublisher {
                         fullName: ''.concat(delivery.metadata!.firstName!.toString(), ' ', delivery.metadata!.lastName!.toString()),
                         prevStatus: delivery.metadata.previousStatus?.toString()!,
                         newStatus: delivery.metadata.newStatus!.toString(),
+                        event: delivery.metadata!.event!.toString()
                     }
                 }
                 break;
@@ -92,6 +94,7 @@ export class SocketPublisher implements ISocketPublisher {
                     data: {
                         email: delivery.metadata!.email!.toString(),
                         fullName: ''.concat(delivery.metadata!.firstName!.toString(), ' ', delivery.metadata!.lastName!.toString()),
+                        event: delivery.metadata!.event!.toString()
                     }
                 }
                 break;
@@ -101,7 +104,8 @@ export class SocketPublisher implements ISocketPublisher {
                     message: 'Tag was created',
                     data: {
                         tag_id: delivery.metadata!.tag_id!,
-                        tag_name: delivery.metadata!.tag_name!.toString()
+                        tag_name: delivery.metadata!.tag_name!.toString(),
+                        event: delivery.metadata!.event!.toString()
                     }
                 }
                 break;
