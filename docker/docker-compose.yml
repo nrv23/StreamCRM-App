@@ -68,22 +68,35 @@ services:
   prometheus:
     image: prom/prometheus:v2.54.0
     container_name: prometheus-local
+    restart: unless-stopped
     ports:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - promdata:/prometheus
+    networks:
+      - stream-crm-network
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --spider -q http://localhost:9090/-/healthy || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
   grafana:
     image: grafana/grafana:11.1.0
     container_name: grafana-local
+    restart: unless-stopped
     ports:
       - "3005:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafanadata:/var/lib/grafana
+    networks:
+      - stream-crm-network
     depends_on:
-      - prometheus
+      prometheus:
+        condition: service_healthy
 volumes:
   postgres_projects_data:
     external: true

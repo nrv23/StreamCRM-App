@@ -45,7 +45,6 @@ export class SocketPublisher implements ISocketPublisher {
             };
 
             const payload = this.setSocketPayload(delivery);
-
             if (!payload) continue; // continue con la siguiente iteracion
 
             //room, delivery.metadata.event!.toString()
@@ -57,10 +56,7 @@ export class SocketPublisher implements ISocketPublisher {
                 payload: payload
             }
             this._logger.info('Notification was sent using socket...', log);
-
             parentPort?.postMessage(socketMessage);
-
-
         }
     }
 
