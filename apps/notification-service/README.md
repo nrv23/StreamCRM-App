@@ -217,10 +217,85 @@ src/
 
 ## 🛣️ Rutas y API Endpoints
 
+### 🔔 Gestor de Notificaciones (`/api/v1/notifications`)
+
+| Método | Endpoint | Descripción | Middlewares / Validación |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/notifications/` | Búsqueda y filtrado paginado de notificaciones del usuario | `getNotificationValidator`, `validateRequest`, `fakeAuth` |
+| `PATCH` | `/api/v1/notifications/:notification_id/read` | Marca una notificación específica como leída (`read`) | `markAsReadNotificationValidator`, `validateRequest`, `fakeAuth` |
+| `GET` | `/api/v1/notifications/unread-count` | Obtiene el número total de notificaciones no leídas (`pending`) | `fakeAuth` |
+
+#### 📝 Detalle de Endpoints:
+
+1. **`POST /api/v1/notifications/`**
+   - **Body (JSON)**:
+     ```json
+     {
+       "page": 1,
+       "limit": 10,
+       "status": "pending",
+       "type": "info",
+       "search": "Tag created"
+     }
+     ```
+   - **Respuesta (200 OK)**:
+     ```json
+     {
+       "success": true,
+       "response": {
+         "message": "",
+         "details": {
+           "data": [
+             {
+               "id": 1,
+               "title": "New Tag created",
+               "message": "Tag created with name VIP",
+               "type": "info",
+               "status": "pending",
+               "created_at": "2026-08-17T20:00:00.000Z"
+             }
+           ],
+           "totalRecords": 1,
+           "currentPage": 1,
+           "totalPages": 1
+         }
+       }
+     }
+     ```
+
+2. **`PATCH /api/v1/notifications/:notification_id/read`**
+   - **Params**: `notification_id` (ID numérico de la notificación)
+   - **Respuesta (200 OK)**:
+     ```json
+     {
+       "success": true,
+       "response": {
+         "message": "Notification was marked as read"
+       }
+     }
+     ```
+
+3. **`GET /api/v1/notifications/unread-count`**
+   - **Respuesta (200 OK)**:
+     ```json
+     {
+       "success": true,
+       "response": {
+         "details": {
+           "unread_count": 5
+         }
+       }
+     }
+     ```
+
+---
+
 ### 📊 Métricas y Observabilidad (`/metrics`)
 - `GET /metrics` - Exposición de métricas en formato Prometheus (`prom-client`).
 
-### 🩺 Healthcheck
+---
+
+### 🩺 Healthcheck (`/health`)
 - `GET /health` - Estado de salud del microservicio de notificaciones.
 
 ---
