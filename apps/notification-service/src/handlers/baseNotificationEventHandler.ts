@@ -1,6 +1,5 @@
 import { CreateNotificationDto } from "../dto/notifications/create-notification.dto.ts";
 import { IntegrationEventHandler } from "../interfaces/handler/integration-event-handler.interface.ts";
-import { INotificationCommand } from "../interfaces/notification-command.interface.ts";
 import { UnitOfWork } from "../config/unitOfWork.ts";
 import { NotificationCommand } from "../enum/Notification-Command.enum.ts";
 import { NotificationDeliveryStatus } from "../enum/NotificationDeliveryStatus.enum.ts";
@@ -23,6 +22,7 @@ export abstract class BaseNotificationEventHandler<TEvent> implements Integratio
 
     async handle(event: TEvent): Promise<void> {
 
+
         await this.unitOfWork.execute(async ({ notification, notificationDelivery }) => {
             const newNotification = this.createNotification(event);
             const notificationResponse = await notification.save(newNotification);
@@ -30,16 +30,42 @@ export abstract class BaseNotificationEventHandler<TEvent> implements Integratio
 
             // Retorna un array de comandos (puede venir vacío)
             for (const command of commands) {
-                await notificationDelivery.save({ // se guarda el intento de envio
+                const deliveryResponse = await notificationDelivery.save({ // se guarda el intento de envio
                     notification_id: command.notification_id,
-                    channel: command.channel
+                    channel: command.channel,
                 });
+
+                const pendingDeliveries = await notificationDelivery.getNotficationDeliveries(
+                    NotificationDeliveryStatus.PENDING,
+                    this.limit,
+                    [NotificationCommand.INAPP],
+                    deliveryResponse.id
+                );
+                const processingDeliveriesId = pendingDeliveries.map(delivery => delivery.delivery_id);
+
+                await notificationDelivery.setStatusProcessing(processingDeliveriesId);
+                try {
+                    await notificationDelivery.markAsDelivered(
+                        deliveryResponse.id,
+                        '',
+                    );
+
+                    const statuses = await notificationDelivery.findStatusesByNotificationId(command.notification_id);
+                    const notificationStatus = this.resolveNotificationStatus(statuses);
+
+                    await notification.setNotificationStatus(
+                        command.notification_id,
+                        notificationStatus,
+                    );
+                } catch (err) {
+                    const error = err instanceof Error ? err.message : String(err);
+                    await notificationDelivery.markAsFailed(deliveryResponse.id, error);
+                }
+
                 //await this.notificationDispatcher.dispatch(command);
+                if (pendingDeliveries[0]) await this.publisher.publish(pendingDeliveries[0]);
             }
         });
-
-        const inAppDeliveries = await this.processInAppNotificationDeliveries();
-        await this.publisher.publish(inAppDeliveries)
     }
 
     protected abstract createNotification(event: TEvent): CreateNotificationDto;
@@ -52,53 +78,7 @@ export abstract class BaseNotificationEventHandler<TEvent> implements Integratio
         return [];
     }
 
-    private async getPendingDeliveries(): Promise<GetNotificationDeliveriesResponse[]> {
-        return this.unitOfWork.execute(async ({ notificationDelivery }) => {
-            const pendingDeliveries = await notificationDelivery.getNotficationDeliveries(
-                NotificationDeliveryStatus.PENDING,
-                this.limit,
-                [NotificationCommand.INAPP]
-            );
-            const processingDeliveriesId = pendingDeliveries.map(delivery => delivery.delivery_id);
-            await notificationDelivery.setStatusProcessing(processingDeliveriesId);
-            return pendingDeliveries;
-        });
-    }
 
-    private async processInAppNotificationDeliveries() {
-
-        let pendingDeliveries = await this.getPendingDeliveries();
-        for (const delivery of pendingDeliveries) {
-            // meter aqui un catch para manejar el error 
-            // Aquí sí abres transacción para guardar el resultado
-            await this.unitOfWork.execute(async ({
-                notification,
-                notificationDelivery,
-            }) => {
-
-                try {
-                    await notificationDelivery.markAsDelivered(
-                        delivery.delivery_id,
-                        '',
-                    );
-
-                    const statuses = await notificationDelivery.findStatusesByNotificationId(delivery.notification_id);
-                    const notificationStatus = this.resolveNotificationStatus(statuses);
-
-                    await notification.setNotificationStatus(
-                        delivery.notification_id,
-                        notificationStatus,
-                    );
-                } catch (err) {
-
-                    const error = err instanceof Error ? err.message : String(err);
-                    await notificationDelivery.markAsFailed(delivery.delivery_id, error);
-                    pendingDeliveries = pendingDeliveries.filter((pd) => pd.delivery_id !== delivery.delivery_id);
-                }
-            });
-        }
-        return pendingDeliveries;
-    }
 
     private resolveNotificationStatus(deliveryStatuses: NotificationDeliveryStatus[]): NotificationStatus {
         if (deliveryStatuses.length === 0) {

@@ -19,33 +19,33 @@ export class SocketPublisher implements ISocketPublisher {
 
     }
 
-    public async publish(deliveries: GetNotificationDeliveriesResponse[]) {
+    public async publish(delivery: GetNotificationDeliveriesResponse) {
+
         let log: ILogMetadata;
-        for (const delivery of deliveries) {
-            // generar log 
-            console.log({ delivery });
-            log = {
-                service: env.service_name,
-                created_at: new Date().toISOString(),
-                entity_id: delivery.delivery_id,
-                event: delivery.channel,
-                event_id: delivery.notification_external_id,
-                payload: JSON.parse(JSON.stringify(delivery.metadata))
-            };
+        // generar log 
+        console.log({ delivery });
+        log = {
+            service: env.service_name,
+            created_at: new Date().toISOString(),
+            entity_id: delivery.delivery_id,
+            event: delivery.channel,
+            event_id: delivery.notification_external_id,
+            payload: JSON.parse(JSON.stringify(delivery.metadata))
+        };
 
-            const payload = SocketPayloadFactory.build(delivery);
-            if (!payload) continue; // continue con la siguiente iteracion
+        const payload = SocketPayloadFactory.build(delivery);
+        if (!payload) return; // continue con la siguiente iteracion
 
-            //room, delivery.metadata.event!.toString()
-            const room = `user:${delivery.metadata.user_id!.toString()}`;
-            const socketMessage: SocketMessage = {
-                event: SOCKET_EMMIT,
-                type: "socket",
-                room,
-                payload: payload
-            }
-            this._logger.info('Notification was sent using socket...', log);
-            parentPort?.postMessage(socketMessage);
+        //room, delivery.metadata.event!.toString()
+        const room = `user:${delivery.metadata.user_id!.toString()}`;
+        const socketMessage: SocketMessage = {
+            event: SOCKET_EMMIT,
+            type: "socket",
+            room,
+            payload: payload
         }
+        this._logger.info('Notification was sent using socket...', log);
+        parentPort?.postMessage(socketMessage);
+
     }
 }
