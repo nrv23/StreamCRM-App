@@ -1,24 +1,13 @@
-import { SocketServer } from "../config/socketio.ts"
 import { GetNotificationDeliveriesResponse } from "../repository/notification/notification-delivery-repository.repository.ts";
 import { Logger } from "winston";
 import { ILogMetadata } from "../interfaces/iLog.interface.ts";
 import { env } from "../config/enviroment.ts";
-import { CHANGE_CUSTOMER_STATUS, CREATE_TAG, DELETE_CUSTOMER, SOCKET_EMMIT, UPDATE_CUSTOMER } from "../shared/types/events.type..ts";
-import { JsonObject } from "../dto/outboxEvents/createOutboxEvent.dto.ts";
+import { SOCKET_EMMIT } from "../shared/types/events.type..ts";
 import { ISocketPublisher } from "../interfaces/publisher/SocketPublisher.interface.ts";
 import { parentPort } from "node:worker_threads";
+import { SocketPayloadFactory } from "../shared/factory/socket-payload-factory.ts";
+import { SocketMessage } from "../interfaces/socket/SocketMessage.interface.ts";
 
-export type SocketPayload = {
-    message: string;
-    data: JsonObject;
-}
-
-export type SocketMessage = {
-    event: string;
-    type: string;
-    room: string;
-    payload: SocketPayload
-}
 
 export class SocketPublisher implements ISocketPublisher {
 
@@ -34,7 +23,7 @@ export class SocketPublisher implements ISocketPublisher {
         let log: ILogMetadata;
         for (const delivery of deliveries) {
             // generar log 
-
+            console.log({ delivery });
             log = {
                 service: env.service_name,
                 created_at: new Date().toISOString(),
@@ -44,7 +33,7 @@ export class SocketPublisher implements ISocketPublisher {
                 payload: JSON.parse(JSON.stringify(delivery.metadata))
             };
 
-            const payload = this.setSocketPayload(delivery);
+            const payload = SocketPayloadFactory.build(delivery);
             if (!payload) continue; // continue con la siguiente iteracion
 
             //room, delivery.metadata.event!.toString()
@@ -59,62 +48,4 @@ export class SocketPublisher implements ISocketPublisher {
             parentPort?.postMessage(socketMessage);
         }
     }
-
-    private setSocketPayload(delivery: GetNotificationDeliveriesResponse): SocketPayload | null {
-        let newPayload: SocketPayload | null;
-
-        switch (delivery.metadata!.event!.toString()) {
-            case UPDATE_CUSTOMER:
-                newPayload = {
-                    message: 'Customer info was updated',
-                    data: {
-                        email: delivery.metadata!.email!.toString(),
-                        fullName: ''.concat(delivery.metadata!.firstName!.toString(), ' ', delivery.metadata!.lastName!.toString()),
-                        event: delivery.metadata!.event!.toString()
-                    }
-                }
-                break;
-
-            case CHANGE_CUSTOMER_STATUS:
-                newPayload = {
-                    message: 'Customer status was changed',
-                    data: {
-                        email: delivery.metadata!.email!.toString(),
-                        fullName: ''.concat(delivery.metadata!.firstName!.toString(), ' ', delivery.metadata!.lastName!.toString()),
-                        prevStatus: delivery.metadata.previousStatus?.toString()!,
-                        newStatus: delivery.metadata.newStatus!.toString(),
-                        event: delivery.metadata!.event!.toString()
-                    }
-                }
-                break;
-
-            case DELETE_CUSTOMER:
-                newPayload = {
-                    message: 'Customer was deleted',
-                    data: {
-                        email: delivery.metadata!.email!.toString(),
-                        fullName: ''.concat(delivery.metadata!.firstName!.toString(), ' ', delivery.metadata!.lastName!.toString()),
-                        event: delivery.metadata!.event!.toString()
-                    }
-                }
-                break;
-
-            case CREATE_TAG:
-                newPayload = {
-                    message: 'Tag was created',
-                    data: {
-                        tag_id: delivery.metadata!.tag_id!,
-                        tag_name: delivery.metadata!.tag_name!.toString(),
-                        event: delivery.metadata!.event!.toString()
-                    }
-                }
-                break;
-            default:
-                newPayload = null;
-        }
-
-        return newPayload;
-    }
-
-
 }

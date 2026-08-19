@@ -1,8 +1,8 @@
 import { Worker } from "node:worker_threads";
 import { SocketServer } from "../config/socketio.ts";
-import { SocketMessage } from "../publisher/Socket.publsher.ts";
 import { SOCKET_EMMIT } from "../shared/types/events.type..ts";
 import { ISocketConsumer } from "../interfaces/consumer/socket-consumer.interface.ts";
+import { SocketMessage } from "../interfaces/socket/SocketMessage.interface.ts";
 
 export class SocketConsumer implements ISocketConsumer {
 
@@ -13,7 +13,7 @@ export class SocketConsumer implements ISocketConsumer {
     consume(worker: Worker): void {
 
         worker.on('message', (message: SocketMessage) => {
-            console.log("llego el mesnahe", message)
+
             if (message.type !== 'socket') return;
             if (message.event !== SOCKET_EMMIT) return;
 
