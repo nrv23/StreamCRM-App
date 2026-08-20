@@ -17,7 +17,7 @@ export class NotificationService {
     async search(options: GetNotificationsDto) {
 
         const page = options.page || 1;
-        const limit = options.limit || 20;
+        const limit = options.limit ? options.limit > 20 ? 20 : options.limit : 20;
 
         options.limit = limit;
         options.page = page;
