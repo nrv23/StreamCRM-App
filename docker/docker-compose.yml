@@ -97,15 +97,45 @@ services:
     depends_on:
       prometheus:
         condition: service_healthy
+  redis-server:
+    image: redis:8.10.0-alpine
+    container_name: redis-server
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - redisdata:/data
+    networks:
+      - stream-crm-network
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--user", "streamcrm", "-a", "12345", "ping" ]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  redis-insight:
+    image: redis/redisinsight:3.8.0
+    container_name: redis-insight
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    depends_on:
+      redis-server:
+        condition: service_healthy
+    networks:
+      - stream-crm-network
 volumes:
   postgres_projects_data:
     external: true
     name: stream-crm_postgres_projects_data
-
   rabbitmq_streamcrm_data:
   esdata:
   promdata:
   grafanadata:
+  redisdata:
 networks:
   stream-crm-network:
     driver: bridge

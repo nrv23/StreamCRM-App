@@ -50,6 +50,7 @@ export class NoteController {
 
         const { id } = req.user;
         // matchedData extrae SOLO los datos validados y ya convertidos (por ej: .toInt())
+        // comentario de prueba
         const queryOptions = matchedData(req, { locations: ['query'] }) as unknown as GetNoteDto;
         const options: GetNoteDto = {
             ...queryOptions,

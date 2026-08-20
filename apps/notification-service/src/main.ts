@@ -12,6 +12,7 @@ import { connect as elasticSearchConnect } from "./config/elasticsearch.ts";
 import { createServer } from "http";
 import { SocketServer } from "./config/socketio.ts";
 import { WinstonLogger } from "./shared/utils/winstonLogger.ts";
+import { RedisBootstrap } from "./config/redis.ts";
 
 
 async function bootstrap() {
@@ -20,6 +21,7 @@ async function bootstrap() {
     const port = Number(env.server_port);
     await verifyTransporterConnection();
     await elasticSearchConnect();
+    await RedisBootstrap.getInstance().init();
 
     const httpServer = createServer(app);
 
