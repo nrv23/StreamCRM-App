@@ -74,7 +74,8 @@ export class NotificationDeliveryRepository implements INotificationDeliveryRepo
             );
     }
     // agregar metodo para buscar deliveries en pending, 5 intentos marca el evento como failed.
-
+    // revisar si en el notiiction worker se pouede enviar los sockets
+    // revisar el metodo getNotficationDeliveries no esta trayendo bien los deliveries. 
     async getNotficationDeliveries(status: NotificationDeliveryStatus, limit: number, allowedDeliveryChannel: NotificationCommand[], delivery_id?: number): Promise<GetNotificationDeliveriesResponse[]> {
         const params: Array<string | number | NotificationCommand[]> = [];
         let sql = `

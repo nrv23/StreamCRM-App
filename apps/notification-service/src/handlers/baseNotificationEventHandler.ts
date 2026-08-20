@@ -41,29 +41,32 @@ export abstract class BaseNotificationEventHandler<TEvent> implements Integratio
                     [NotificationCommand.INAPP],
                     deliveryResponse.id
                 );
-                const processingDeliveriesId = pendingDeliveries.map(delivery => delivery.delivery_id);
 
-                await notificationDelivery.setStatusProcessing(processingDeliveriesId);
-                try {
-                    await notificationDelivery.markAsDelivered(
-                        deliveryResponse.id,
-                        '',
-                    );
+                if (pendingDeliveries.length) {
+                    const processingDeliveriesId = pendingDeliveries.map(delivery => delivery.delivery_id);
 
-                    const statuses = await notificationDelivery.findStatusesByNotificationId(command.notification_id);
-                    const notificationStatus = this.resolveNotificationStatus(statuses);
+                    await notificationDelivery.setStatusProcessing(processingDeliveriesId);
+                    try {
+                        await notificationDelivery.markAsDelivered(
+                            deliveryResponse.id,
+                            '',
+                        );
 
-                    await notification.setNotificationStatus(
-                        command.notification_id,
-                        notificationStatus,
-                    );
-                } catch (err) {
-                    const error = err instanceof Error ? err.message : String(err);
-                    await notificationDelivery.markAsFailed(deliveryResponse.id, error);
+                        const statuses = await notificationDelivery.findStatusesByNotificationId(command.notification_id);
+                        const notificationStatus = this.resolveNotificationStatus(statuses);
+
+                        await notification.setNotificationStatus(
+                            command.notification_id,
+                            notificationStatus,
+                        );
+                    } catch (err) {
+                        const error = err instanceof Error ? err.message : String(err);
+                        await notificationDelivery.markAsFailed(deliveryResponse.id, error);
+                    }
+
+                    //await this.notificationDispatcher.dispatch(command);
+                    if (pendingDeliveries[0]) await this.publisher.publish(pendingDeliveries[0]);
                 }
-
-                //await this.notificationDispatcher.dispatch(command);
-                if (pendingDeliveries[0]) await this.publisher.publish(pendingDeliveries[0]);
             }
         });
     }
