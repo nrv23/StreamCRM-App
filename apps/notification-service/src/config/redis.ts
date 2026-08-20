@@ -14,7 +14,7 @@ export interface IBootstrap {
 }
 
 const logger: Logger = WinstonLogger.getInstance(env.elastic_search_url,
-    'config-db-module',
+    'redis-module',
     'debug',
     env.index_elastic_search_name);
 
