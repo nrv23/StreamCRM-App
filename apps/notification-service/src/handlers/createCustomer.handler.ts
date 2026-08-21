@@ -7,18 +7,19 @@ import { NotificationStatus } from "../enum/notification-status.enum.ts";
 import { NotificationType } from "../enum/notification-type.enum.ts";
 import { UnitOfWork } from "../config/unitOfWork.ts";
 import { ISocketPublisher } from "../interfaces/publisher/SocketPublisher.interface.ts";
+import { RedisPublisher } from "../publisher/Redis.publisher.ts";
 
 export class CreateCustomerHandler extends BaseNotificationEventHandler<RabbitEventDto> {
 
     // AQUÍ INYECTAS TUS DEPENDENCIAS
     constructor(
         public unitOfWork: UnitOfWork,
-        public socket: ISocketPublisher,
+        public redisPublisher: RedisPublisher,
         public limit: number
 
     ) {
         // Y se las pasas a la clase base, para que ella pueda guardar en BD
-        super(unitOfWork, limit, socket)
+        super(unitOfWork, limit, redisPublisher)
     }
 
     // Ya NO necesitas escribir el método handle() aquí, porque lo heredas del padre.

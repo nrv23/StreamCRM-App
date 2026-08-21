@@ -24,7 +24,7 @@ Servicio asíncrono y reactivo orientado a eventos (**Event-Driven Architecture*
 - **Procesamiento Basado en Eventos**: Consumo asíncrono de RabbitMQ sin bloquear operaciones del cliente.
 - **Notificaciones Multicanal**: Soporte extensible para envíos vía Email (**Nodemailer**), SMS y **WebSockets** (In-App).
 - **Notificaciones In-App en Tiempo Real (WebSockets)**: Emisión directa de eventos `INAPP` a clientes conectados mediante **Socket.io**, sin depender de proveedores externos (SMS, Email, Push).
-- **Arquitectura Multihilo (Worker Threads IPC)**: Despacho de notificaciones desde worker threads hacia el hilo principal mediante `parentPort` para la emisión por sockets.
+- **Sockets Distribuidos (Redis Pub/Sub)**: Publicación y distribución global de notificaciones en tiempo real a través de **Redis Pub/Sub** (`STREAM_CRM_EVENT`) para soportar el escalamiento horizontal entre múltiples instancias del servicio.
 - **Motor de Plantillas Dinámicas**: Renderizado de mensajes HTML utilizando **Handlebars**.
 - **Garantía de Idempotencia**: Verificación de eventos procesados en PostgreSQL (`processed_events`) para evitar notificaciones duplicadas.
 - **Manejo Resiliente de Fallos (DLQ)**: Cola de mensajes fallidos (Dead Letter Queue) para auditoría y reintentos automatizados.
@@ -35,7 +35,7 @@ Servicio asíncrono y reactivo orientado a eventos (**Event-Driven Architecture*
 
 ## 🏗️ Arquitectura del Microservicio
 
-El servicio opera principalmente como un **Event Consumer / Background Worker** que responde a eventos del sistema, notifica vía Email/SMS, despacha notificaciones In-App por WebSockets y expone métricas HTTP:
+El servicio opera principalmente como un **Event Consumer / Background Worker** que responde a eventos del sistema, notifica vía Email/SMS, despacha notificaciones In-App por WebSockets distribuidos vía Redis y expone métricas HTTP:
 
 ```text
 ┌──────────────────────────────────────────────────────────┐
@@ -57,47 +57,50 @@ El servicio opera principalmente como un **Event Consumer / Background Worker** 
                              │
                  ┌───────────┼───────────┐
                  ▼           ▼           ▼
-┌──────────────────┐ ┌──────────────┐ ┌──────────────────────────────────────┐
-│ Template Engine  │ │  Email / SMS │ │ SocketPublisher (Worker Thread IPC)  │
-│  (Handlebars)    │ │   Senders    │ │  └─> parentPort.postMessage()       │
-└──────────────────┘ └──────────────┘ └──────────────────┬───────────────────┘
-                                                         │ (Inter-Thread IPC)
-                                                         ▼
-                                              ┌──────────────────────────────┐
-                                              │ SocketConsumer (Main Thread) │
-                                              │  └─> SocketServer (Emits)    │
-                                              └──────────────────────────────┘
+┌──────────────────┐ ┌──────────────┐ ┌──────────────────────────────────────────────┐
+│ Template Engine  │ │  Email / SMS │ │ RedisPublisher (Publish to STREAM_CRM_EVENT) │
+│  (Handlebars)    │ │   Senders    │ │  └─> Redis Client (publish)                  │
+└──────────────────┘ └──────────────┘ └──────────────────────┬───────────────────────┘
+                                                             │ (Redis Pub/Sub Channel)
+                                                             ▼
+                                                  ┌──────────────────────────────────────┐
+                                                  │ RedisSubscriber & SocketConsumer     │
+                                                  │ (Main Thread - All Node Instances)   │
+                                                  │  └─> SocketServer.emitToRoom()       │
+                                                  └──────────────────────────────────────┘
 ```
 
 ---
 
-## 🔌 Notificaciones In-App en Tiempo Real (WebSockets)
+## 🔌 Notificaciones In-App en Tiempo Real (WebSockets Distribuidos con Redis)
 
-Para aquellos eventos del sistema que requieren notificar al cliente en la interfaz de usuario **en tiempo real sin depender de proveedores de pago o externos** (como proveedores de SMS, Email o Push Services), se implementó un canal **`INAPP`** impulsado por **Socket.io**.
+Para aquellos eventos del sistema que requieren notificar al cliente en la interfaz de usuario **en tiempo real sin depender de proveedores de pago o externos**, se implementó un canal **`INAPP`** impulsado por **Socket.io** distribuido mediante **Redis Pub/Sub**.
 
-### 🛠️ Arquitectura de Comunicación Inter-Hilo (Worker IPC)
+### 🛠️ Arquitectura de Distribución Sockets (Redis Pub/Sub)
 
-Dado que los consumidores de eventos de RabbitMQ corren en un **Worker Thread** aislado para no bloquear el Event Loop principal:
+Para garantizar el escalamiento horizontal entre múltiples instancias del servicio (nodos en clúster/Docker):
 
-1. **`SocketPublisher` (Worker Thread):** Transforma la entrega de notificación (`INAPP`) en un objeto `SocketMessage` con payload tipado (`SocketPayload`) y lo envía al hilo principal utilizando `parentPort.postMessage()`.
-2. **`SocketConsumer` (Main Thread):** Escucha los mensajes emitidos por el worker (`worker.on('message')`), valida que el mensaje sea de tipo `socket` / `socket-emmit` y lo redirige al servidor HTTP mediante `SocketServer`.
-3. **`SocketServer` (Main Thread):** Administra el servidor WebSocket (namespace `/notifications`), une a los clientes conectados a sus salas de usuario individuales (`user:{user_id}`) y emite la notificación en tiempo real.
+1. **`RedisPublisher` (Worker/Handler):** Transforma la entrega de notificación (`INAPP`) en un objeto `SocketMessage` (construido mediante `SocketUtils` y `SocketPayloadFactory`) y lo publica en el canal central de Redis `STREAM_CRM_EVENT` (`"stream_crm_events"`).
+2. **`RedisSubscriber` & `SocketConsumer` (Main Thread en cada instancia):** Cada nodo activo del servicio escucha el canal de Redis (`redisConsumer.subscribe`). Al recibir el mensaje, `SocketConsumer` valida que corresponda a un evento de socket (`socket-emmit`).
+3. **`SocketServer` (Main Thread):** Administra el servidor WebSocket (Socket.io), une a los clientes conectados a sus salas de usuario individuales (`user:{user_id}`) y emite la notificación únicamente en el nodo donde se encuentra la conexión activa del cliente.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant EventWorker as 🧵 Worker Thread (Handler)
-    participant Publisher as 📢 SocketPublisher
-    participant MainThread as 🖥️ Main Thread (SocketConsumer)
-    participant SocketServer as 🔌 SocketServer (Socket.io)
+    participant EventWorker as 🧵 Worker Thread / Handler
+    participant Publisher as 📢 RedisPublisher
+    participant RedisChannel as 🔴 Redis Pub/Sub (stream_crm_events)
+    participant RedisSub as 📥 RedisSubscriber (Main Thread)
+    participant SocketConsumer as 🔌 SocketConsumer
+    participant SocketServer as ⚡ SocketServer (Socket.io)
     participant Client as 👤 Client Frontend
 
-    Client->>SocketServer: Conectar WebSocket (query: room=user:123)
-    SocketServer->>SocketServer: joinRoom("user:123")
-    EventWorker->>Publisher: Process INAPP delivery
-    Publisher->>Publisher: Map delivery to SocketPayload
-    Publisher->>MainThread: parentPort.postMessage(SocketMessage)
-    MainThread->>SocketServer: emitToRoom("user:123", "socket-emmit", payload)
+    Client->>SocketServer: Conectar WebSocket (joinRoom user:123)
+    EventWorker->>Publisher: Process INAPP delivery (build SocketMessage)
+    Publisher->>RedisChannel: publish(STREAM_CRM_EVENT, message)
+    RedisChannel-->>RedisSub: Deliver to subscribers in all instances
+    RedisSub->>SocketConsumer: consume(message)
+    SocketConsumer->>SocketServer: emitToRoom("user:123", "socket-emmit", payload)
     SocketServer-->>Client: Receive event payload in real time
 ```
 
@@ -119,9 +122,9 @@ graph TD
     subgraph Processing ["🛠️ Procesamiento Multicanal"]
         Handler -->|Canal Email/SMS| Template["📄 Handlebars Engine (Compilar HTML)"]
         Template --> Sender["✉️ EmailSender / SMS Sender"]
-        Handler -->|Canal INAPP| SocketPub["📢 SocketPublisher (parentPort.postMessage)"]
-        SocketPub -->|IPC Message| SocketCon["📥 SocketConsumer (Main Thread)"]
-        SocketCon --> SocketServer["🔌 SocketServer.emitToRoom()"]
+        Handler -->|Canal INAPP| RedisPub["📢 RedisPublisher (publish)"]
+        RedisPub -->|Redis Pub/Sub| RedisSub["📥 RedisSubscriber & SocketConsumer"]
+        RedisSub --> SocketServer["🔌 SocketServer.emitToRoom()"]
         Sender --> DB[("🐘 PostgreSQL (processed_events & notifications)")]
         SocketServer --> Client["👤 Client Frontend (Room: user:id)"]
     end
@@ -168,21 +171,21 @@ src/
 ├── app.ts                  # Configuración de Express para endpoints de salud (/health) y métricas (/metrics)
 ├── main.ts                 # Bootstrap del servicio y arranque de workers de RabbitMQ
 ├── background/             # Workers en segundo plano (events, notifications, dlq)
-├── config/                 # Configuración de entorno, Nodemailer, PostgreSQL, Elastic, RabbitMQ
-├── consumer/               # Consumidores de colas de RabbitMQ (Normal & DLQ)
+├── config/                 # Configuración de entorno, Nodemailer, PostgreSQL, Elastic, Redis, RabbitMQ
+├── consumer/               # Consumidores de colas de RabbitMQ y RedisSubscriber
 ├── controllers/            # Controladores HTTP (MetricsController, etc.)
 ├── dto/                    # Data Transfer Objects
 ├── entity/                 # Entidades del dominio (Notification, ProcessedEvent)
 ├── enum/                   # Enums (NotificationType, Channel, EventTypes, NotificationCommand)
 ├── handlebars/             # Helpers y utilidades para compilación de Handlebars
 ├── handlers/               # Event Handlers (CreateCustomer, UpdateCustomer, DeleteCustomer, StatusChange)
-├── interfaces/             # Interfaces y contratos del servicio
-├── publisher/              # Publicadores de eventos secundarios
+├── interfaces/             # Interfaces y contratos del servicio (consumer, publisher, socket)
+├── publisher/              # Publicadores de eventos (RedisPublisher)
 ├── repository/             # Persistencia de eventos procesados y notificaciones
 ├── routes/                 # Rutas de Express (metrics, etc.)
 ├── sender/                 # Adaptadores de envío (EmailSender via Nodemailer, SmsSender)
 ├── services/               # Servicios principales (Delivery Processing, Consumer Service, MetricsService)
-├── shared/                 # Middlewares, utilidades, logger y manejador de errores
+├── shared/                 # Middlewares, utilidades (socket-utils), logger y manejador de errores
 └── templates/              # Plantillas HTML Handlebars para emails
 ```
 
@@ -196,7 +199,7 @@ src/
    - Renderizar la plantilla con datos del evento.
    - Ejecutar el envío mediante el canal adecuado (Email, SMS, INAPP).
    - Registrar la notificación y marcar el evento como procesado.
-3. **Worker Thread IPC Bridge (`SocketPublisher` & `SocketConsumer`)**: Patrón de paso de mensajes inter-hilo mediante `parentPort.postMessage` para desacoplar el procesamiento en segundo plano del servidor WebSocket en el hilo principal.
+3. **Distributed Sockets via Redis Pub/Sub (`RedisPublisher`, `RedisSubscriber` & `SocketConsumer`)**: Publicación y recepción de mensajes en el canal `stream_crm_events` de Redis para transmitir notificaciones en tiempo real a salas de usuarios en cualquier nodo/instancia activa.
 4. **Idempotent Consumer**: Garantiza que el procesamiento repetido del mismo evento no genere notificaciones duplicadas al usuario.
 5. **Dead Letter Queue (DLQ)**: Aislamiento de mensajes no procesables para evitar el bloqueo de la cola principal.
 6. **Observability Pattern (Prometheus Integration)**: Middleware e instrumentalización mediante `prom-client` para rastrear latencias de endpoint y métricas de proceso.
@@ -345,6 +348,12 @@ EMAIL_FROM=no-reply@streamcrm.com
 
 # Elasticsearch
 ELASTICSEARCH_NODE=http://localhost:9200
+
+# Redis (Sockets Distribuidos / PubSub)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_USERNAME=streamcrm
+REDIS_PASSWORD=12345
 ```
 
 ---

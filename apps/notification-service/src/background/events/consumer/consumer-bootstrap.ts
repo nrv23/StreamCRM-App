@@ -1,5 +1,6 @@
 import { env } from "../../../config/enviroment.ts";
 import RabbitMQConsumer from "../../../config/rabbitmqConsumer.ts";
+import { RedisBootstrap } from "../../../config/redis.ts";
 import { RabbitEventConsumer } from "../../../consumer/RabbitEvent.consumer.ts";
 import { EventDispatcher } from "../../../handlers/EventDispatcher.ts";
 import { handlers } from "../../../handlers/handlers.ts";
@@ -11,6 +12,9 @@ import { WinstonLogger } from "../../../shared/utils/winstonLogger.ts";
 
 async function startWorker() {
     try {
+
+        await RedisBootstrap.getInstance().init();
+
         const repository = new ProcessedEventRepository();
         const dispatcher = new EventDispatcher(handlers)
         const processIntegrationEvent = new ProcessIntegrationEvent(repository, dispatcher)

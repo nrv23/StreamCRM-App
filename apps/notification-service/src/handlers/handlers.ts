@@ -23,6 +23,8 @@ import { SocketServer } from "../config/socketio.ts";
 import { SocketPublisher } from "../publisher/Socket.publsher.ts";
 import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 import { env } from "../config/enviroment.ts";
+import { RedisBootstrap } from "../config/redis.ts";
+import { RedisPublisher } from "../publisher/Redis.publisher.ts";
 env
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,31 +44,35 @@ const logger = WinstonLogger.getInstance(
     'debug',
     env.index_elastic_search_name
 )
-const socketPublisher = new SocketPublisher(logger)
+
+
+//const socketPublisher = new SocketPublisher(logger)
+const redisClient = RedisBootstrap.getInstance().getPublisher();
+const redisPublisher = new RedisPublisher(redisClient, logger);
 const unitOfWork = new UnitOfWork();
 const limit = 20;
 export const handlers = new Map<string, IntegrationEventHandler<RabbitEventDto>>([
     [
         CREATE_CUSTOMER,
-        new CreateCustomerHandler(unitOfWork, socketPublisher, limit),
+        new CreateCustomerHandler(unitOfWork, redisPublisher, limit),
     ],
     // notificaciones que llegan a userId y adminIds
     [
         UPDATE_CUSTOMER,
-        new UpdateCustomerHandler(unitOfWork, socketPublisher, limit),
+        new UpdateCustomerHandler(unitOfWork, redisPublisher, limit),
     ],
     [
         DELETE_CUSTOMER,
-        new DeleteCustomerHandler(unitOfWork, socketPublisher, limit),
+        new DeleteCustomerHandler(unitOfWork, redisPublisher, limit),
     ],
     [
         CHANGE_CUSTOMER_STATUS,
-        new CustomerStatusChangeHandler(unitOfWork, socketPublisher, limit),
+        new CustomerStatusChangeHandler(unitOfWork, redisPublisher, limit),
     ],
 
     [
         CREATE_TAG,
-        new CreateTagHandler(unitOfWork, socketPublisher, limit),
+        new CreateTagHandler(unitOfWork, redisPublisher, limit),
     ],
 
 ]);

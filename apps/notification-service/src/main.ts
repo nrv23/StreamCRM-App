@@ -13,6 +13,9 @@ import { createServer } from "http";
 import { SocketServer } from "./config/socketio.ts";
 import { WinstonLogger } from "./shared/utils/winstonLogger.ts";
 import { RedisBootstrap } from "./config/redis.ts";
+import { RedisPublisher } from "./publisher/Redis.publisher.ts";
+import { RedisSubscriber } from "./consumer/RedisSubscriber.consumer.ts";
+import { STREAM_CRM_EVENT } from "./shared/types/events.type..ts";
 
 
 async function bootstrap() {
@@ -39,6 +42,28 @@ async function bootstrap() {
     );
 
     startEventWorker(socketServer);
+
+    // hacer una prueba del pub/sub de redis 
+
+    /*const redisPublisher = new RedisPublisher(RedisBootstrap.getInstance().getPublisher());
+    const redisSubscriber = new RedisSubscriber(RedisBootstrap.getInstance().getSubscriber());
+
+    await redisSubscriber.subscribe(STREAM_CRM_EVENT, (message) => {
+        console.log(
+            "[Redis SUB] received:",
+            message
+        );
+    })
+
+    await redisPublisher.publish(STREAM_CRM_EVENT, {
+        room: "user:18",
+        event: "notification.created",
+        payload: {
+            message: "Redis Pub/Sub funcionando papá"
+        }
+    });*/
+
+
 
     httpServer.listen(port, () => {
         console.log(`Notification Service running on port ${port}`);

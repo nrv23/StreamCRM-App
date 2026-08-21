@@ -27,3 +27,7 @@ export const NOTIFICATION_CREATED = "notification-created";
 // sockets 
 
 export const SOCKET_EMMIT = "socket-emmit";
+
+// redis 
+
+export const STREAM_CRM_EVENT = "stream-crm:socket-events";

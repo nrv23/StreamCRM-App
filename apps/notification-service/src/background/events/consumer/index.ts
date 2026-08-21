@@ -1,9 +1,15 @@
 import { Worker } from "node:worker_threads";
 import { SocketConsumer } from "../../../consumer/Socket.consumer.ts";
 import { SocketServer } from "../../../config/socketio.ts";
+import { RedisBootstrap } from "../../../config/redis.ts";
+import { RedisSubscriber } from "../../../consumer/RedisSubscriber.consumer.ts";
+import { STREAM_CRM_EVENT } from "../../../shared/types/events.type..ts";
+import { SocketMessage } from "../../../interfaces/socket/SocketMessage.interface.ts";
+import { WinstonLogger } from "../../../shared/utils/winstonLogger.ts";
+import { env } from "../../../config/enviroment.ts";
 
 export function startEventWorker(
-    socketServer: SocketServer
+    socketServer: SocketServer,
 ): Worker {
 
     const isDevelopment = import.meta.url.endsWith(".ts");
@@ -18,7 +24,19 @@ export function startEventWorker(
 
     // Escucha los mensajes enviados desde el worker
     // y los publica usando la instancia REAL de SocketServer del main thread.
-    new SocketConsumer(socketServer).consume(outboxWorker);
+    const logger = WinstonLogger.getInstance(
+        env.elastic_search_url,
+        'event-worker',
+        'debug',
+        env.index_elastic_search_name
+    );
+    const client = RedisBootstrap.getInstance().getSubscriber();
+    const redisConsumer = new RedisSubscriber<SocketMessage>(client, logger);
+    const socketConsumer = new SocketConsumer(socketServer);
+
+    redisConsumer.subscribe(STREAM_CRM_EVENT, message => {
+        socketConsumer.consume(message);
+    });
 
     outboxWorker.on("message", (message: unknown) => {
         console.log("[MAIN <- WORKER]", message);

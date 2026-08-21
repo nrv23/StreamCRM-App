@@ -10,18 +10,15 @@ export class SocketConsumer implements ISocketConsumer {
         private readonly socketServer: SocketServer
     ) { }
 
-    consume(worker: Worker): void {
-
-        worker.on('message', (message: SocketMessage) => {
-
-            if (message.type !== 'socket') return;
-            if (message.event !== SOCKET_EMMIT) return;
-
-            this.socketServer.emitToRoom(
-                message.room,
-                message.payload.data.event!.toString(),
-                message.payload
-            );
-        });
+    consume(message: SocketMessage): void {
+        console.log({ message })
+        if (message.type !== 'socket') return;
+        if (message.event !== SOCKET_EMMIT) return;
+        console.log('emiting message....', message);
+        this.socketServer.emitToRoom(
+            message.room,
+            message.payload.data.event!.toString(),
+            message.payload
+        );
     }
 }

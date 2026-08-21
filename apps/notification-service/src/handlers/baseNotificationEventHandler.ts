@@ -6,6 +6,10 @@ import { NotificationDeliveryStatus } from "../enum/NotificationDeliveryStatus.e
 import { GetNotificationDeliveriesResponse } from "../repository/notification/notification-delivery-repository.repository.ts";
 import { ISocketPublisher } from "../interfaces/publisher/SocketPublisher.interface.ts";
 import { NotificationStatus } from "../enum/notification-status.enum.ts";
+import { IRedisPublisher } from "../interfaces/publisher/RedisPublisher.interface.ts";
+import { STREAM_CRM_EVENT } from "../shared/types/events.type..ts";
+import { SocketUtils } from "../shared/utils/socket-utils.ts";
+import { SocketMessage } from "../interfaces/socket/SocketMessage.interface.ts";
 
 
 export type CreateNotificationBodyDataResponse = {
@@ -16,7 +20,7 @@ export abstract class BaseNotificationEventHandler<TEvent> implements Integratio
     constructor(
         protected readonly unitOfWork: UnitOfWork,
         protected readonly limit: number,
-        protected readonly publisher: ISocketPublisher
+        protected readonly redisPublisher: IRedisPublisher
     ) {
     }
 
@@ -65,7 +69,10 @@ export abstract class BaseNotificationEventHandler<TEvent> implements Integratio
                     }
 
                     //await this.notificationDispatcher.dispatch(command);
-                    if (pendingDeliveries[0]) await this.publisher.publish(pendingDeliveries[0]);
+                    if (pendingDeliveries[0]) {
+                        const message = SocketUtils.buildMessage(pendingDeliveries[0]);
+                        if (message) await this.redisPublisher.publish<SocketMessage>(STREAM_CRM_EVENT, message);
+                    }
                 }
             }
         });
