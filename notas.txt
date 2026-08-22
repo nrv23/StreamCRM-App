@@ -11,3 +11,11 @@ git for-each-ref --sort=-committerdate refs/heads/ \
   No se puede reutilizar conexiones de rabbitmq de un main process a un worker thread o child process.
   Cada uno tiene su contexto de procesamiento e instancia propia
 
+IPC approach
+→ válido para comunicar worker → main
+→ quedó innecesario al introducir Redis Pub/Sub
+
+Redis approach
+→ resuelve worker → main
+→ y además instancia A → instancia B
+→ reduce una capa de comunicación
