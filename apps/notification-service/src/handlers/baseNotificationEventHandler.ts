@@ -71,7 +71,8 @@ export abstract class BaseNotificationEventHandler<TEvent> implements Integratio
                     //await this.notificationDispatcher.dispatch(command);
                     if (pendingDeliveries[0]) {
                         const message = SocketUtils.buildMessage(pendingDeliveries[0]);
-                        if (message) await this.redisPublisher.publish<SocketMessage>(STREAM_CRM_EVENT, message);
+                        message && await this.redisPublisher.publish<SocketMessage>(STREAM_CRM_EVENT, message);
+                        //if (message) await this.redisPublisher.publish<SocketMessage>(STREAM_CRM_EVENT, message);
                     }
                 }
             }
