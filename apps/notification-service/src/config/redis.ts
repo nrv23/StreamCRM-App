@@ -142,93 +142,37 @@ export class RedisBootstrap implements IBootstrap {
 
     private registerEvents(): void {
 
-        /*
-         * Publisher events
-         */
+        this._publisherClient.on("error", (error) => {
+            logger.error("[Redis Publisher] error", error);
+        });
 
-        this._publisherClient.on(
-            "error",
-            (error) => {
-                logger.error(
-                    "[Redis Publisher] error",
-                    error
-                );
-            }
-        );
+        this._publisherClient.on("reconnecting", () => {
+            logger.warn("[Redis Publisher] reconnecting...");
+        });
 
+        this._publisherClient.on("ready", () => {
+            logger.info("[Redis Publisher] ready");
+        });
 
-        this._publisherClient.on(
-            "reconnecting",
-            () => {
-                logger.info(
-                    "[Redis Publisher] reconnecting..."
-                );
-            }
-        );
+        this._publisherClient.on("end", () => {
+            logger.warn("[Redis Publisher] connection ended");
+        });
 
 
-        this._publisherClient.on(
-            "ready",
-            () => {
-                logger.info(
-                    "[Redis Publisher] ready"
-                );
-            }
-        );
+        this._subscriberClient.on("error", (error) => {
+            logger.error("[Redis Subscriber] error", error);
+        });
 
+        this._subscriberClient.on("reconnecting", () => {
+            logger.warn("[Redis Subscriber] reconnecting...");
+        });
 
-        this._publisherClient.on(
-            "end",
-            () => {
-                logger.info(
-                    "[Redis Publisher] connection ended"
-                );
-            }
-        );
+        this._subscriberClient.on("ready", () => {
+            logger.info("[Redis Subscriber] ready");
+        });
 
-
-        /*
-         * Subscriber events
-         */
-
-        this._subscriberClient.on(
-            "error",
-            (error) => {
-                logger.error(
-                    "[Redis Subscriber] error",
-                    error
-                );
-            }
-        );
-
-
-        this._subscriberClient.on(
-            "reconnecting",
-            () => {
-                logger.info(
-                    "[Redis Subscriber] reconnecting..."
-                );
-            }
-        );
-
-
-        this._subscriberClient.on(
-            "ready",
-            () => {
-                logger.info(
-                    "[Redis Subscriber] ready"
-                );
-            }
-        );
-
-
-        this._subscriberClient.on(
-            "end",
-            () => {
-                logger.info(
-                    "[Redis Subscriber] connection ended"
-                );
-            }
-        );
+        this._subscriberClient.on("end", () => {
+            logger.warn("[Redis Subscriber] connection ended");
+        });
     }
 }

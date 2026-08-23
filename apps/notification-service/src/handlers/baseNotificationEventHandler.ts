@@ -6,6 +6,7 @@ import { NotificationDeliveryStatus } from "../enum/NotificationDeliveryStatus.e
 import { GetNotificationDeliveriesResponse } from "../repository/notification/notification-delivery-repository.repository.ts";
 import { ISocketPublisher } from "../interfaces/publisher/SocketPublisher.interface.ts";
 import { NotificationStatus } from "../enum/notification-status.enum.ts";
+import { IRedisEmitter } from "../interfaces/publisher/RedisEmitter.publisher.ts";
 
 
 export type CreateNotificationBodyDataResponse = {
@@ -16,7 +17,7 @@ export abstract class BaseNotificationEventHandler<TEvent> implements Integratio
     constructor(
         protected readonly unitOfWork: UnitOfWork,
         protected readonly limit: number,
-        protected readonly publisher: ISocketPublisher
+        protected readonly emitter: IRedisEmitter
     ) {
     }
 
@@ -65,7 +66,7 @@ export abstract class BaseNotificationEventHandler<TEvent> implements Integratio
                     }
 
                     //await this.notificationDispatcher.dispatch(command);
-                    if (pendingDeliveries[0]) await this.publisher.publish(pendingDeliveries[0]);
+                    if (pendingDeliveries[0]) await this.emitter.emit(pendingDeliveries[0]);
                 }
             }
         });

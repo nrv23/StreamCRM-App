@@ -23,7 +23,6 @@ export class SocketPublisher implements ISocketPublisher {
 
         let log: ILogMetadata;
         // generar log 
-        console.log({ delivery });
         log = {
             service: env.service_name,
             created_at: new Date().toISOString(),

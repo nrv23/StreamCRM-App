@@ -18,7 +18,7 @@ export function startEventWorker(
 
     // Escucha los mensajes enviados desde el worker
     // y los publica usando la instancia REAL de SocketServer del main thread.
-    new SocketConsumer(socketServer).consume(outboxWorker);
+    //new SocketConsumer(socketServer).consume(outboxWorker);
 
     outboxWorker.on("message", (message: unknown) => {
         console.log("[MAIN <- WORKER]", message);

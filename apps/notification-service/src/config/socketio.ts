@@ -4,29 +4,39 @@ import { Logger } from "winston";
 import { ILogMetadata } from "../interfaces/iLog.interface.ts";
 import { SOCKET_CONNECTED, SOCKET_DISCONNECTED } from "../shared/types/events.type..ts";
 import { env } from "./enviroment.ts";
-import { SocketPayload } from "../publisher/Socket.publsher.ts";
-
+import { createAdapter } from '@socket.io/redis-adapter';
+import { RedisClientType } from "redis";
+import { SocketPayload } from "../interfaces/socket/SocketMessage.interface.ts";
 
 export class SocketServer {
     private static _instance: SocketServer;
     private _io!: SocketIOServer;
     private _app: Server;
     private _logger: Logger;
+    private readonly _publisherClient: RedisClientType;
+    private readonly _subscriberClient: RedisClientType;
     private readonly _namespace: string = '/notifications';
     private _notificationsNamespace!: Namespace;
     //private _roomsMap: Map<Record<string,string>>;
 
     // Constructor privado para forzar el uso de Singleton
-    private constructor(app: Server, logger: Logger) {
+    private constructor(
+        public readonly app: Server,
+        public readonly logger: Logger,
+        public readonly publisherClient: RedisClientType,
+        public readonly subscriberClient: RedisClientType
+    ) {
         this._app = app;
         this._logger = logger;
+        this._publisherClient = publisherClient;
+        this._subscriberClient = subscriberClient;
         this.initSocketServer();
     }
 
     // Método estático para inicializar o recuperar la instancia única
-    public static init(app: Server, logger: Logger): SocketServer {
+    public static init(app: Server, logger: Logger, publisherClient: RedisClientType, subscriberClient: RedisClientType): SocketServer {
         if (!SocketServer._instance) {
-            SocketServer._instance = new SocketServer(app, logger);
+            SocketServer._instance = new SocketServer(app, logger, publisherClient, subscriberClient);
         }
         return SocketServer._instance;
     }
@@ -41,7 +51,8 @@ export class SocketServer {
 
     private initSocketServer(): void {
         this._io = new SocketIOServer(this._app, {
-            cors: { origin: "*" } // cuando se cree el authservice y gateway esto se va cambiar
+            cors: { origin: "*" },// cuando se cree el authservice y gateway esto se va cambiar
+            adapter: createAdapter(this._publisherClient, this._subscriberClient)
         });
         this._notificationsNamespace = this._io.of(this._namespace);
 

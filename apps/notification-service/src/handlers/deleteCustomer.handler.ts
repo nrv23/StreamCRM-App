@@ -6,17 +6,18 @@ import { NotificationType } from "../enum/notification-type.enum.ts";
 import { UnitOfWork } from "../config/unitOfWork.ts";
 import { NotificationCommand } from "../enum/Notification-Command.enum.ts";
 import { ISocketPublisher } from "../interfaces/publisher/SocketPublisher.interface.ts";
+import { IRedisEmitter } from "../interfaces/publisher/RedisEmitter.publisher.ts";
 
 export class DeleteCustomerHandler extends BaseNotificationEventHandler<RabbitEventDto> {
 
     constructor(
         public unitOfWork: UnitOfWork,
-        public socket: ISocketPublisher,
+        public emitter: IRedisEmitter,
         public limit: number
 
     ) {
         // Y se las pasas a la clase base, para que ella pueda guardar en BD
-        super(unitOfWork, limit, socket)
+        super(unitOfWork, limit, emitter)
     }
 
     protected createNotification(event: RabbitEventDto): CreateNotificationDto {

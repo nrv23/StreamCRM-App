@@ -12,15 +12,20 @@ import { connect as elasticSearchConnect } from "./config/elasticsearch.ts";
 import { createServer } from "http";
 import { SocketServer } from "./config/socketio.ts";
 import { WinstonLogger } from "./shared/utils/winstonLogger.ts";
+import { RedisBootstrap } from "./config/redis.ts";
 
 
 async function bootstrap() {
     const app = createApp();
     //await rabbitMQClient.connect()
     const port = Number(env.server_port);
-    await verifyTransporterConnection();
-    await elasticSearchConnect();
-
+    //await verifyTransporterConnection();
+    //await elasticSearchConnect();
+    await Promise.all([
+        verifyTransporterConnection(),
+        elasticSearchConnect(),
+        RedisBootstrap.getInstance().init()
+    ]);
     const httpServer = createServer(app);
 
     const socketServer = SocketServer.init( // esta clase es singleton porque solo maneja una conexion que se va distribuir por toda la api
@@ -29,7 +34,9 @@ async function bootstrap() {
             'server-socket',
             'debug',
             env.index_elastic_search_name
-        )
+        ),
+        RedisBootstrap.getInstance().getPublisher(),
+        RedisBootstrap.getInstance().getSubscriber()
     );
 
     const { startEventWorker } = await import(
