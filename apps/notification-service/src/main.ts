@@ -22,9 +22,14 @@ async function bootstrap() {
     const app = createApp();
     //await rabbitMQClient.connect()
     const port = Number(env.server_port);
-    await verifyTransporterConnection();
-    await elasticSearchConnect();
-    await RedisBootstrap.getInstance().init();
+
+    // iniciar los sercicios al mismo tiempo
+
+    await Promise.all([
+        await verifyTransporterConnection(),
+        await elasticSearchConnect(),
+        await RedisBootstrap.getInstance().init()
+    ])
 
     const httpServer = createServer(app);
 
