@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "./dist",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "node"
+    ],
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "target": "ESNext",
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "erasableSyntaxOnly": false, // evita warning en estructuras como enum
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": [
+    "./node_modules",
+    "./dist"
+  ]
+}

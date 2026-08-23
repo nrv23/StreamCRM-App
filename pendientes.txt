@@ -1,0 +1,9 @@
+En cada microserivicio agregar:
+
+unit tests
+integration tests
+E2E
+failure tests
+docs/ADRs
+metrics adicionales
+OpenTelemetry

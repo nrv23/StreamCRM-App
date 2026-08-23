@@ -78,7 +78,7 @@ export class RedisBootstrap implements IBootstrap {
     public async init(): Promise<void> {
 
         if (this._initialized) {
-            logger.info("RedisBootstrap is not iniitalized")
+            logger.info("RedisBootstrap is already iniitalized")
             return;
         }
 
