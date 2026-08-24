@@ -1,5 +1,5 @@
 import { PoolClient } from 'pg';
-import { OutboxEventRepository } from '../repository/customer/outbox_event-repository.repository.js';
+import { OutboxEventRepository } from '../repository/user/outbox_event-repository.repository.ts';
 import { IDatabase } from '../interfaces/database.interface.js';
 import { pool } from './db.js';
 import { AuditLogsRepository } from '../repository/auditLog/audit-log-repository.repository.js';

@@ -1,9 +1,9 @@
-import { createOutboxEventDto } from "../../dto/customer/createOutboxEvent.dto.js";
-import { OutBoxEvent } from "../../entity/OutBoxEvent.entity.js";
+import { createEventDto } from "../../dto/customer/create-event.dto.ts";
+import { OutBoxEvent } from "../../entity/OutBoxEvent.entity.ts";
 
 
 export interface IOutboxEventsRepository {
-    save(event: createOutboxEventDto): Promise<OutBoxEvent>;
+    save(event: createEventDto): Promise<OutBoxEvent>;
     findPending(limit: number): Promise<OutBoxEvent[]>;
     markAsPublished(
         eventId: number,

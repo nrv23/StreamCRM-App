@@ -1,4 +1,4 @@
-import { JsonObject } from "../customer/createOutboxEvent.dto.js";
+import { JsonObject } from "../customer/create-event.dto.ts";
 
 
 export interface CreateLogDto {

@@ -1,6 +1,6 @@
 
-import { ApiErrorCode } from "../enum/ErrorCodes.enum.js";
-import { CodeResponseDictionary } from "../interfaces/ICodeResponse.interface.js";
+import { ApiErrorCode } from "../enum/ErrorCodes.enum.ts";
+import { CodeResponseDictionary } from "../interfaces/ICodeResponse.interface.ts";
 
 export const AuthResponseCode: CodeResponseDictionary = {
     [ApiErrorCode.INTERNAL_SERVER_ERROR]: {

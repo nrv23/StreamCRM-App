@@ -1,7 +1,7 @@
 
 import { ApiErrorCode } from '../../enum/ErrorCodes.enum.js';
 import { AppError } from '../errors/app-errors.js';
-import { CustomerResponseCode } from '../../responses/customer.responses.js';
+import { AuthResponseCode } from '../../responses/auth.responses.ts';
 
 export class ErrorFactory {
     /**
@@ -35,7 +35,7 @@ export class ErrorFactory {
         }
 
         // Resolvemos el mensaje dinámicamente si no se provee uno
-        const message = customMessage || CustomerResponseCode[enumErrorCode]?.message || "Unexpected error";
+        const message = customMessage || AuthResponseCode[enumErrorCode]?.message || "Unexpected error";
 
         return new AppError(message, statusCode, enumErrorCode);
     }

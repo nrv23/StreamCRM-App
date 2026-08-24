@@ -8,7 +8,7 @@ import { WinstonLogger } from '../shared/utils/winstonLogger.ts';
 
 const log: Logger = WinstonLogger.getInstance(
     env.elastic_search_url,
-    'customerElasticSearchServer',
+    'authElasticSearchServer',
     'debug',
     env.index_elastic_search_name
 );
@@ -63,7 +63,7 @@ export async function connect(): Promise<void> {
 
     while (!isConnected) {
 
-        log.info('CustomerService connecting to Elasticsearch...');
+        log.info('AuthService connecting to Elasticsearch...');
 
         try {
 
@@ -71,7 +71,7 @@ export async function connect(): Promise<void> {
                 await elasticSearchClient.cluster.health({});
 
             log.info(
-                `CustomerService Elasticsearch health status - ${healthResponse.status}`
+                `AuthService Elasticsearch health status - ${healthResponse.status}`
             );
 
             await createLogIndex();

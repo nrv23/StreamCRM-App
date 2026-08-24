@@ -10,7 +10,7 @@ export interface JsonObject {
     [key: string]: JsonValue;
 }
 
-export interface createOutboxEventDto {
+export interface createEventDto {
 
     id?: number;
     event_id: string;

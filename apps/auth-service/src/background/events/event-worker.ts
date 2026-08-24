@@ -1,6 +1,6 @@
 import { parentPort, workerData } from "node:worker_threads";
 import { OutboxEventRepository }
-    from "../../repository/customer/outbox_event-repository.repository.js";
+    from "../../repository/user/outbox_event-repository.repository.ts";
 import { ConsoleEventPublisher }
     from "../../publisher/ConsoleEvent.publisher.js";
 import { env }

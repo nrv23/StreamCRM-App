@@ -1,8 +1,8 @@
 import { OutBoxEvent } from "../../entity/OutBoxEvent.entity.ts";
 import { IDatabase } from "../../interfaces/database.interface.ts";
-import { IOutboxEventsRepository } from "../../interfaces/customer/outbox_event-repository.interface.js";
+import { IOutboxEventsRepository } from "../../interfaces/user/outbox_event-repository.interface.ts";
 import { databaseInstance } from "../../config/query.ts";
-import { createOutboxEventDto } from "../../dto/customer/createOutboxEvent.dto.ts";
+import { createEventDto } from "../../dto/customer/create-event.dto.ts";
 import { ErrorFactory } from "../../shared/factory/error-factory.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
 import { StatusEvent } from "../../enum/StatusEvent.enum.ts";
@@ -66,7 +66,7 @@ export class OutboxEventRepository implements IOutboxEventsRepository {
         );
     }
 
-    async save(event: createOutboxEventDto): Promise<OutBoxEvent> {
+    async save(event: createEventDto): Promise<OutBoxEvent> {
 
         const [outBoxEventResponse] = await this._db.query<OutBoxEvent>(`
             Insert into outbox_events(

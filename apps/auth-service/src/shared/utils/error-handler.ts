@@ -2,7 +2,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiResponse } from '../types/api-response.js';
 import { AppError } from '../errors/app-errors.js';
-import { CustomerResponseCode } from '../../responses/customer.responses.js';
+import { AuthResponseCode } from '../../responses/auth.responses.ts';
 import { ApiErrorCode } from '../../enum/ErrorCodes.enum.js';
 
 export const errorHandler = ( // va en el app .ts
@@ -31,8 +31,8 @@ export const errorHandler = ( // va en el app .ts
         const internalResponse: ApiResponse<never> = {
             success: false,
             error: {
-                code: CustomerResponseCode[ApiErrorCode.INTERNAL_SERVER_ERROR]!.code,
-                message: CustomerResponseCode[ApiErrorCode.INTERNAL_SERVER_ERROR]!.message
+                code: AuthResponseCode[ApiErrorCode.INTERNAL_SERVER_ERROR]!.code,
+                message: AuthResponseCode[ApiErrorCode.INTERNAL_SERVER_ERROR]!.message
             }
         };
 

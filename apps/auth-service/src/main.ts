@@ -2,7 +2,7 @@ import { createApp } from "./app.js";
 import { env } from "./config/enviroment.js";
 //import { rabbitMQClient } from "./config/raabbitmq.ts";
 // ejecucion del worker
-import './background/events';
+//import './background/events';
 import { connect as elasticSearchConnect } from "./config/elasticsearch.ts";
 
 async function bootstrap() {
@@ -14,11 +14,11 @@ async function bootstrap() {
     await elasticSearchConnect();
 
     app.listen(port, () => {
-        console.log(`Customer Service running on port ${port}`);
+        console.log(`Auth Service running on port ${port}`);
     });
 }
 
 bootstrap().catch((error) => {
-    console.error("Error starting Customer Service", error);
+    console.error("Error starting Auth Service", error);
     process.exit(1);
 });
