@@ -6,6 +6,7 @@ import { ClusterHealthHealthResponseBody } from '@elastic/elasticsearch/lib/api/
 import { env } from './enviroment.ts';
 import { WinstonLogger } from '../shared/utils/winstonLogger.ts';
 
+
 const log: Logger = WinstonLogger.getInstance(
     env.elastic_search_url,
     'authElasticSearchServer',

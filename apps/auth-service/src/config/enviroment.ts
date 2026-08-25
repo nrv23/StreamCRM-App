@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { IEnvConfig } from "../interfaces/IEnvConfig.js";
-import { cleanEnv, num, str } from 'envalid';
+import { bool, cleanEnv, num, str } from 'envalid';
 
 dotenv.config();
 
@@ -16,7 +16,7 @@ const validatedEnv = cleanEnv(process.env, {
     DB_PASSWORD: str(),
 
     API_VERSION: num({ default: 1 }),
-    SERVER_PORT: num(),
+    SERVER_PORT: num({}),
 
     SERVICE_NAME: str(),
     INTERVAL_WORKER_EXECUTION_TIME: num(),
@@ -33,7 +33,18 @@ const validatedEnv = cleanEnv(process.env, {
     ELASTIC_SEARCH_URL: str({
         default: 'http://localhost:9200'
     }),
-    INDEX_ELASTIC_SEARCH_NAME: str()
+    INDEX_ELASTIC_SEARCH_NAME: str(),
+    REDIS_HOST: str({
+        default: "localhost"
+    }),
+    REDIS_PORT: num({
+        default: 6379
+    }),
+    REDIS_PASSWORD: str({
+        default: '12345'
+    }),
+    REDIS_USERNAME: str(),
+    REDIS_MAX_RETRIES_PER_REQUEST: num()
 });
 
 export const env: IEnvConfig = {
@@ -50,24 +61,20 @@ export const env: IEnvConfig = {
     service_name: validatedEnv.SERVICE_NAME,
     interval_worker_execution_time: validatedEnv.INTERVAL_WORKER_EXECUTION_TIME,
     pagination_record_events_limit: validatedEnv.PAGINATION_RECORD_EVENTS_LIMIT,
+
     rabbitmq_host: validatedEnv.RABBITMQ_HOST,
     rabbitmq_host_port: validatedEnv.RABBITMQ_HOST_PORT,
     rabbitmq_user: validatedEnv.RABBITMQ_USER,
     rabbitmq_password: validatedEnv.RABBITMQ_PASSWORD,
     rabbitmq_vhost: validatedEnv.RABBITMQ_VHOST,
+
     elastic_search_url: validatedEnv.ELASTIC_SEARCH_URL,
-    index_elastic_search_name: validatedEnv.INDEX_ELASTIC_SEARCH_NAME
+    index_elastic_search_name: validatedEnv.INDEX_ELASTIC_SEARCH_NAME,
+    redis: {
+        redis_host: validatedEnv.REDIS_HOST,
+        redis_port: validatedEnv.REDIS_PORT,
+        redis_username: validatedEnv.REDIS_USERNAME,
+        redis_password: validatedEnv.REDIS_PASSWORD,
+        redis_max_retries_per_request: validatedEnv.REDIS_MAX_RETRIES_PER_REQUEST
+    }
 };
-/*
-export const env: IEnvConfig = {
-    db: {
-        host: process.env.DB_HOST!,
-        port: Number(process.env.DB_PORT!),
-        database: process.env.DB_NAME!,
-        user: process.env.DB_USER!,
-        password: process.env.DB_PASSWORD!,
-    },
-    api_version: Number(process.env.API_VERSION) || 1,
-    server_port: Number(process.env.PORT!),
-    service_name: process.env.SERVICE_NAME!
-};*/

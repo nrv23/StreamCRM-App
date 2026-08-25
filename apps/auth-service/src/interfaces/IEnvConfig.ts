@@ -20,4 +20,12 @@ export interface IEnvConfig {
     rabbitmq_vhost: string;
     elastic_search_url: string;
     index_elastic_search_name: string;
+    redis: {
+        redis_host: string;
+        redis_port: number;
+        redis_username: string;
+        redis_password: string;
+        redis_max_retries_per_request: number;
+
+    }
 }

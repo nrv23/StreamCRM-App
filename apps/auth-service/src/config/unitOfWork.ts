@@ -1,8 +1,10 @@
 import { PoolClient } from 'pg';
-import { OutboxEventRepository } from '../repository/user/outbox_event-repository.repository.ts';
+import { OutboxEventRepository } from '../repository/event/outbox_event-repository.repository.ts';
 import { IDatabase } from '../interfaces/database.interface.js';
 import { pool } from './db.js';
-import { AuditLogsRepository } from '../repository/auditLog/audit-log-repository.repository.js';
+import { ProcessedEventRepository } from '../repository/processedEvent/processedEvent-repository.repository.ts';
+import { NotificationRepository } from '../repository/notification/notification-repository.repository.ts';
+import { NotificationDeliveryRepository } from '../repository/notification/notification-delivery-repository.repository.ts';
 
 // Adaptador para cumplir con la interfaz IDatabase usando el cliente de pg
 class PgClientAdapter implements IDatabase {
@@ -15,7 +17,9 @@ class PgClientAdapter implements IDatabase {
 
 export interface IUnitOfWorkRepositories {
     events: OutboxEventRepository;
-    auditLogs: AuditLogsRepository
+    processedEvents: ProcessedEventRepository;
+    notification: NotificationRepository;
+    notificationDelivery: NotificationDeliveryRepository
 }
 
 export class UnitOfWork {
@@ -23,8 +27,11 @@ export class UnitOfWork {
     private getRepos(dbAdapter: PgClientAdapter): IUnitOfWorkRepositories {
 
         return {
+
             events: new OutboxEventRepository(dbAdapter),
-            auditLogs: new AuditLogsRepository(dbAdapter)
+            processedEvents: new ProcessedEventRepository(dbAdapter),
+            notification: new NotificationRepository(dbAdapter),
+            notificationDelivery: new NotificationDeliveryRepository(dbAdapter)
         }
     }
 

@@ -1,8 +1,9 @@
 import { Pool } from "pg";
 import { env } from "./enviroment.js";
-import { Logger } from "winston";
 import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 import { ILogMetadata } from "../interfaces/iLog.interface.ts";
+import { Logger } from "winston";
+import { DB_CONNECTED } from "../shared/types/events.type..ts";
 
 export const pool = new Pool({
     host: env.db.host,
@@ -23,18 +24,16 @@ const logger: Logger = WinstonLogger.getInstance(env.elastic_search_url,
 
 pool.on("connect", async client => {
     await client.query(`SET TIME ZONE 'America/Costa_Rica';`);
-
     const log: ILogMetadata = {
         service: env.service_name,
-        event: "db-module"
+        event: DB_CONNECTED,
+        created_at: new Date().toISOString()
     }
-
 
     logger.info("PostgreSQL pool connected", log);
 });
 
 pool.on("error", (err) => {
-
     let errorObject = {
         message: '',
         stack: '',
@@ -56,7 +55,8 @@ pool.on("error", (err) => {
         error_message: errorObject.message,
         error_name: errorObject.name,
         error_stack: errorObject.stack,
-        event: "db-module"
+        event: DB_CONNECTED,
+        created_at: new Date().toISOString()
     }
 
     logger.info("Unexpected PostgreSQL pool error:", log);
