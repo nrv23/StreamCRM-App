@@ -1,4 +1,4 @@
-import { JsonObject } from "../customer/create-event.dto.ts";
+import { JsonObject } from "../event/create-event.dto.ts";
 
 
 export interface CreateLogDto {

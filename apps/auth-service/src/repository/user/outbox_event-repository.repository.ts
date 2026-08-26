@@ -2,7 +2,7 @@ import { OutBoxEvent } from "../../entity/OutBoxEvent.entity.ts";
 import { IDatabase } from "../../interfaces/database.interface.ts";
 import { IOutboxEventsRepository } from "../../interfaces/user/outbox_event-repository.interface.ts";
 import { databaseInstance } from "../../config/query.ts";
-import { createEventDto } from "../../dto/customer/create-event.dto.ts";
+import { createEventDto } from "../../dto/event/create-event.dto.ts";
 import { ErrorFactory } from "../../shared/factory/error-factory.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
 import { StatusEvent } from "../../enum/StatusEvent.enum.ts";

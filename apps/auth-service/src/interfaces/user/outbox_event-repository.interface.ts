@@ -1,4 +1,4 @@
-import { createEventDto } from "../../dto/customer/create-event.dto.ts";
+import { createEventDto } from "../../dto/event/create-event.dto.ts";
 import { OutBoxEvent } from "../../entity/OutBoxEvent.entity.ts";
 
 

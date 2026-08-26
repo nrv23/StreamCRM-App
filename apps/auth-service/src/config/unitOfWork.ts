@@ -1,10 +1,12 @@
 import { PoolClient } from 'pg';
-import { OutboxEventRepository } from '../repository/event/outbox_event-repository.repository.ts';
 import { IDatabase } from '../interfaces/database.interface.js';
 import { pool } from './db.js';
-import { ProcessedEventRepository } from '../repository/processedEvent/processedEvent-repository.repository.ts';
-import { NotificationRepository } from '../repository/notification/notification-repository.repository.ts';
-import { NotificationDeliveryRepository } from '../repository/notification/notification-delivery-repository.repository.ts';
+import { OutboxEventRepository } from '../repository/user/outbox_event-repository.repository.ts';
+import { UserRepository } from '../repository/user/user.repository.ts';
+import { RoleRepository } from '../repository/user/role.repository.ts';
+import { UserRoleRepository } from '../repository/user/user_role.repository.ts';
+import { PermissionRepository } from '../repository/permission/permission.repository.ts';
+import { RolePermissionRepository } from '../repository/permission/role-permission.repository.ts';
 
 // Adaptador para cumplir con la interfaz IDatabase usando el cliente de pg
 class PgClientAdapter implements IDatabase {
@@ -17,9 +19,11 @@ class PgClientAdapter implements IDatabase {
 
 export interface IUnitOfWorkRepositories {
     events: OutboxEventRepository;
-    processedEvents: ProcessedEventRepository;
-    notification: NotificationRepository;
-    notificationDelivery: NotificationDeliveryRepository
+    users: UserRepository;
+    roles: RoleRepository;
+    userRoles: UserRoleRepository,
+    permissions: PermissionRepository,
+    rolePermissions: RolePermissionRepository
 }
 
 export class UnitOfWork {
@@ -27,11 +31,12 @@ export class UnitOfWork {
     private getRepos(dbAdapter: PgClientAdapter): IUnitOfWorkRepositories {
 
         return {
-
             events: new OutboxEventRepository(dbAdapter),
-            processedEvents: new ProcessedEventRepository(dbAdapter),
-            notification: new NotificationRepository(dbAdapter),
-            notificationDelivery: new NotificationDeliveryRepository(dbAdapter)
+            users: new UserRepository(dbAdapter),
+            roles: new RoleRepository(dbAdapter),
+            userRoles: new UserRoleRepository(dbAdapter),
+            permissions: new PermissionRepository(dbAdapter),
+            rolePermissions: new RolePermissionRepository(dbAdapter)
         }
     }
 

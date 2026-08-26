@@ -27,5 +27,6 @@ export interface IEnvConfig {
         redis_password: string;
         redis_max_retries_per_request: number;
 
-    }
+    },
+    hash_password_secret_key: string;
 }
