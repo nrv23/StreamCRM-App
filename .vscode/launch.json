@@ -36,6 +36,24 @@
                 "<node_internals>/**",
                 "**/node_modules/**"
             ]
+        },
+        {
+            "name": "Auth Service",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "/home/nvm23/.nvm/versions/node/v22.22.2/bin/node",
+            "cwd": "${workspaceFolder}/apps/auth-service",
+            "program": "${workspaceFolder}/apps/auth-service/node_modules/tsx/dist/cli.mjs",
+            "args": [
+                "watch",
+                "src/main.ts"
+            ],
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/apps/auth-service/.env",
+            "skipFiles": [
+                "<node_internals>/**",
+                "**/node_modules/**"
+            ]
         }
     ]
 }
