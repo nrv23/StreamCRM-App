@@ -24,13 +24,13 @@ export class AuditLogsRepository implements IAuditLogsRepository {
         customer.note.created
         customer.note.deleted
      */
-    async save(log: CreateLogDto): Promise<AuditLogs> {
+    async save(log: CreateLogDto): Promise<void> {
         const query = `
             INSERT INTO audit_logs (
                 entity_type,
                 entity_id,
                 action,
-                changed_by_user_id,
+                user_id,
                 old_values,
                 new_values,
                 ip_address, 
@@ -46,7 +46,7 @@ export class AuditLogsRepository implements IAuditLogsRepository {
             log.entity_type,
             log.entity_id,
             log.action,
-            log.changed_by_user_id,
+            log.user_id,
             log.old_values,
             log.new_values,
             log.ip_address,
@@ -55,9 +55,7 @@ export class AuditLogsRepository implements IAuditLogsRepository {
 
         if (!response) throw ErrorFactory.build(
             ApiErrorCode.CONFLICT_ERROR,
-            "log was not inserted"
+            "audit log was not inserted"
         );
-
-        return response;
     }
 }

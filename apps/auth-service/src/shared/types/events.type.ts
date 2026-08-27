@@ -1,12 +1,11 @@
 
 
-export const CREATE_CUSTOMER = "customer.created";
-export const UPDATE_CUSTOMER = "customer.updated";
-export const CHANGE_CUSTOMER_STATUS = "customer.status.changed";
-export const DELETE_CUSTOMER = "customer.deleted";
+export const CREATE_USER = "user.created";
+export const UPDATE_USER = "user.updated";
+export const CHANGE_USER_STATUS = "user.status.changed";
+export const DELETE_USER = "user.deleted";
 
-// tags events
+// db events
+export const DB_CONNECTED = "db_connected";
 
 
-export const CREATE_TAG = "customer.tag.added";
-export const CREATE_NOTE = "customer.note.added";

@@ -3,7 +3,8 @@ import { env } from "./enviroment.js";
 import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 import { ILogMetadata } from "../interfaces/iLog.interface.ts";
 import { Logger } from "winston";
-import { DB_CONNECTED } from "../shared/types/events.type..ts";
+import { DB_CONNECTED } from "../shared/types/events.type.ts";
+
 
 export const pool = new Pool({
     host: env.db.host,
