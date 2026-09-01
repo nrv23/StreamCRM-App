@@ -7,7 +7,7 @@ export const fakeAuth = (
 ) => {
 
     req.user = {
-        id: 2,
+        id: 6,
         email: "admin@test.com",
         roles: []
     };

@@ -19,7 +19,7 @@ export class ErrorFactory {
                 statusCode = 409;
                 break;
 
-            case ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED: // Ambos mapean a 409
+            case ApiErrorCode.USER_EMAIL_DUPLICATED: // Ambos mapean a 409
                 statusCode = 400;
                 break;
 

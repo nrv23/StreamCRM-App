@@ -6,6 +6,11 @@ import { CREATE_USER } from "../shared/types/events.type.ts";
 import { env } from "../config/enviroment.ts";
 import { EntityType } from "../enum/EntityType.enum.ts";
 import { UserStatus } from "../enum/UserStatus.enum.ts";
+import { ErrorFactory } from "../shared/factory/error-factory.ts";
+import { ApiErrorCode } from "../enum/ErrorCodes.enum.ts";
+import { IUserDataResponse } from "../interfaces/user/user-data.interface.ts";
+import { IUserDataPaginated } from "../interfaces/user/user-data-paginated.interface.ts";
+import { UserWithAccessResponse } from "../repository/user/user.repository.ts";
 
 export class UserService {
 
@@ -20,6 +25,9 @@ export class UserService {
         return this.unitOfWork.execute(async ({ userRoles, users, events, rolePermissions, auditLogs }) => {
 
             // validar que exista por email 
+            const currentUser = await users.findbyEmail(dto.email);
+            if (currentUser) throw ErrorFactory.build(ApiErrorCode.USER_EMAIL_DUPLICATED, 'User already exists');
+
             const newUser = await users.save({
                 external_id: dto.external_id,
                 email: dto.email,
@@ -69,5 +77,39 @@ export class UserService {
 
             return newUser;
         })
+    }
+
+    async getMe(user_id: number): Promise<IUserDataResponse> {
+
+        return await this.unitOfWork.execute(async ({ users, userRoles, rolePermissions }) => {
+
+            const currentUser = await users.findbyId(user_id);
+            if (!currentUser) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'User not exists');
+
+            const roles = await userRoles.getRolesByUserId(currentUser.id);
+            const permissions = await rolePermissions.getPermissionsByRoleIdAndUserId(currentUser.id);
+            const response: IUserDataResponse = {
+                user: currentUser,
+                roles,
+                permissions: permissions.map(permission => permission.code)
+            }
+            return response;
+        })
+    }
+
+    async getUserFilteredAndPaginated(options: IUserDataPaginated): Promise<UserWithAccessResponse[]> {
+        return await this.unitOfWork.execute(async ({ users }) => {
+
+            const limit = options.limit && options.limit <= 30 ? options.limit : 30;
+            const page = options.page || 1;
+            const offset = (page - 1) * limit;
+
+            options.limit = limit;
+            options.offset = offset;
+            options.page = page;
+
+            const response = await users.findUsersPaginated(options);
+            return response;
+        });
     }
 }

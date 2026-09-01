@@ -7,8 +7,8 @@ export const AuthResponseCode: CodeResponseDictionary = {
         code: ApiErrorCode.INTERNAL_SERVER_ERROR,
         message: "Internal server error"
     },
-    [ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED]: {
-        code: ApiErrorCode.CUSTOMER_EMAIL_DUPLICATED,
+    [ApiErrorCode.USER_EMAIL_DUPLICATED]: {
+        code: ApiErrorCode.USER_EMAIL_DUPLICATED,
         message: "Email already exists"
     },
     [ApiErrorCode.INVALID_PASSWORD]: {
