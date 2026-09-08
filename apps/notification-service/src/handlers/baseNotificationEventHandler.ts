@@ -28,7 +28,7 @@ export abstract class BaseNotificationEventHandler<TEvent> implements Integratio
             const newNotification = this.createNotification(event);
             const notificationResponse = await notification.save(newNotification);
             const commands = this.createNotificationDeliveryBody(event, notificationResponse.id);
-
+            let hasError: boolean = false;
             // Retorna un array de comandos (puede venir vacío)
             for (const command of commands) {
                 const deliveryResponse = await notificationDelivery.save({ // se guarda el intento de envio
@@ -61,12 +61,13 @@ export abstract class BaseNotificationEventHandler<TEvent> implements Integratio
                             notificationStatus,
                         );
                     } catch (err) {
+                        hasError = true;
                         const error = err instanceof Error ? err.message : String(err);
                         await notificationDelivery.markAsFailed(deliveryResponse.id, error);
                     }
 
                     //await this.notificationDispatcher.dispatch(command);
-                    if (pendingDeliveries[0]) await this.emitter.emit(pendingDeliveries[0]);
+                    if (pendingDeliveries[0] && !hasError) await this.emitter.emit(pendingDeliveries[0]);
                 }
             }
         });

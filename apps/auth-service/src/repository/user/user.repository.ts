@@ -3,7 +3,7 @@ import { CreateUserDto } from "../../dto/user/create-user.dto.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
 import { UserStatus } from "../../enum/UserStatus.enum.ts";
 import { IDatabase } from "../../interfaces/database.interface.ts";
-import { IUserDataPaginated } from "../../interfaces/user/user-data-paginated.interface.ts";
+import { IUserDataPaginatedDto } from "../../interfaces/user/user-data-paginated.interface.ts";
 import { IUserRepository } from "../../interfaces/user/user-repository.interface.ts";
 import { ErrorFactory } from "../../shared/factory/error-factory.ts";
 import { GetUserRolesResponse } from "./user_role.repository.ts";
@@ -44,7 +44,7 @@ export class UserRepository implements IUserRepository {
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
     }
-    async findUsersPaginated(options: IUserDataPaginated): Promise<UserWithAccessResponse[]> {
+    async findUsersPaginated(options: IUserDataPaginatedDto): Promise<UserWithAccessResponse[]> {
 
         const params: Array<number | string> = [];
         let sql = `

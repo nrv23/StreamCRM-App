@@ -1,7 +1,7 @@
 import { UserStatus } from "../../enum/UserStatus.enum.ts";
 
 
-export interface IUserDataPaginated {
+export interface IUserDataPaginatedDto {
     id: number;
     external_id: string;
     email: string,

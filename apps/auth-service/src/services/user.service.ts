@@ -9,7 +9,7 @@ import { UserStatus } from "../enum/UserStatus.enum.ts";
 import { ErrorFactory } from "../shared/factory/error-factory.ts";
 import { ApiErrorCode } from "../enum/ErrorCodes.enum.ts";
 import { IUserDataResponse } from "../interfaces/user/user-data.interface.ts";
-import { IUserDataPaginated } from "../interfaces/user/user-data-paginated.interface.ts";
+import { IUserDataPaginatedDto } from "../interfaces/user/user-data-paginated.interface.ts";
 import { UserWithAccessResponse } from "../repository/user/user.repository.ts";
 
 export class UserService {
@@ -97,7 +97,7 @@ export class UserService {
         })
     }
 
-    async getUserFilteredAndPaginated(options: IUserDataPaginated): Promise<UserWithAccessResponse[]> {
+    async getUserFilteredAndPaginated(options: IUserDataPaginatedDto): Promise<UserWithAccessResponse[]> {
         return await this.unitOfWork.execute(async ({ users }) => {
 
             const limit = options.limit && options.limit <= 30 ? options.limit : 30;
