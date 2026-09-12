@@ -11,6 +11,8 @@ import { ApiErrorCode } from "../enum/ErrorCodes.enum.ts";
 import { IUserDataResponse } from "../interfaces/user/user-data.interface.ts";
 import { IUserDataPaginatedDto } from "../interfaces/user/user-data-paginated.interface.ts";
 import { UserWithAccessResponse } from "../repository/user/user.repository.ts";
+import { IPaginationResponse } from "../interfaces/pagination.interface.ts";
+import { response } from "express";
 
 export class UserService {
 
@@ -97,7 +99,7 @@ export class UserService {
         })
     }
 
-    async getUserFilteredAndPaginated(options: IUserDataPaginatedDto): Promise<UserWithAccessResponse[]> {
+    async getUsers(options: IUserDataPaginatedDto): Promise<IPaginationResponse<UserWithAccessResponse[]>> {
         return await this.unitOfWork.execute(async ({ users }) => {
 
             const limit = options.limit && options.limit <= 30 ? options.limit : 30;
@@ -108,7 +110,22 @@ export class UserService {
             options.offset = offset;
             options.page = page;
 
-            const response = await users.findUsersPaginated(options);
+            const [data, totalItems] = await Promise.all([users.findUsersPaginated(options), users.getRecordsCount(options)]);
+            const totalPages = Math.ceil(totalItems / limit);
+            const prevPage = page! > 1 ? page! - 1 : null;
+            const nextPage = page! < totalPages ? page! + 1 : null;
+            const response: IPaginationResponse<UserWithAccessResponse[]> = {
+                data,
+                paginationData: {
+                    page: +page,
+                    pageSize: data.length,
+                    totalPages,
+                    totalRecords: totalItems,
+                    previousPage: prevPage!,
+                    nextPage: nextPage!
+                }
+            }
+
             return response;
         });
     }

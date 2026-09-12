@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { ApiResponse } from '../shared/types/api-response.ts';
 import { CreateUserReponse } from '../repository/user/user.repository.ts';
 import { IUserDataResponse } from '../interfaces/user/user-data.interface.ts';
+import { IUserDataPaginatedDto } from '../interfaces/user/user-data-paginated.interface.ts';
 
 
 export class UserController {
@@ -53,6 +54,50 @@ export class UserController {
             }
         }
 
+        res.status(200).json(response);
+        return;
+    }
+
+    async getUsers(req: Request, res: Response) {
+
+        /*
+            id: number;
+            external_id: string;
+            email: string,
+            status: UserStatus,
+            initial_date: string;
+            final_date: string;
+            limit?: number;
+            offset?: number;
+            page?: number;
+        */
+
+        const {
+            id,
+            external_id,
+            email,
+            status,
+            initial_date,
+            final_date,
+            limit,
+            offset,
+            page,
+
+        } = req.body;
+
+        const options: IUserDataPaginatedDto = {
+            id,
+            external_id,
+            email,
+            status,
+            initial_date,
+            final_date,
+            limit,
+            offset,
+            page,
+        }
+
+        const response = await this.userService.getUsers(options);
         res.status(200).json(response);
         return;
     }

@@ -37,6 +37,10 @@ export type UserWithAccessResponse = {
     permissions: string[];
 }
 
+export type GetUsersCountResponse = {
+    count: number;
+}
+
 
 export class UserRepository implements IUserRepository {
 
@@ -44,10 +48,74 @@ export class UserRepository implements IUserRepository {
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
     }
+    async getRecordsCount(options: IUserDataPaginatedDto): Promise<number> {
+
+        const params: Array<number | string> = [];
+        let sql = `
+
+            SELECT 	
+                count(distinct(u.id)) as count
+            FROM user_roles ur
+            join users u on u.id = ur.user_id 
+            JOIN roles r ON r.id = ur.role_id
+            JOIN role_permissions rp
+                ON rp.role_id = r.id
+            JOIN permissions p
+                ON p.id = rp.permission_id
+            WHERE ur.user_id = u.id
+            AND ur.status = 'active'
+            AND r.status = 'active'
+        `;
+
+        if (options.id) {
+            params.push(options.id);
+            sql += `
+                AND u.id = ${params.length}
+            `;
+        }
+
+        if (options.external_id) {
+            params.push(options.external_id);
+            sql += `
+                AND u.external_id = ${params.length}
+            `;
+        }
+
+        if (options.email) {
+            params.push(options.email);
+            sql += `
+                AND u.email = ${params.length}
+            `;
+        }
+
+
+        if (options.status) {
+            params.push(options.status);
+            sql += `
+                AND u.status = ${params.length}
+            `;
+        }
+
+        if (options.initial_date && options.final_date) {
+            params.push(options.initial_date, options.final_date);
+            sql += `
+              AND TO_CHAR(u.created_at, 'YYYY-MM-DD') BETWEEN ${params.length - 1} AND ${params.length};
+            `;
+        }
+
+        const [response] = await this._db.query<GetUsersCountResponse>(sql, params);
+
+        if (!response || !response.count)
+            throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error getting users list');
+
+        return response.count;
+    }
     async findUsersPaginated(options: IUserDataPaginatedDto): Promise<UserWithAccessResponse[]> {
 
         const params: Array<number | string> = [];
         let sql = `
+            
+        WITH users_with_access AS (
             SELECT
                 u.id,
                 u.external_id,
@@ -56,45 +124,47 @@ export class UserRepository implements IUserRepository {
                 u.last_name,
                 u.status,
                 u.created_at,
-                    COALESCE(
-                        (
-                            SELECT jsonb_agg(
-                                jsonb_build_object(
-                                    'id', r.id,
-                                    'name', r.name,
-                                    'description', r.description
-                                )
-                                ORDER BY r.name
+
+                COALESCE(
+                    (
+                        SELECT jsonb_agg(
+                            jsonb_build_object(
+                                'id', r.id,
+                                'name', r.name,
+                                'description', r.description
                             )
-                            FROM user_roles ur
-                            JOIN roles r
-                                ON r.id = ur.role_id
-                            WHERE ur.user_id = u.id
-                            AND ur.status = 'active'
-                            AND r.status = 'active'
-                        ),
-                        '[]'::jsonb
-                    ) AS roles,
+                            ORDER BY r.name
+                        )
+                        FROM user_roles ur
+                        JOIN roles r
+                            ON r.id = ur.role_id
+                        WHERE ur.user_id = u.id
+                        AND ur.status = 'active'
+                        AND r.status = 'active'
+                    ),
+                    '[]'::jsonb
+                ) AS roles,
 
-                    COALESCE(
-                        (
-                            SELECT jsonb_agg(p.code ORDER BY p.code) permission_code
-                            FROM user_roles ur
-                            JOIN roles r
-                                ON r.id = ur.role_id
-                            JOIN role_permissions rp
-                                ON rp.role_id = r.id
-                            JOIN permissions p
-                                ON p.id = rp.permission_id
-                            WHERE ur.user_id = u.id
-                            AND ur.status = 'active'
-                            AND r.status = 'active'
-                        
-                        ),
-                        '[]'::jsonb
-                    ) AS permissions
-
-                FROM users u
+                COALESCE(
+                    (
+                        SELECT jsonb_agg(
+                            p.code
+                            ORDER BY p.code
+                        )
+                        FROM user_roles ur
+                        JOIN roles r
+                            ON r.id = ur.role_id
+                        JOIN role_permissions rp
+                            ON rp.role_id = r.id
+                        JOIN permissions p
+                            ON p.id = rp.permission_id
+                        WHERE ur.user_id = u.id
+                        AND ur.status = 'active'
+                        AND r.status = 'active'
+                    ),
+                    '[]'::jsonb
+                ) AS permissions
+                    FROM users u
         
         `;
         if (options.id) {
@@ -129,8 +199,7 @@ export class UserRepository implements IUserRepository {
         if (options.initial_date && options.final_date) {
             params.push(options.initial_date, options.final_date);
             sql += `
-              AND TO_CHAR(fecha_columna, 'YYYY-MM-DD') BETWEEN ${params.length - 1} AND ${params.length};
-            
+              AND TO_CHAR(u.created_at, 'YYYY-MM-DD') BETWEEN ${params.length - 1} AND ${params.length};
             `
         }
         params.push(options.limit!);
@@ -139,7 +208,14 @@ export class UserRepository implements IUserRepository {
         params.push(options.offset!);
         const indexOffset = params.length;
 
-        sql += ` ORDER BY u.id DESC LIMIT ${indexLimit} OFFSET ${indexOffset} ;`;
+        sql += ` ORDER BY u.id DESC LIMIT ${indexLimit} OFFSET ${indexOffset} )`;
+
+        sql += `
+            SELECT *
+            FROM users_with_access
+            WHERE jsonb_array_length(roles) > 0
+            AND jsonb_array_length(permissions) > 0;
+        `;
 
         const response = await this._db.query<UserWithAccessResponse>(sql, params);
         return response;
