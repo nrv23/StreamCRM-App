@@ -15,6 +15,7 @@ import { IPaginationResponse } from "../interfaces/pagination.interface.ts";
 import { LoginDto } from "../dto/user/login.dto.ts";
 import { randomUUID } from "node:crypto";
 import { ITokenManager } from "../interfaces/token/token-payload.interface.ts";
+import { LoginDataResponse } from "../interfaces/user/login-data.interface.ts";
 
 export class UserService {
 
@@ -177,7 +178,8 @@ export class UserService {
                 })
             ]);
 
-            const response: IUserDataResponse = {
+            const response: LoginDataResponse = {
+                token,
                 user: currentUser,
                 roles,
                 permissions: permissions.map(permission => permission.code)
