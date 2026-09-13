@@ -29,11 +29,10 @@ export class UserRoutes implements IRoutes {
 
     BuildRoutes(): Router {
 
-
         this._router.post('/', fakeAuth, createUserValidator, validateRequest, this._userController.create.bind(this._userController));
         this._router.get('/me', fakeAuth, this._userController.me.bind(this._userController));
         this._router.post('/filtered', getUsersValidator, this._userController.getUsers.bind(this._userController));
+
         return this._router;
     }
-
 }

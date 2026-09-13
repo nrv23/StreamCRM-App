@@ -19,7 +19,7 @@ import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 import { env } from "../config/enviroment.ts";
 import { RedisEmitter } from "../publisher/RedisEmitter.publisher.ts";
 import { RedisBootstrap } from "../config/redis.ts";
-env
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -60,18 +60,9 @@ export const handlers = new Map<string, IntegrationEventHandler<RabbitEventDto>>
         CHANGE_CUSTOMER_STATUS,
         new CustomerStatusChangeHandler(unitOfWork, redisEmitter, limit),
     ],
-
     [
         CREATE_TAG,
         new CreateTagHandler(unitOfWork, redisEmitter, limit),
     ],
-
 ]);
 
-/*
-    customer.status.changed -- 
-    customer.tag.added
-    customer.updated -- 
-    customer.created -- 
-    customer.deleted --
-*/

@@ -1,4 +1,5 @@
 
+import type { SignOptions } from 'jsonwebtoken';
 
 export interface IEnvConfig {
     db: {
@@ -29,4 +30,9 @@ export interface IEnvConfig {
 
     },
     hash_password_secret_key: string;
+    access_token_ttl: NonNullable<SignOptions['expiresIn']>;
+    refresh_token_ttl_days: number;
+    session_ttl_days: number;
+    jwt_secret: string;
 }
+

@@ -12,13 +12,16 @@ import { IUserDataResponse } from "../interfaces/user/user-data.interface.ts";
 import { IUserDataPaginatedDto } from "../interfaces/user/user-data-paginated.interface.ts";
 import { UserWithAccessResponse } from "../repository/user/user.repository.ts";
 import { IPaginationResponse } from "../interfaces/pagination.interface.ts";
-import { response } from "express";
+import { LoginDto } from "../dto/user/login.dto.ts";
+import { randomUUID } from "node:crypto";
+import { ITokenManager } from "../interfaces/token/token-payload.interface.ts";
 
 export class UserService {
 
     constructor(
         public unitOfWork: UnitOfWork,
-        public passwordHasher: IPasswordHasher
+        public passwordHasher: IPasswordHasher,
+        public tokenManager: ITokenManager
     ) {
 
     }
@@ -90,6 +93,9 @@ export class UserService {
 
             const roles = await userRoles.getRolesByUserId(currentUser.id);
             const permissions = await rolePermissions.getPermissionsByRoleIdAndUserId(currentUser.id);
+
+            //delete currentUser.password;
+
             const response: IUserDataResponse = {
                 user: currentUser,
                 roles,
@@ -118,7 +124,7 @@ export class UserService {
                 data,
                 paginationData: {
                     page: +page,
-                    pageSize: data.length,
+                    pageSize: +data.length,
                     totalPages,
                     totalRecords: totalItems,
                     previousPage: prevPage!,
@@ -128,5 +134,55 @@ export class UserService {
 
             return response;
         });
+    }
+
+    async login(dto: LoginDto) {
+
+        return await this.unitOfWork.execute(async ({ users, userRoles, rolePermissions, sessions }) => {
+
+            const currentUser = await users.findbyEmail(dto.email);
+
+            if (!currentUser) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'Invalid authentication credentials');
+            if (currentUser.status === UserStatus.blocked) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'User  account is blocked');
+            if (currentUser.status === UserStatus.inactive) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'User account is inactive');
+
+            const isValidPass = await this.passwordHasher.verify(dto.password, currentUser.password!.toString());
+
+            if (!isValidPass) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'Invalid authentication credentials');
+
+            const session_id = randomUUID();
+            const expiresAt = Date.now() + 15 * 60 * 1000;
+
+
+            // crear el token de sesion
+            const token = await this.tokenManager.sign({
+                sid: session_id,
+                exp: expiresAt,
+                uid: currentUser.id,
+                sub: currentUser.external_id
+            });
+
+            // crear el registro de la session en la tabla sesiones para trazabilidad e historicos.
+
+            delete currentUser.password;
+
+            const [roles, permissions, _] = await Promise.all([
+                userRoles.getRolesByUserId(currentUser.id),
+                rolePermissions.getPermissionsByRoleIdAndUserId(currentUser.id),
+                sessions.save({
+                    user_id: currentUser.id,
+                    user_agent: dto.user_agent,
+                    ip_address: dto.ip_address,
+                    session_id
+                })
+            ]);
+
+            const response: IUserDataResponse = {
+                user: currentUser,
+                roles,
+                permissions: permissions.map(permission => permission.code)
+            }
+            return response;
+        })
     }
 }

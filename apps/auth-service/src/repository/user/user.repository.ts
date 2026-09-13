@@ -22,7 +22,9 @@ export type GetUserResponse = {
     email: string;
     first_name: string;
     last_name: string;
-    created_at: string
+    created_at: string;
+    password?: string;
+    status?: UserStatus;
 }
 
 export type UserWithAccessResponse = {
@@ -70,21 +72,21 @@ export class UserRepository implements IUserRepository {
         if (options.id) {
             params.push(options.id);
             sql += `
-                AND u.id = ${params.length}
+                AND u.id = $${params.length}
             `;
         }
 
         if (options.external_id) {
             params.push(options.external_id);
             sql += `
-                AND u.external_id = ${params.length}
+                AND u.external_id = $${params.length}
             `;
         }
 
         if (options.email) {
             params.push(options.email);
             sql += `
-                AND u.email = ${params.length}
+                AND u.email = $${params.length}
             `;
         }
 
@@ -92,14 +94,14 @@ export class UserRepository implements IUserRepository {
         if (options.status) {
             params.push(options.status);
             sql += `
-                AND u.status = ${params.length}
+                AND u.status = $${params.length}
             `;
         }
 
         if (options.initial_date && options.final_date) {
             params.push(options.initial_date, options.final_date);
             sql += `
-              AND TO_CHAR(u.created_at, 'YYYY-MM-DD') BETWEEN ${params.length - 1} AND ${params.length};
+              AND TO_CHAR(u.created_at, 'YYYY-MM-DD') BETWEEN $${params.length - 1} AND $${params.length};
             `;
         }
 
@@ -108,7 +110,7 @@ export class UserRepository implements IUserRepository {
         if (!response || !response.count)
             throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error getting users list');
 
-        return response.count;
+        return +response.count;
     }
     async findUsersPaginated(options: IUserDataPaginatedDto): Promise<UserWithAccessResponse[]> {
 
@@ -170,21 +172,21 @@ export class UserRepository implements IUserRepository {
         if (options.id) {
             params.push(options.id);
             sql += `
-                AND u.id = ${params.length}
+                AND u.id = $${params.length}
             `;
         }
 
         if (options.external_id) {
             params.push(options.external_id);
             sql += `
-                AND u.external_id = ${params.length}
+                AND u.external_id = $${params.length}
             `;
         }
 
         if (options.email) {
             params.push(options.email);
             sql += `
-                AND u.email = ${params.length}
+                AND u.email = $${params.length}
             `;
         }
 
@@ -192,14 +194,14 @@ export class UserRepository implements IUserRepository {
         if (options.status) {
             params.push(options.status);
             sql += `
-                AND u.status = ${params.length}
+                AND u.status = $${params.length}
             `;
         }
 
         if (options.initial_date && options.final_date) {
             params.push(options.initial_date, options.final_date);
             sql += `
-              AND TO_CHAR(u.created_at, 'YYYY-MM-DD') BETWEEN ${params.length - 1} AND ${params.length};
+              AND TO_CHAR(u.created_at, 'YYYY-MM-DD') BETWEEN $${params.length - 1} AND $${params.length};
             `
         }
         params.push(options.limit!);
@@ -208,7 +210,7 @@ export class UserRepository implements IUserRepository {
         params.push(options.offset!);
         const indexOffset = params.length;
 
-        sql += ` ORDER BY u.id DESC LIMIT ${indexLimit} OFFSET ${indexOffset} )`;
+        sql += ` ORDER BY u.id DESC LIMIT $${indexLimit} OFFSET $${indexOffset} )`;
 
         sql += `
             SELECT *
@@ -216,7 +218,7 @@ export class UserRepository implements IUserRepository {
             WHERE jsonb_array_length(roles) > 0
             AND jsonb_array_length(permissions) > 0;
         `;
-
+        console.log({ params })
         const response = await this._db.query<UserWithAccessResponse>(sql, params);
         return response;
     }
@@ -245,7 +247,7 @@ export class UserRepository implements IUserRepository {
 
     async findbyEmail(email: string): Promise<GetUserResponse | undefined> {
 
-        const sql = 'select id,external_id, email,first_name, last_name, created_at from users where email = $1';
+        const sql = 'select id,external_id, email,first_name, last_name, created_at, password, status from users where email = $1';
         const [response] = await this._db.query<GetUserResponse>(sql, [email]);
         return response;
     }

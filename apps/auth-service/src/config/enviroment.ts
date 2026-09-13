@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import { IEnvConfig } from "../interfaces/IEnvConfig.js";
 import { bool, cleanEnv, num, str } from 'envalid';
+import type { SignOptions } from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -45,7 +46,16 @@ const validatedEnv = cleanEnv(process.env, {
     }),
     REDIS_USERNAME: str(),
     REDIS_MAX_RETRIES_PER_REQUEST: num(),
-    HASH_PASSWORD_SECRET_KEY: str()
+    HASH_PASSWORD_SECRET_KEY: str(),
+
+    ACCESS_TOKEN_TTL: str({
+        default: '15m'
+    }),
+    REFRESH_TOKEN_TTL_DAYS: num({ default: 7 }),
+    SESSION_TTL_DAYS: num({ default: 7 }),
+    JWT_SECRET: str() // vEnyvIANeCb6nyDR4MTVUdvfNS6mBETDmx2pn8dBeGvq4SloLXcFpq_UsY0H7zrvFomsRIWwMdn0FqLeC0YNpQ
+
+
 });
 
 export const env: IEnvConfig = {
@@ -78,5 +88,9 @@ export const env: IEnvConfig = {
         redis_password: validatedEnv.REDIS_PASSWORD,
         redis_max_retries_per_request: validatedEnv.REDIS_MAX_RETRIES_PER_REQUEST
     },
-    hash_password_secret_key: validatedEnv.HASH_PASSWORD_SECRET_KEY
+    hash_password_secret_key: validatedEnv.HASH_PASSWORD_SECRET_KEY,
+    access_token_ttl: validatedEnv.ACCESS_TOKEN_TTL as NonNullable<SignOptions['expiresIn']>,
+    refresh_token_ttl_days: validatedEnv.REFRESH_TOKEN_TTL_DAYS,
+    session_ttl_days: validatedEnv.SESSION_TTL_DAYS,
+    jwt_secret: validatedEnv.JWT_SECRET
 };
