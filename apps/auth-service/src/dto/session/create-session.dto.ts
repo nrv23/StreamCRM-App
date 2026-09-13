@@ -5,4 +5,5 @@ export interface CreateSessionDto {
     session_id: string;
     ip_address: string;
     user_agent: string;
+    expires_at: Date;
 }

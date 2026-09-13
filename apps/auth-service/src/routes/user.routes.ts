@@ -8,6 +8,7 @@ import { fakeAuth } from "../shared/middleware/fake-user.middleware.ts";
 import { createUserValidator } from "../validators/user/create-user.validator.ts";
 import { PasswordHasher, Pbkdf2PasswordHasher } from "../shared/utils/passwordHash.ts";
 import { getUsersValidator } from "../validators/user/get-users.validator.ts";
+import { TokenManager } from "../shared/utils/tokenManager.ts";
 
 
 export class UserRoutes implements IRoutes {
@@ -16,13 +17,15 @@ export class UserRoutes implements IRoutes {
     private readonly _userController: UserController;
     private readonly _userService: UserService;
     private readonly _passwordHasher: Pbkdf2PasswordHasher;
+    private readonly _tokenManager: TokenManager;
     private _router: Router;
     constructor(
 
     ) {
         this._passwordHasher = new Pbkdf2PasswordHasher();
         this._unitOfWork = new UnitOfWork();
-        this._userService = new UserService(this._unitOfWork, this._passwordHasher);
+        this._tokenManager = new TokenManager();
+        this._userService = new UserService(this._unitOfWork, this._passwordHasher, this._tokenManager);
         this._userController = new UserController(this._userService);
         this._router = Router()
     }
@@ -32,7 +35,7 @@ export class UserRoutes implements IRoutes {
         this._router.post('/', fakeAuth, createUserValidator, validateRequest, this._userController.create.bind(this._userController));
         this._router.get('/me', fakeAuth, this._userController.me.bind(this._userController));
         this._router.post('/filtered', getUsersValidator, this._userController.getUsers.bind(this._userController));
-
+        this._router.post('/login', getUsersValidator, this._userController.login.bind(this._userController));
         return this._router;
     }
 }

@@ -101,4 +101,20 @@ export class UserController {
         res.status(200).json(response);
         return;
     }
+
+    async login(req: Request, res: Response) {
+
+        const { user_agent, ip_address } = req.requestDataInfo;
+        const { email, password } = req.body;
+
+        const data = await this.userService.login({
+            user_agent,
+            ip_address,
+            email,
+            password
+        });
+
+        res.status(200).json(data);
+        return;
+    }
 }

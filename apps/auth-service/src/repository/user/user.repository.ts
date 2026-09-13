@@ -247,7 +247,7 @@ export class UserRepository implements IUserRepository {
 
     async findbyEmail(email: string): Promise<GetUserResponse | undefined> {
 
-        const sql = 'select id,external_id, email,first_name, last_name, created_at, password, status from users where email = $1';
+        const sql = 'select id,external_id, email,first_name, last_name, created_at, password_hash as password, status from users where email = $1';
         const [response] = await this._db.query<GetUserResponse>(sql, [email]);
         return response;
     }

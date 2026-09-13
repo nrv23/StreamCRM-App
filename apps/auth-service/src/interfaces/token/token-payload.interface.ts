@@ -4,7 +4,6 @@ export interface TokenPayload {
     sub: string;
     uid: number;
     sid: string;
-    exp: number;
 }
 
 

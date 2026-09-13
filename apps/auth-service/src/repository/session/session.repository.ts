@@ -19,8 +19,8 @@ export class SessionRepository implements ISessionRepository {
 
     async save(dto: CreateSessionDto): Promise<void> {
 
-        const sql = 'insert into auth_sessions(user_id,session_id,ip_address,user_agent) values($1,$2,$3,$4) returning id;';
-        const [response] = await this._db.query<CreateSessionResponse>(sql, [dto.user_id, dto.session_id, dto.ip_address, dto.user_agent]);
+        const sql = 'insert into auth_sessions(user_id,session_id,ip_address,user_agent, expires_at) values($1,$2,$3,$4, $5) returning id;';
+        const [response] = await this._db.query<CreateSessionResponse>(sql, [dto.user_id, dto.session_id, dto.ip_address, dto.user_agent, dto.expires_at]);
 
         if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
     }

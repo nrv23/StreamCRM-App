@@ -152,13 +152,13 @@ export class UserService {
             if (!isValidPass) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'Invalid authentication credentials');
 
             const session_id = randomUUID();
-            const expiresAt = Date.now() + 15 * 60 * 1000;
-
-
+            const session_expires_at = new Date(
+                Date.now() + env.session_ttl_days * 24 * 60 * 60 * 1000
+            );
+            const token_expires_at = Math.floor(Date.now() / 1000) + 15 * 60;
             // crear el token de sesion
             const token = await this.tokenManager.sign({
                 sid: session_id,
-                exp: expiresAt,
                 uid: currentUser.id,
                 sub: currentUser.external_id
             });
@@ -174,12 +174,14 @@ export class UserService {
                     user_id: currentUser.id,
                     user_agent: dto.user_agent,
                     ip_address: dto.ip_address,
-                    session_id
+                    session_id,
+                    expires_at: session_expires_at
                 })
             ]);
 
             const response: LoginDataResponse = {
-                token,
+                access_token: token,
+                expires_at: token_expires_at,
                 user: currentUser,
                 roles,
                 permissions: permissions.map(permission => permission.code)
