@@ -30,7 +30,9 @@ export class ErrorFactory {
             case ApiErrorCode.INTERNAL_SERVER_ERROR:
                 statusCode = 500;
                 break;
-
+            case ApiErrorCode.UNAUTHORIZED:
+                statusCode = 401;
+                break;
             default: throw new Error("Error type not implemented")
         }
 

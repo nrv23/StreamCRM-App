@@ -8,6 +8,7 @@ import { fakeAuth } from "../shared/middleware/fake-user.middleware.ts";
 import { createUserValidator } from "../validators/user/create-user.validator.ts";
 import { PasswordHasher, Pbkdf2PasswordHasher } from "../shared/utils/passwordHash.ts";
 import { getUsersValidator } from "../validators/user/get-users.validator.ts";
+import { loginValidator } from "../validators/user/login.dto.ts";
 import { TokenManager } from "../shared/utils/tokenManager.ts";
 
 
@@ -35,7 +36,7 @@ export class UserRoutes implements IRoutes {
         this._router.post('/', fakeAuth, createUserValidator, validateRequest, this._userController.create.bind(this._userController));
         this._router.get('/me', fakeAuth, this._userController.me.bind(this._userController));
         this._router.post('/filtered', getUsersValidator, this._userController.getUsers.bind(this._userController));
-        this._router.post('/login', getUsersValidator, this._userController.login.bind(this._userController));
+        this._router.post('/login', loginValidator, validateRequest, this._userController.login.bind(this._userController));
         return this._router;
     }
 }

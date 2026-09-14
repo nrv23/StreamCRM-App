@@ -11,4 +11,6 @@ export interface ITokenManager {
 
     sign(payload: TokenPayload): Promise<string>;
     verify(token: string): Promise<TokenPayload>;
+    refreshToken(): string;
+    verifyRefreshToken(refreshToken: string): string
 }

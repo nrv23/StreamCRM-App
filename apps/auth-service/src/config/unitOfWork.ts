@@ -9,6 +9,7 @@ import { PermissionRepository } from '../repository/permission/permission.reposi
 import { RolePermissionRepository } from '../repository/permission/role-permission.repository.ts';
 import { AuditLogsRepository } from '../repository/auditLog/audit-log-repository.repository.ts';
 import { SessionRepository } from '../repository/session/session.repository.ts';
+import { RefreshTokenRepository } from '../repository/session/refresh-token.repository.ts';
 
 // Adaptador para cumplir con la interfaz IDatabase usando el cliente de pg
 class PgClientAdapter implements IDatabase {
@@ -27,7 +28,8 @@ export interface IUnitOfWorkRepositories {
     permissions: PermissionRepository,
     rolePermissions: RolePermissionRepository,
     auditLogs: AuditLogsRepository,
-    sessions: SessionRepository
+    sessions: SessionRepository,
+    refreshTokens: RefreshTokenRepository
 }
 
 export class UnitOfWork {
@@ -42,7 +44,8 @@ export class UnitOfWork {
             permissions: new PermissionRepository(dbAdapter),
             rolePermissions: new RolePermissionRepository(dbAdapter),
             auditLogs: new AuditLogsRepository(dbAdapter),
-            sessions: new SessionRepository(dbAdapter)
+            sessions: new SessionRepository(dbAdapter),
+            refreshTokens: new RefreshTokenRepository(dbAdapter)
         }
     }
 

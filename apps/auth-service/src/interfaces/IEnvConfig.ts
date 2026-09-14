@@ -2,6 +2,7 @@
 import type { SignOptions } from 'jsonwebtoken';
 
 export interface IEnvConfig {
+    node_env: string;
     db: {
         host: string;
         port: number;

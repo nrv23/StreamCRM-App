@@ -6,7 +6,7 @@ import { ApiResponse } from '../shared/types/api-response.ts';
 import { CreateUserReponse } from '../repository/user/user.repository.ts';
 import { IUserDataResponse } from '../interfaces/user/user-data.interface.ts';
 import { IUserDataPaginatedDto } from '../interfaces/user/user-data-paginated.interface.ts';
-
+import { env } from '../config/enviroment.ts';
 
 export class UserController {
 
@@ -112,6 +112,14 @@ export class UserController {
             ip_address,
             email,
             password
+        });
+
+        res.cookie('refresh_token', data.refresh_token, {
+            httpOnly: true,
+            secure: env.node_env === 'production',
+            sameSite: 'strict',
+            path: '/api/v1/users/refresh-token',
+            maxAge: env.session_ttl_days * 24 * 60 * 60 * 1000
         });
 
         res.status(200).json(data);

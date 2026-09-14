@@ -1,5 +1,6 @@
 import { databaseInstance } from "../../config/query.ts";
 import { CreateSessionDto } from "../../dto/session/create-session.dto.ts";
+import { Session } from "../../entity/Session.entity.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
 import { IDatabase } from "../../interfaces/database.interface.ts";
 import { ISessionRepository } from "../../interfaces/session/session-repository.interface.ts";
@@ -17,12 +18,12 @@ export class SessionRepository implements ISessionRepository {
         this._db = db ?? databaseInstance;
     }
 
-    async save(dto: CreateSessionDto): Promise<void> {
+    async save(dto: CreateSessionDto): Promise<Session> {
 
-        const sql = 'insert into auth_sessions(user_id,session_id,ip_address,user_agent, expires_at) values($1,$2,$3,$4, $5) returning id;';
-        const [response] = await this._db.query<CreateSessionResponse>(sql, [dto.user_id, dto.session_id, dto.ip_address, dto.user_agent, dto.expires_at]);
-
+        const sql = 'insert into auth_sessions(user_id,session_id,ip_address,user_agent, expires_at) values($1,$2,$3,$4, $5) returning *;';
+        const [response] = await this._db.query<Session>(sql, [dto.user_id, dto.session_id, dto.ip_address, dto.user_agent, dto.expires_at]);
         if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
+        return response
     }
 
 }

@@ -7,6 +7,7 @@ import { MetricsRoutes } from "./routes/metrics.route.ts";
 import { MetricsController } from "./controllers/metrics.controller.ts";
 import MetricsService from "./services/metrics.service.ts";
 import { UserRoutes } from "./routes/user.routes.ts";
+import cookieParser from 'cookie-parser';
 
 export function createApp(): Application {
     const app = express();
@@ -19,6 +20,9 @@ export function createApp(): Application {
 
     // 2. Para parsear peticiones con formato "application/x-www-form-urlencoded"
     app.use(express.urlencoded({ extended: true }));
+
+    // 3. Para parsear cookies
+    app.use(cookieParser());
 
     // 3. Extraer IP y User Agent globalmente
     app.use(requestDataInfo);

@@ -139,7 +139,7 @@ export class UserService {
 
     async login(dto: LoginDto) {
 
-        return await this.unitOfWork.execute(async ({ users, userRoles, rolePermissions, sessions }) => {
+        return await this.unitOfWork.execute(async ({ users, userRoles, rolePermissions, sessions, refreshTokens }) => {
 
             const currentUser = await users.findbyEmail(dto.email);
 
@@ -156,37 +156,54 @@ export class UserService {
                 Date.now() + env.session_ttl_days * 24 * 60 * 60 * 1000
             );
             const token_expires_at = Math.floor(Date.now() / 1000) + 15 * 60;
+            const refresh_token = this.tokenManager.refreshToken();
             // crear el token de sesion
-            const token = await this.tokenManager.sign({
-                sid: session_id,
-                uid: currentUser.id,
-                sub: currentUser.external_id
-            });
 
             // crear el registro de la session en la tabla sesiones para trazabilidad e historicos.
 
             delete currentUser.password;
 
-            const [roles, permissions, _] = await Promise.all([
+            const [roles, permissions, token, _, __] = await Promise.all([
                 userRoles.getRolesByUserId(currentUser.id),
                 rolePermissions.getPermissionsByRoleIdAndUserId(currentUser.id),
+                this.tokenManager.sign({
+                    sid: session_id,
+                    uid: currentUser.id,
+                    sub: currentUser.external_id
+                }),
                 sessions.save({
                     user_id: currentUser.id,
                     user_agent: dto.user_agent,
                     ip_address: dto.ip_address,
                     session_id,
                     expires_at: session_expires_at
+                }),
+                refreshTokens.save({
+                    user_id: currentUser.id,
+                    expires_at: session_expires_at,
+                    session_id,
+                    token_hash: refresh_token
                 })
             ]);
 
             const response: LoginDataResponse = {
                 access_token: token,
+                refresh_token,
                 expires_at: token_expires_at,
                 user: currentUser,
                 roles,
                 permissions: permissions.map(permission => permission.code)
             }
             return response;
+        })
+    }
+
+    async validateCurrentRefreshToken(refreshToken: string, user_id?: number): Promise<boolean> {
+        return await this.unitOfWork.execute(async ({ refreshTokens }) => {
+            const currentRefreshToken = await refreshTokens.getCurrentRefreshToken(refreshToken);
+            if (!currentRefreshToken) return false;
+            if(user_id && currentRefreshToken.user_id !== user_id) return false;
+            return true;
         })
     }
 }

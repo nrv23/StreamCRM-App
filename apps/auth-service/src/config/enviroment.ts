@@ -59,6 +59,7 @@ const validatedEnv = cleanEnv(process.env, {
 });
 
 export const env: IEnvConfig = {
+    node_env: validatedEnv.NODE_ENV,
     db: {
         host: validatedEnv.DB_HOST,
         port: validatedEnv.DB_PORT,
