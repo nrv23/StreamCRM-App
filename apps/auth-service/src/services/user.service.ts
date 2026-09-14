@@ -16,6 +16,7 @@ import { LoginDto } from "../dto/user/login.dto.ts";
 import { randomUUID } from "node:crypto";
 import { ITokenManager } from "../interfaces/token/token-payload.interface.ts";
 import { LoginDataResponse } from "../interfaces/user/login-data.interface.ts";
+import { RefreshTokenStatus } from "../enum/RefreshTokenStatus.enum.ts";
 
 export class UserService {
 
@@ -199,11 +200,46 @@ export class UserService {
     }
 
     async validateCurrentRefreshToken(refreshToken: string, user_id?: number): Promise<boolean> {
-        return await this.unitOfWork.execute(async ({ refreshTokens }) => {
+        return await this.unitOfWork.execute(async ({ refreshTokens, users }) => {
             const currentRefreshToken = await refreshTokens.getCurrentRefreshToken(refreshToken);
+            const currentUser = await users.findbyId(currentRefreshToken!.user_id);
+            if (!currentUser) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'User not exists');
+            if (currentUser.status === UserStatus.blocked) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'User  account is blocked');
+            if (currentUser.status === UserStatus.inactive) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'User account is inactive');
             if (!currentRefreshToken) return false;
-            if(user_id && currentRefreshToken.user_id !== user_id) return false;
+            if (user_id && currentRefreshToken.user_id !== user_id) return false;
             return true;
         })
+    }
+
+    async getNewAccessToken(refreshToken: string): Promise<{ access_token: string, expires_at: number }> {
+        return await this.unitOfWork.execute(async ({ refreshTokens, users, sessions }) => {
+            const currentRefreshToken = await refreshTokens.getCurrentRefreshToken(refreshToken);
+
+            await refreshTokens.setStatus(refreshToken, RefreshTokenStatus.revoked);
+            const currentUser = await users.findbyId(currentRefreshToken!.user_id);
+            const session_id = randomUUID();
+            const token_expires_at = Math.floor(Date.now() / 1000) + 15 * 60;
+            const refresh_token = this.tokenManager.refreshToken();
+
+            const [token, _] = await Promise.all([
+                this.tokenManager.sign({
+                    sid: session_id,
+                    uid: currentUser!.id,
+                    sub: currentUser!.external_id
+                }),
+                refreshTokens.save({
+                    user_id: currentUser!.id,
+                    expires_at: new Date(currentRefreshToken?.expires_at!),
+                    session_id,
+                    token_hash: refresh_token
+                })
+            ]);
+
+            return {
+                access_token: token,
+                expires_at: token_expires_at
+            }
+        });
     }
 }

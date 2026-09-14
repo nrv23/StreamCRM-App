@@ -18,6 +18,6 @@ export async function refreshTokenMiddleware(req: Request, res: Response, next: 
     if(await userService.validateCurrentRefreshToken(refreshToken as string, req.user?.id)) next();
     else throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Invalid refresh token');
   } catch (error) {
-    return res.status(403).json({ message: 'Invalid refresh token' });
+    throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Invalid refresh token');
   }
 }
