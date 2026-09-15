@@ -259,4 +259,23 @@ export class UserService {
             return response;
         });
     }
+
+    async logout(refreshToken: string) {
+        return await this.unitOfWork.execute(async ({ refreshTokens, sessions }) => {
+
+            const currentRefreshToken = await refreshTokens.getCurrentRefreshToken(refreshToken);
+            if (!currentRefreshToken) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'Invalid refresh token');
+
+            const currentSession = await sessions.getCurrentSessionIdByUserId(currentRefreshToken.session_id);
+            if (!currentSession) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'The current session is ended');
+
+            // revokar session y refresh token
+
+            await Promise.all([
+                refreshTokens.revoke(refreshToken, RefreshTokenStatus.revoked),
+                sessions.revoke(currentSession.session_id)
+            ]);
+        })
+
+    }
 }

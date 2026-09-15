@@ -2,6 +2,7 @@ import { databaseInstance } from "../../config/query.ts";
 import { CreateSessionDto } from "../../dto/session/create-session.dto.ts";
 import { Session } from "../../entity/Session.entity.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
+import { SessionRevokedReasonEnum } from "../../enum/SessionRevokedReason.enum.ts";
 import { SessionStatus } from "../../enum/SessionStatus.enum.ts";
 import { IDatabase } from "../../interfaces/database.interface.ts";
 import { ISessionRepository } from "../../interfaces/session/session-repository.interface.ts";
@@ -16,11 +17,32 @@ export type GetSessionIdByUserIdResponse = {
     expires_at: string;
 }
 
+export type RevokeSessionResponse = {
+    id: number;
+}
+
 export class SessionRepository implements ISessionRepository {
 
     private _db: IDatabase;
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
+    }
+
+    async revoke(session_id: string): Promise<void> {
+        const sql = `
+            update auth_sessions 
+            set 
+                status = $1,
+                revoked_at = NOW(),
+                ended_at = NOW(),
+                revoke_reason = $2
+            where session_id = $3
+            and status = $4
+            returning id;
+        `;
+        const [response] = await this._db.query<RevokeSessionResponse>(sql, [SessionStatus.revoked, SessionRevokedReasonEnum.logout, session_id, SessionStatus.active]);
+        if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
+
     }
     async getCurrentSessionIdByUserId(session_id: string): Promise<GetSessionIdByUserIdResponse | null> {
         const sql = `

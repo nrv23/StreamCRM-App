@@ -8,4 +8,5 @@ export interface ISessionRepository {
 
     save(dto: CreateSessionDto): Promise<Session>;
     getCurrentSessionIdByUserId(session_id: string): Promise<GetSessionIdByUserIdResponse | null>;
+    revoke(session_id: string): Promise<void>;
 }

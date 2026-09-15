@@ -26,8 +26,12 @@ export class RefreshTokenRepository implements IRefreshTokenRepository {
     }
     async revoke(refreshToken: string, status: RefreshTokenStatus): Promise<SetStatusRefreshToken> {
 
-        const sql = `update refresh_tokens set status = $1, revoked_at = now() where token_hash = $2 returning expired_at;`;
-        const [response] = await this._db.query<SetStatusRefreshToken>(sql, [status, refreshToken]);
+        const sql = `
+            update refresh_tokens set status = $1, revoked_at = now() 
+            where token_hash = $2 
+            and status = $3
+            returning expired_at;`;
+        const [response] = await this._db.query<SetStatusRefreshToken>(sql, [status, refreshToken, RefreshTokenStatus.active]);
         if (!response || !response.expired_at) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
         return response;
     }

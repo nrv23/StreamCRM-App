@@ -12,6 +12,7 @@ import { loginValidator } from "../validators/user/login.dto.ts";
 import { TokenManager } from "../shared/utils/tokenManager.ts";
 import { refreshTokenValidator } from "../validators/auth/refresh-token.validator.ts";
 import { refreshTokenMiddleware } from "../shared/middleware/refresh-token.middleware.ts";
+import { logoutValidator } from "../validators/auth/logout.validator.ts";
 
 
 export class UserRoutes implements IRoutes {
@@ -40,6 +41,8 @@ export class UserRoutes implements IRoutes {
         this._router.post('/filtered', getUsersValidator, this._userController.getUsers.bind(this._userController));
         this._router.post('/login', loginValidator, validateRequest, this._userController.login.bind(this._userController));
         this._router.post('/refresh_token', refreshTokenValidator, validateRequest, refreshTokenMiddleware, this._userController.setRefreshToken.bind(this._userController));
+        this._router.get('/logout', logoutValidator, validateRequest, this._userController.logout.bind(this._userController));
+
         return this._router;
     }
 }

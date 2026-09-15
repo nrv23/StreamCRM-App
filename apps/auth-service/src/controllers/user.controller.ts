@@ -156,4 +156,31 @@ export class UserController {
         res.status(200).json(response);
         return;
     }
+
+    async logout(req: Request, res: Response) {
+
+        const { refresh_token } = req.cookies;
+
+        await this.userService.logout(refresh_token);
+
+        // borrar el cookie
+
+        res.clearCookie('refresh_token', {
+            httpOnly: true,
+            secure: env.node_env === 'production',
+            sameSite: 'strict',
+            path: '/api/v1/users/refresh-token',
+            maxAge: env.session_ttl_days * 24 * 60 * 60 * 1000
+        });
+
+        const response: ApiResponse<null> = {
+            success: true,
+            response: {
+                message: "Se cerro la sesion con exito"
+            }
+        };
+        res.status(200).json(response);
+        return;
+
+    }
 } 

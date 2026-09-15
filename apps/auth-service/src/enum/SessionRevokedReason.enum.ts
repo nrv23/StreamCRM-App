@@ -2,5 +2,6 @@
 
 export enum SessionRevokedReasonEnum {
 
-    suspiciusActivity = 'actvidad sospechosa'
+    suspiciusActivity = 'actvidad sospechosa',
+    logout = 'cerrar sesion'
 }
