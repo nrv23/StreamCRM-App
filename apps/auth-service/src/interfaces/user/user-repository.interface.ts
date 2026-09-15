@@ -1,4 +1,5 @@
 import { CreateUserDto } from "../../dto/user/create-user.dto.ts";
+import { UserStatus } from "../../enum/UserStatus.enum.ts";
 import { CreateUserReponse, GetUserResponse, UserWithAccessResponse } from "../../repository/user/user.repository.ts";
 import { IUserDataPaginatedDto } from "./user-data-paginated.interface.ts";
 
@@ -11,5 +12,5 @@ export interface IUserRepository {
     findbyId(user_id: number): Promise<GetUserResponse | undefined>;
     findUsersPaginated(options: IUserDataPaginatedDto): Promise<UserWithAccessResponse[]>;
     getRecordsCount(options: IUserDataPaginatedDto): Promise<number>;
-    delete(): Promise<void>;
+    setStatus(user_id: number, status: UserStatus): Promise<void>;
 }

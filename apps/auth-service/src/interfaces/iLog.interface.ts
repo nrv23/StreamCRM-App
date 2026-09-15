@@ -7,6 +7,7 @@ export interface ILogMetadata {
     event_id?: string;
     entity_id?: number;
     method?: string;
+    route?: string;
     payload?: JsonObject;
     created_at: string;
     error_name?: string;

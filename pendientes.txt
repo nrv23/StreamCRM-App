@@ -7,3 +7,6 @@ failure tests
 docs/ADRs
 metrics adicionales
 OpenTelemetry
+
+
+agregar funciones de postgresql en buscadores de notification service

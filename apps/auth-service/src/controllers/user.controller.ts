@@ -148,8 +148,8 @@ export class UserController {
     async logout(req: Request, res: Response) {
 
         const { refresh_token } = req.cookies;
-
-        await this.userService.logout(refresh_token);
+        const { ip_address, user_agent } = req.requestDataInfo;
+        await this.userService.logout(refresh_token, ip_address, user_agent);
 
         // borrar el cookie
 
@@ -169,6 +169,22 @@ export class UserController {
         };
         res.status(200).json(response);
         return;
+    }
 
+    async setStatus(req: Request, res: Response) {
+
+        const { id } = req.params;
+        const { status } = req.body;
+        const { ip_address, user_agent } = req.requestDataInfo;
+        await this.userService.setStatus(+id!, status, ip_address, user_agent);
+
+        const response: ApiResponse<null> = {
+            success: true,
+            response: {
+                message: "Se ha actualizado el estado del usuario"
+            }
+        };
+
+        res.status(200).json(response);
     }
 } 

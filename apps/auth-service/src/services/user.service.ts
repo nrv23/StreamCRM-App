@@ -2,7 +2,7 @@ import { UnitOfWork } from "../config/unitOfWork.ts";
 import { CreateUserDto } from "../dto/user/create-user.dto.ts";
 import { IPasswordHasher } from "../interfaces/password-hasher.interface.ts";
 import { ROLE_PERMISSION_POLICY } from "../shared/utils/rolePermissionDefault.ts";
-import { CREATE_USER } from "../shared/types/events.type.ts";
+import { CHANGE_USER_STATUS, CREATE_USER, GET_ME, GET_USERS, LOGIN_USER, LOGOUT_USER } from "../shared/types/events.type.ts";
 import { env } from "../config/enviroment.ts";
 import { EntityType } from "../enum/EntityType.enum.ts";
 import { UserStatus } from "../enum/UserStatus.enum.ts";
@@ -18,13 +18,16 @@ import { ITokenManager } from "../interfaces/token/token-payload.interface.ts";
 import { LoginDataResponse } from "../interfaces/user/login-data.interface.ts";
 import { RefreshTokenStatus } from "../enum/RefreshTokenStatus.enum.ts";
 import { IRefreshTokenResponse } from "../interfaces/session/refresh-token-data.interface.ts";
+import { Logger } from "winston";
+import { ILogMetadata } from "../interfaces/iLog.interface.ts";
 
 export class UserService {
 
     constructor(
-        public unitOfWork: UnitOfWork,
-        public passwordHasher: IPasswordHasher,
-        public tokenManager: ITokenManager
+        private unitOfWork: UnitOfWork,
+        private passwordHasher: IPasswordHasher,
+        private tokenManager: ITokenManager,
+        private _logger: Logger
     ) {
 
     }
@@ -83,6 +86,18 @@ export class UserService {
                 })
             ]);
 
+            const log: ILogMetadata = {
+                service: env.service_name,
+                event: CREATE_USER,
+                entity_id: newUser.id,
+                method: 'POST',
+                route: 'api/v1/users',
+                created_at: new Date().toISOString(),
+                event_id: newUser.external_id
+            };
+
+            this._logger.info('user created', log);
+
             return newUser;
         })
     }
@@ -104,6 +119,23 @@ export class UserService {
                 roles,
                 permissions: permissions.map(permission => permission.code)
             }
+
+            const log: ILogMetadata = {
+                service: env.service_name,
+                event: GET_ME,
+                entity_id: currentUser.id,
+                method: 'POST',
+                route: 'api/v1/me',
+                created_at: new Date().toISOString(),
+                payload: {
+                    user: response.user,
+                    roles: JSON.stringify(response.roles),
+                    permissions: JSON.stringify(response.permissions)
+                }
+            };
+
+            this._logger.info('get me profile', log);
+
             return response;
         })
     }
@@ -135,13 +167,27 @@ export class UserService {
                 }
             }
 
+            const log: ILogMetadata = {
+                service: env.service_name,
+                event: GET_USERS,
+                method: 'POST',
+                route: 'api/v1/filtered',
+                created_at: new Date().toISOString(),
+                payload: {
+                    users: JSON.stringify(response.data),
+                    paginationData: JSON.stringify(response.paginationData)
+                }
+            };
+
+            this._logger.info('get users', log);
+
             return response;
         });
     }
 
     async login(dto: LoginDto): Promise<LoginDataResponse> {
 
-        return await this.unitOfWork.execute(async ({ users, userRoles, rolePermissions, sessions, refreshTokens }) => {
+        return await this.unitOfWork.execute(async ({ users, userRoles, rolePermissions, sessions, refreshTokens, auditLogs }) => {
 
             const currentUser = await users.findbyEmail(dto.email);
 
@@ -185,8 +231,24 @@ export class UserService {
                     expires_at: session_expires_at,
                     session_id,
                     token_hash: refresh_token
+                }),
+                auditLogs.save({
+                    entity_type: EntityType.USER,
+                    entity_id: currentUser.id,
+                    action: LOGIN_USER,
+                    user_id: currentUser.id,
+                    old_values: {
+                        email: dto.email,
+                        password: "xxxxxxxxxxxxxxxxxx"
+                    },
+                    new_values: {
+
+                    },
+                    user_agent: dto.user_agent,
+                    ip_address: dto.ip_address,
                 })
             ]);
+
 
             const response: LoginDataResponse = {
                 access_token: token,
@@ -196,6 +258,23 @@ export class UserService {
                 roles,
                 permissions: permissions.map(permission => permission.code)
             }
+
+            const log: ILogMetadata = {
+                service: env.service_name,
+                event: LOGIN_USER,
+                entity_id: currentUser.id,
+                method: 'POST',
+                route: 'api/v1/login',
+                created_at: new Date().toISOString(),
+                payload: {
+                    user: response.user,
+                    roles: JSON.stringify(response.roles),
+                    permissions: JSON.stringify(response.permissions)
+                }
+            };
+
+            this._logger.info('login user', log);
+
             return response;
         })
     }
@@ -260,8 +339,8 @@ export class UserService {
         });
     }
 
-    async logout(refreshToken: string) {
-        return await this.unitOfWork.execute(async ({ refreshTokens, sessions }) => {
+    async logout(refreshToken: string, ip_address: string, user_agent: string) {
+        return await this.unitOfWork.execute(async ({ refreshTokens, sessions, auditLogs }) => {
 
             const currentRefreshToken = await refreshTokens.getCurrentRefreshToken(refreshToken);
             if (!currentRefreshToken) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'Invalid refresh token');
@@ -273,9 +352,83 @@ export class UserService {
 
             await Promise.all([
                 refreshTokens.revoke(refreshToken, RefreshTokenStatus.revoked),
-                sessions.revoke(currentSession.session_id)
+                sessions.revoke(currentSession.session_id),
+                auditLogs.save({
+                    entity_type: EntityType.USER,
+                    entity_id: currentRefreshToken.user_id,
+                    action: LOGOUT_USER,
+                    user_id: currentRefreshToken.user_id,
+                    old_values: {
+
+                    },
+                    new_values: {
+
+                    },
+                    ip_address,
+                    user_agent
+                })
             ]);
+
+            const log: ILogMetadata = {
+                service: env.service_name,
+                event: LOGOUT_USER,
+                method: 'POST',
+                route: 'api/v1/logout',
+                created_at: new Date().toISOString(),
+
+            };
+
+            this._logger.info('logout user', log);
         })
 
+    }
+
+    async setStatus(user_id: number, status: UserStatus, ip_address: string, user_agent: string) {
+        return this.unitOfWork.execute(async ({ users, auditLogs }) => {
+
+
+            const currentUser = await users.findbyId(user_id);
+
+            if (!currentUser) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'User not exists');
+            if (currentUser.status === UserStatus.blocked) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'User  account is blocked');
+            if (currentUser.status === UserStatus.inactive) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'User account is inactive');
+
+
+            delete currentUser.password;
+
+            const log: ILogMetadata = {
+                service: env.service_name,
+                event: CHANGE_USER_STATUS,
+                method: 'POST',
+                route: 'api/v1/status/:id',
+                created_at: new Date().toISOString(),
+                payload: {
+                    prevStatus: currentUser.status!,
+                    currentStatus: status,
+                    ...currentUser
+                }
+
+            };
+
+            this._logger.info('user status changed', log);
+
+            await Promise.all([
+                users.setStatus(user_id, status),
+                auditLogs.save({
+                    entity_type: EntityType.USER,
+                    entity_id: currentUser.id,
+                    action: CHANGE_USER_STATUS,
+                    user_id,
+                    old_values: {
+                        prevStatus: currentUser.status?.toString()!
+                    },
+                    new_values: {
+                        currentStatus: status,
+                    },
+                    ip_address,
+                    user_agent
+                })
+            ])
+        })
     }
 }

@@ -43,12 +43,22 @@ export type GetUsersCountResponse = {
     count: number;
 }
 
+export type SetUserStatusResponse = {
+    id: number;
+}
 
 export class UserRepository implements IUserRepository {
 
     private _db: IDatabase;
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
+    }
+    async setStatus(user_id: number, status: UserStatus): Promise<void> {
+
+        const sql = 'update users set status = $1 where id = $2 returning id;';
+        const [response] = await this._db.query<SetUserStatusResponse>(sql, [status, user_id]);
+        if (!response || !response.id)
+            throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error setting user status');
     }
     async getRecordsCount(options: IUserDataPaginatedDto): Promise<number> {
 
@@ -103,7 +113,7 @@ export class UserRepository implements IUserRepository {
     }
     async findbyId(user_id: number): Promise<GetUserResponse | undefined> {
 
-        const sql = 'select id,external_id, email,first_name, last_name, created_at from users where id = $1';
+        const sql = 'select id,external_id, email,first_name, last_name, created_at, status from users where id = $1';
         const [response] = await this._db.query<GetUserResponse>(sql, [user_id]);
         return response;
     }
@@ -114,9 +124,4 @@ export class UserRepository implements IUserRepository {
         const [response] = await this._db.query<GetUserResponse>(sql, [email]);
         return response;
     }
-
-    delete(): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-
 }
