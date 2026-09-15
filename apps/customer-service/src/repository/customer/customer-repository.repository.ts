@@ -112,111 +112,37 @@ export class CustomerRepository implements ICustomerRepository {
         );
         return response;
     }
-    async searchByFilters(
-        options: GetCustomerDto,
-    ): Promise<Customer[]> {
+    async searchByFilters(options: GetCustomerDto): Promise<Customer[]> {
         const page = options.page ?? 1;
         const limit = options.limit ?? 20;
         const offset = (page - 1) * limit;
 
-        const params: unknown[] = [];
+        const sql = 'SELECT * FROM search_customers_paginated($1, $2, $3, $4, $5, $6, $7);';
 
-        let query = `
-    SELECT
-        id,
-        first_name,
-        last_name,
-        email,
-        phone,
-        country,
-        status
-    FROM customers
-    WHERE deleted_at IS NULL
-    `;
+        const params = [
+            options.search ?? null,
+            options.status ?? null,
+            options.country ?? null,
+            options.sortBy ?? 'id',
+            options.orderBy ?? 'ASC',
+            limit,
+            offset
+        ];
 
-        if (options.search) {
-            params.push(`%${options.search}%`);
-            query += `
-        AND CONCAT(first_name, ' ', last_name) ILIKE $${params.length}
-        `;
-        }
-
-        if (options.status) {
-            params.push(options.status);
-            query += `
-        AND status = $${params.length}
-        `;
-        }
-
-        if (options.country) {
-            params.push(options.country);
-            query += `
-        AND country = $${params.length}
-        `;
-        }
-
-        // Lista blanca segura: la expresión SQL ya viene validada
-        const sortExpressions: Record<string, string> = {
-            id: "id",
-            name: "CONCAT(first_name, ' ', last_name)",
-            email: "email",
-            country: "country",
-            status: "status",
-            createdAt: "created_at",
-        };
-
-        const requestedSort = options.sortBy ?? "id";
-        const sortExpression = sortExpressions[requestedSort] ?? sortExpressions.id;
-
-        const sortOrder = options.orderBy?.toUpperCase() === "DESC" ? "DESC" : "ASC";
-
-        // Agregamos SOLO limit y offset a params
-        params.push(limit);
-        const limitIndex = params.length;
-
-        params.push(offset);
-        const offsetIndex = params.length;
-
-        // Concatenamos sortExpression y sortOrder de la lista blanca directamente
-        query += `
-    ORDER BY ${sortExpression} ${sortOrder}
-    LIMIT $${limitIndex} OFFSET $${offsetIndex}
-    `;
-
-        const customers = await this._db.query<Customer>(
-            query,
-            params,
-        );
-
+        const customers = await this._db.query<Customer>(sql, params);
         return customers;
     }
-    // count de registros
 
     async getTotalRecords(options: GetCustomerDto): Promise<number> {
-        const params: any[] = [];
-        let query = `
-            select count(1) as "totalRecords"
-            from customers 
-            where deleted_at is null
-        `;
+        const sql = 'SELECT get_customers_total_records($1, $2, $3) AS "totalRecords";';
 
-        if (options.search) {
-            params.push(`%${options.search}%`);
-            query += ` and concat(first_name, ' ', last_name) ilike $${params.length}`;
-        }
-        if (options.status) {
-            params.push(options.status);
-            query += ` and status = $${params.length}`;
-        }
-        if (options.country) {
-            params.push(options.country);
-            query += ` and country = $${params.length}`;
-        }
+        const params = [
+            options.search ?? null,
+            options.status ?? null,
+            options.country ?? null
+        ];
 
-        const response = await this._db.query<{
-            totalRecords: number
-        }>(query, params);
-
-        return Number(response[0]?.totalRecords || 0);
+        const [response] = await this._db.query<{ totalRecords: number }>(sql, params);
+        return Number(response?.totalRecords || 0);
     }
 }
