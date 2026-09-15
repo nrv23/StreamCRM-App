@@ -1,0 +1,11 @@
+{
+  "id": 1,
+  "external_id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "usuario@example.com",
+  "status": "active",
+  "initial_date": "2024-01-01T00:00:00Z",
+  "final_date": "2024-12-31T23:59:59Z",
+  "limit": 10,
+  "offset": 0,
+  "page": 1
+}

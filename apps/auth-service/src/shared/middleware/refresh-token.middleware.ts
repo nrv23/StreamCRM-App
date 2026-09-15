@@ -12,12 +12,12 @@ const userService = new UserService(new UnitOfWork(), new Pbkdf2PasswordHasher()
 export async function refreshTokenMiddleware(req: Request, res: Response, next: NextFunction) {
   const refreshToken = req.cookies['refresh_token'];
 
-  // Verify the refresh token and generate a new access token
   try {
-
-    if(await userService.validateCurrentRefreshToken(refreshToken as string, req.user?.id)) next();
+    // Verify the refresh token and generate a new access token
+    const isValid = await userService.validateCurrentRefreshToken(refreshToken as string, req.user?.id);
+    if (isValid) next();
     else throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Invalid refresh token');
   } catch (error) {
-    throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Invalid refresh token');
+    throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, error instanceof Error ? error.message : String(error));
   }
 }

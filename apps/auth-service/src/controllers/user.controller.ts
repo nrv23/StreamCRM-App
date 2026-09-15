@@ -3,15 +3,18 @@ import { UserService } from "../services/user.service.ts";
 import { CreateUserDto } from '../dto/user/create-user.dto.ts';
 import { randomUUID } from "node:crypto";
 import { ApiResponse } from '../shared/types/api-response.ts';
-import { CreateUserReponse } from '../repository/user/user.repository.ts';
+import { CreateUserReponse, UserWithAccessResponse } from '../repository/user/user.repository.ts';
 import { IUserDataResponse } from '../interfaces/user/user-data.interface.ts';
 import { IUserDataPaginatedDto } from '../interfaces/user/user-data-paginated.interface.ts';
 import { env } from '../config/enviroment.ts';
+import { IPaginationResponse } from '../interfaces/pagination.interface.ts';
+import { LoginDataResponse } from '../interfaces/user/login-data.interface.ts';
+import { IRefreshTokenResponse } from '../interfaces/session/refresh-token-data.interface.ts';
 
 export class UserController {
 
     constructor(
-        public userService: UserService
+        private userService: UserService
     ) {
 
     }
@@ -97,7 +100,13 @@ export class UserController {
             page,
         }
 
-        const response = await this.userService.getUsers(options);
+        const data = await this.userService.getUsers(options);
+        const response: ApiResponse<IPaginationResponse<UserWithAccessResponse[]>> = {
+            success: true,
+            response: {
+                details: data
+            }
+        }
         res.status(200).json(response);
         return;
     }
@@ -122,7 +131,29 @@ export class UserController {
             maxAge: env.session_ttl_days * 24 * 60 * 60 * 1000
         });
 
-        res.status(200).json(data);
+
+        const response: ApiResponse<LoginDataResponse> = {
+            success: true,
+            response: {
+                details: data
+            }
+        }
+
+        res.status(200).json(response);
         return;
     }
-}
+
+    async setRefreshToken(req: Request, res: Response) {
+
+        const { refresh_token } = req.cookies;
+        const data = await this.userService.setRefreshToken(refresh_token);
+        const response: ApiResponse<IRefreshTokenResponse> = {
+            success: true,
+            response: {
+                details: data
+            }
+        }
+        res.status(200).json(response);
+        return;
+    }
+} 

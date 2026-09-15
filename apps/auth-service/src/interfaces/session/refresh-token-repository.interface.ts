@@ -7,5 +7,5 @@ export interface IRefreshTokenRepository {
 
     save(dto: CreateRefreshTokenDto): Promise<RefreshToken>;
     getCurrentRefreshToken(refreshToken: string): Promise<GetCurrentRefreshToken | null>;
-    setStatus(refreshToken: string, status: RefreshTokenStatus): Promise<SetStatusRefreshToken>;
+    revoke(refreshToken: string, status: RefreshTokenStatus): Promise<SetStatusRefreshToken>;
 }

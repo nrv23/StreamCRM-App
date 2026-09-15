@@ -10,6 +10,8 @@ import { PasswordHasher, Pbkdf2PasswordHasher } from "../shared/utils/passwordHa
 import { getUsersValidator } from "../validators/user/get-users.validator.ts";
 import { loginValidator } from "../validators/user/login.dto.ts";
 import { TokenManager } from "../shared/utils/tokenManager.ts";
+import { refreshTokenValidator } from "../validators/auth/refresh-token.validator.ts";
+import { refreshTokenMiddleware } from "../shared/middleware/refresh-token.middleware.ts";
 
 
 export class UserRoutes implements IRoutes {
@@ -37,6 +39,7 @@ export class UserRoutes implements IRoutes {
         this._router.get('/me', fakeAuth, this._userController.me.bind(this._userController));
         this._router.post('/filtered', getUsersValidator, this._userController.getUsers.bind(this._userController));
         this._router.post('/login', loginValidator, validateRequest, this._userController.login.bind(this._userController));
+        this._router.post('/refresh_token', refreshTokenValidator, validateRequest, refreshTokenMiddleware, this._userController.setRefreshToken.bind(this._userController));
         return this._router;
     }
 }

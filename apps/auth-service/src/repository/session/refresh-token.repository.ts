@@ -10,7 +10,8 @@ import { ErrorFactory } from "../../shared/factory/error-factory.ts";
 export type GetCurrentRefreshToken = {
     user_id: number;
     refresh_token: string;
-    expires_at: string;
+    expired_at: string;
+    session_id: string;
 }
 
 export type SetStatusRefreshToken = {
@@ -23,25 +24,33 @@ export class RefreshTokenRepository implements IRefreshTokenRepository {
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
     }
-    async setStatus(refreshToken: string, status: RefreshTokenStatus): Promise<SetStatusRefreshToken> {
+    async revoke(refreshToken: string, status: RefreshTokenStatus): Promise<SetStatusRefreshToken> {
 
-        const sql = `update refresh_tokens set status = $1 where token_hash = $2 returning expired_at;`;
+        const sql = `update refresh_tokens set status = $1, revoked_at = now() where token_hash = $2 returning expired_at;`;
         const [response] = await this._db.query<SetStatusRefreshToken>(sql, [status, refreshToken]);
-        if(!response || !response.expired_at) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
+        if (!response || !response.expired_at) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
         return response;
     }
 
     async save(dto: CreateRefreshTokenDto): Promise<RefreshToken> {
 
-        const sql = 'insert into refresh_tokens(user_id, session_id,token_hash,expires_at) values($1,$2,$3,$4) returning *;';
+        const sql = 'insert into refresh_tokens(user_id, session_id,token_hash,expired_at) values($1,$2,$3,$4) returning *;';
         const [response] = await this._db.query<RefreshToken>(sql, [dto.user_id, dto.session_id, dto.token_hash, dto.expires_at]);
         if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
         return response
     }
 
     async getCurrentRefreshToken(refreshToken: string): Promise<GetCurrentRefreshToken | null> {
-        const sql = 'select user_id, refresh_token, expires_at from refresh_tokens where token_hash = $1 and revoked_at is null;';
-        const [response] = await this._db.query<GetCurrentRefreshToken>(sql, [refreshToken]);
+        const sql = `
+            select user_id, token_hash as refresh_token, expired_at, session_id 
+            from refresh_tokens 
+            where token_hash = $1 
+            and status = $2
+            and revoked_at is null 
+            and expired_at > now()
+            FOR UPDATE;
+        `;
+        const [response] = await this._db.query<GetCurrentRefreshToken>(sql, [refreshToken, RefreshTokenStatus.active]);
         if (!response || !response.refresh_token) return null;
         return response
     }
