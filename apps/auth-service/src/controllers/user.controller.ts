@@ -63,18 +63,6 @@ export class UserController {
 
     async getUsers(req: Request, res: Response) {
 
-        /*
-            id: number;
-            external_id: string;
-            email: string,
-            status: UserStatus,
-            initial_date: string;
-            final_date: string;
-            limit?: number;
-            offset?: number;
-            page?: number;
-        */
-
         const {
             id,
             external_id,
