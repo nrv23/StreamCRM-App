@@ -8,6 +8,8 @@ import { MetricsController } from "./controllers/metrics.controller.ts";
 import MetricsService from "./services/metrics.service.ts";
 import { UserRoutes } from "./routes/user.routes.ts";
 import cookieParser from 'cookie-parser';
+import { PermissionsRoutes } from "./routes/permissions.route.ts";
+import { RolesRoutes } from "./routes/roles.routes.ts";
 
 export function createApp(): Application {
     const app = express();
@@ -37,7 +39,9 @@ export function createApp(): Application {
 
     app.use(new MetricsController(new MetricsService()).metricsCounter);
     app.use(new MetricsRoutes().BuildRoutes())
-    app.use('/api/v1/users', new UserRoutes().BuildRoutes())
+    app.use('/api/v1/users', new UserRoutes().BuildRoutes());
+    app.use('/v1/permissions', new PermissionsRoutes().BuildRoutes());
+    app.use('/v1/roles', new RolesRoutes().BuildRoutes());
     app.use(notFoundRouteHandler); // ruta no encontrada
     app.use(errorHandler); // manejador de errores generico
 

@@ -3,6 +3,7 @@ import { CreatePermissionDto } from "../../dto/permission/create-permission.dto.
 import { Permission } from "../../entity/permission/Permission.entity.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
 import { IDatabase } from "../../interfaces/database.interface.ts";
+import { GetAllPermissionsResponse } from "../../interfaces/permission/get-permission.interface.ts";
 import { IPermissionRepository } from "../../interfaces/permission/permission-repository.interface.ts";
 import { ErrorFactory } from "../../shared/factory/error-factory.ts";
 
@@ -11,6 +12,11 @@ export class PermissionRepository implements IPermissionRepository {
     private _db: IDatabase;
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
+    }
+    async getAllPermissions(): Promise<GetAllPermissionsResponse[]> {
+        const sql = "select id, code, description, TO_CHAR(created_at, 'YYYY-MM-DD') as created_at from permissions;";
+        const response = await this._db.query<GetAllPermissionsResponse>(sql);
+        return response;
     }
     async save(dto: CreatePermissionDto): Promise<Permission> {
         const sql = 'insert into Permissions(code, description) values($1,$2) RETURNING *';

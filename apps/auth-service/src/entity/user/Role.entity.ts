@@ -6,7 +6,9 @@ export class Role {
         public readonly id: number,
         public name: string,
         public description: string,
-        public status: RoleStatus
+        public created_at: string,
+        public status: RoleStatus,
+        public is_system: boolean
     ) {
 
     }

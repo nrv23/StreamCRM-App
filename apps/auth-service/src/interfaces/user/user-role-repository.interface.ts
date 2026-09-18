@@ -4,5 +4,6 @@ import { GetUserRolesResponse } from "../../repository/user/user_role.repository
 export interface IUserRoleRepository {
 
     save(user_id: number, role_Ids: number[]): Promise<void>;
-    getRolesByUserId(user_id: number): Promise<GetUserRolesResponse[]>
+    getRolesByUserId(user_id: number): Promise<GetUserRolesResponse[]>;
+    replaceUserRoles(user_id: number, role_ids: number[]): Promise<void>;
 }
