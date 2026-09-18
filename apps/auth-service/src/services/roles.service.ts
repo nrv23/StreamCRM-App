@@ -6,6 +6,7 @@ import { GetRolesResponse } from "../interfaces/user/get-roles.interface.ts";
 import { ValidateRolesDto } from "../dto/permission/validate-roles.dto.ts";
 import { ErrorFactory } from "../shared/factory/error-factory.ts";
 import { ApiErrorCode } from "../enum/ErrorCodes.enum.ts";
+import { UserStatus } from "../enum/UserStatus.enum.ts";
 
 export class RolesService {
 
@@ -34,6 +35,14 @@ export class RolesService {
         return this._unitOfWork.execute(async ({ roles, users, userRoles }) => {
 
             const searchUserResponse = await users.findbyId(dto.user_id); // usuario consultado 
+
+            const [currentUser, searchUser] = await Promise.all([
+                users.findbyId(dto.current_user_id),
+                users.findbyId(dto.user_id),
+            ]);
+
+            if (currentUser?.status !== UserStatus.active) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Current User is not active');
+            if (searchUser?.status !== UserStatus.active) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'user being queried is not active');
 
             if (!searchUserResponse) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'User not exists');
             if (dto.current_user_id === searchUserResponse.id)
