@@ -30,24 +30,23 @@ export class RolesService {
         return roles;
     }
 
-    async validateRoles(dto: ValidateRolesDto) {
-        return this._unitOfWork.execute(async ({ roles, users }) => {
+    async setNewRoles(dto: ValidateRolesDto) {
+        return this._unitOfWork.execute(async ({ roles, users, userRoles }) => {
 
             const searchUserResponse = await users.findbyId(dto.user_id); // usuario consultado 
 
             if (!searchUserResponse) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'User not exists');
-            if (dto.current_user_id !== searchUserResponse.id)
+            if (dto.current_user_id === searchUserResponse.id)
                 throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'The current user and the user being queried cannot be the same');
 
             const validRoles = await roles.validateRoles(dto);
 
-            if (!validRoles.length)
-                throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'The user sent havent roles or are inactive');
-
-            if (!(await roles.validateUserRolesMatch(dto.user_id, dto.roles)))
-                throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Uno o varios roles enviados no pertencen al usuario consultado');
+            if (validRoles.length !== dto.roles.length)
+                throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Some role sent are not valid or active');
 
             // aqui se actualizan los roles
+            const newRoles = validRoles.map(role => role.id);
+            await userRoles.replaceUserRoles(dto.user_id, newRoles);
 
         });
     }

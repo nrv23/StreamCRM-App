@@ -6,6 +6,8 @@ import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 import { env } from "../config/enviroment.ts";
 import { RolesService } from "../services/roles.service.ts";
 import { RolesController } from "../controllers/roles.controller.ts";
+import { SetUserRolesValidator } from "../validators/user/set-roles.validator.ts";
+import { validateRequest } from "../shared/middleware/validate-errors.middleware.ts";
 
 
 export class RolesRoutes implements IRoutes {
@@ -32,6 +34,7 @@ export class RolesRoutes implements IRoutes {
     BuildRoutes(): Router {
 
         this._router.get('/', validateToken, this._rolesController.getAllRoles.bind(this._rolesController));
+        this._router.patch('/:userid', validateToken, SetUserRolesValidator, validateRequest, this._rolesController.setUserRoles.bind(this._rolesController))
         return this._router;
     }
 }

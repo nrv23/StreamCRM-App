@@ -30,11 +30,9 @@ export class RoleRepository implements IRoleRepository {
             SELECT r.id
             FROM unnest($1::int[]) AS role_id
             INNER JOIN roles r on r.id = role_id
-            INNER JOIN user_roles ur on ur.role_id = r.id
-            where ur.user_id = $2
-            and r.status = $3
+            and r.status = $2
         `;
-        const response = await this._db.query<ValidateRolesResponse>(sql, [dto.roles, dto.user_id, dto.status]);
+        const response = await this._db.query<ValidateRolesResponse>(sql, [dto.roles, dto.status]);
         return response;
     }
 

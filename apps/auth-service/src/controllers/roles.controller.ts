@@ -24,4 +24,28 @@ export class RolesController {
         res.status(200).json(response);
         return;
     }
+
+    async setUserRoles(req: Request, res: Response) {
+
+        const { id } = req.user;
+        const { userid } = req.params;
+        const { roles, status } = req.body;
+
+        await this._rolesService.setNewRoles({
+            user_id: +userid!,
+            current_user_id: id,
+            roles,
+            status
+        })
+
+        const response: ApiResponse<null> = {
+            success: true,
+            response: {
+                message: 'Roles actualizados correctamente'
+            }
+        }
+
+        res.status(200).json(response);
+        return;
+    }
 }
