@@ -1,19 +1,43 @@
 import { databaseInstance } from "../../config/query.ts";
 import { CreateRolePermissionDto } from "../../dto/permission/create-role-permission.dto.ts";
+import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
 import { RoleStatus } from "../../enum/RoleStatus.enum.ts";
 import { IDatabase } from "../../interfaces/database.interface.ts";
 import { IRolePermissionRepository } from "../../interfaces/permission/role-permission.interface.ts";
+import { ErrorFactory } from "../../shared/factory/error-factory.ts";
 
 
 export type GetPermisssionsResponse = {
     code: string
 }
 
+export type HasAllowedPermissionResponse = {
+    hasAllowedPermission: number;
+}
 export class RolePermissionRepository implements IRolePermissionRepository {
 
     private _db: IDatabase;
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
+    }
+    async hasAllowedPermission(user_id: number, permission_code: string, status: RoleStatus): Promise<Boolean> {
+
+        const sql = `
+        
+            SELECT count(1) as "hasAllowedPermission"
+            FROM user_roles ur
+            JOIN roles r ON r.id = ur.role_id
+            JOIN role_permissions rp ON rp.role_id = r.id
+            JOIN permissions p ON p.id = rp.permission_id
+            WHERE ur.user_id = $1
+            AND ur.status = $2
+            AND r.status = $3
+            and p.code = $4;
+        `;
+        const [response] = await this._db.query<HasAllowedPermissionResponse>(sql, [user_id, status, status, permission_code]);
+        if (!response) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
+        return (response.hasAllowedPermission as number) > 0;
+
     }
     getPermissionsByRoleIdAndUserId(user_id: number): Promise<GetPermisssionsResponse[]> {
         const sql = `

@@ -6,4 +6,6 @@ export interface ValidateRolesDto {
     user_id: number;
     status: RoleStatus;
     roles: number[];
+    ip_address: string
+    user_agent: string;
 }

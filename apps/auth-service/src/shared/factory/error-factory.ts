@@ -33,6 +33,9 @@ export class ErrorFactory {
             case ApiErrorCode.UNAUTHORIZED:
                 statusCode = 401;
                 break;
+            case ApiErrorCode.FORBIDDEN:
+                statusCode = 403;
+                break;
             default: throw new Error("Error type not implemented")
         }
 

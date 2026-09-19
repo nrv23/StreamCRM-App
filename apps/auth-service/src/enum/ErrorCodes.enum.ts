@@ -7,4 +7,5 @@ export enum ApiErrorCode {
     INVALID_PASSWORD = "USR-0006",
     ROUTE_NOT_FOUND = "USR-0007",
     UNAUTHORIZED = "USR-0008",
+    FORBIDDEN = "USER-0009"
 }

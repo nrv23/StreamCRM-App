@@ -7,7 +7,7 @@ export const LOGIN_USER = "user.logged_in"
 export const LOGOUT_USER = "user.logged_out"
 export const GET_ME = "user.get_me";
 export const GET_USERS = "user.get_users"
-
+export const SET_USER_ROLES = 'user.set_roles';
 // db events
 export const DB_CONNECTED = "db_connected";
 

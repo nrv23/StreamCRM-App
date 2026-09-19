@@ -1,3 +1,5 @@
 export enum EntityType {
-    USER = 'users'
+    USER = 'users',
+    ROLE = 'role',
+    PERMISSION = 'permission',
 }

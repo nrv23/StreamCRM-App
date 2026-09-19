@@ -30,12 +30,13 @@ export class RolesController {
         const { id } = req.user;
         const { userid } = req.params;
         const { roles, status } = req.body;
-
+        const { ip_address, user_agent } = req.requestDataInfo;
         await this._rolesService.setNewRoles({
             user_id: +userid!,
             current_user_id: id,
             roles,
-            status
+            status,
+            ip_address, user_agent
         })
 
         const response: ApiResponse<null> = {
