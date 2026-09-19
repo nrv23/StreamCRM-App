@@ -71,9 +71,28 @@ export class RolesService {
                     ip_address: dto.ip_address,
                     user_agent: dto.user_agent
                 })
-            ])
+            ]);
+
+            const log: ILogMetadata = {
+                created_at: new Date().toISOString(),
+                method: 'PATCH',
+                route: '/v1/roles/:userid',
+                service: env.service_name,
+                payload: {
+                    newRoles: JSON.stringify(dto.roles),
+                    currentUser: dto.current_user_id,
+                    searchUser: dto.user_id
+                },
+                event: SET_USER_ROLES,
+
+            };
+            this._logger.log('set user roles', log);
         });
     }
 
+    createRole(roleName: string, permissionCodes: string[]) {
+
+
+    }
 
 }

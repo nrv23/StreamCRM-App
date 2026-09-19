@@ -47,8 +47,17 @@ export class RoleRepository implements IRoleRepository {
     }
     async save(dto: CreateRoleDto): Promise<Role> {
 
-        const sql = 'insert into roles(name, description) values($1,$2) RETURNING *;';
-        const [response] = await this._db.query<Role>(sql, [dto.name, dto.description])
+        let sql = '';
+        let params: Array<string | boolean> = [];
+        if (dto.is_system) {
+            sql = 'insert into roles(name, description) values($1,$2) RETURNING *;';
+            params = [dto.name, dto.description];
+        } else {
+            sql = 'insert into roles(name, description, is_system) values($1,$2, $3) RETURNING *;';
+            params = [dto.name, dto.description, Boolean(dto.is_system)];
+        }
+
+        const [response] = await this._db.query<Role>(sql, params);
         if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error trying to create role');
         return response;
     }

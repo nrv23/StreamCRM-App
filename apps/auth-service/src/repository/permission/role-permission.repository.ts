@@ -1,5 +1,6 @@
 import { databaseInstance } from "../../config/query.ts";
 import { CreateRolePermissionDto } from "../../dto/permission/create-role-permission.dto.ts";
+import { CustomePermissions } from "../../dto/user/create-user-role-permissions.dto.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
 import { RoleStatus } from "../../enum/RoleStatus.enum.ts";
 import { IDatabase } from "../../interfaces/database.interface.ts";
@@ -19,6 +20,9 @@ export class RolePermissionRepository implements IRolePermissionRepository {
     private _db: IDatabase;
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
+    }
+    async saveCustomePermissions(dto: CustomePermissions[]): Promise<void> {
+        throw new Error("Method not implemented.");
     }
     async hasAllowedPermission(user_id: number, permission_code: string, status: RoleStatus): Promise<Boolean> {
 

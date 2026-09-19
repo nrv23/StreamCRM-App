@@ -7,4 +7,5 @@ export interface IPermissionRepository {
 
     save(dto: CreatePermissionDto): Promise<Permission>;
     getAllPermissions(): Promise<GetAllPermissionsResponse[]>;
+    //  saveCustomePermissions(dto: CustomePermissions[]): Promise<void>;
 }
