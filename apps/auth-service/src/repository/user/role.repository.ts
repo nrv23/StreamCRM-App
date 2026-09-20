@@ -13,6 +13,13 @@ export type validateUserRolesMatch = {
     matches: boolean
 }
 
+export type GetRoleByIdResponse = {
+    id: number;
+    name: string;
+    description: string;
+    is_system: boolean;
+}
+
 export class RoleRepository implements IRoleRepository {
 
     private _db: IDatabase;
@@ -59,6 +66,12 @@ export class RoleRepository implements IRoleRepository {
 
         const [response] = await this._db.query<Role>(sql, params);
         if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error trying to create role');
+        return response;
+    }
+
+    async getRoleById(role_id: number): Promise<GetRoleByIdResponse | undefined> {
+        const sql = 'select id, name, description, is_system from roles where id = $1';
+        const [response] = await this._db.query<GetRoleByIdResponse>(sql, [role_id]);
         return response;
     }
 }

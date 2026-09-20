@@ -1,5 +1,6 @@
 import { databaseInstance } from "../../config/query.ts";
 import { CreateRolePermissionDto } from "../../dto/permission/create-role-permission.dto.ts";
+import { ValidateAllPermissionsDto } from "../../dto/permission/validate-all-permissions.dto.ts";
 import { CustomePermissions } from "../../dto/user/create-user-role-permissions.dto.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
 import { RoleStatus } from "../../enum/RoleStatus.enum.ts";
@@ -15,15 +16,49 @@ export type GetPermisssionsResponse = {
 export type HasAllowedPermissionResponse = {
     hasAllowedPermission: number;
 }
+
+export type hasAllPermissionsResponse = {
+
+    hasAllPermissions: boolean;
+}
 export class RolePermissionRepository implements IRolePermissionRepository {
 
     private _db: IDatabase;
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
     }
-    async saveCustomePermissions(dto: CustomePermissions[]): Promise<void> {
-        throw new Error("Method not implemented.");
+    async hasAllPermissions(dto: ValidateAllPermissionsDto): Promise<boolean> {
+
+        const sql = `
+
+            SELECT NOT EXISTS (
+                SELECT 1
+                FROM jsonb_to_recordset($1::jsonb)
+                    AS incoming(
+                        code varchar
+                    )
+
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM permissions p
+                    JOIN role_permissions rp ON rp.permission_id = p.id
+                    JOIN user_roles ur ON ur.role_id = rp.role_id
+                    JOIN roles r ON r.id = ur.role_id
+                    WHERE ur.user_id = $2
+                    AND ur.status = $3
+                    AND r.status = $4
+                    and r.is_system is false
+                    AND p.code = incoming.code
+                )
+            ) AS "hasAllPermissions";
+        
+        `;
+
+        const [response] = await this._db.query<hasAllPermissionsResponse>(sql, [dto.permissions, dto.user_id, dto.status, dto.status]);
+        if (!response) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
+        return response.hasAllPermissions;
     }
+
     async hasAllowedPermission(user_id: number, permission_code: string, status: RoleStatus): Promise<Boolean> {
 
         const sql = `
