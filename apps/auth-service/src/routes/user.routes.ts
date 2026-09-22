@@ -16,6 +16,7 @@ import { validateToken } from "../shared/middleware/validate-token.middleware.ts
 import { SetStatusUserValidator } from "../validators/user/set-status.validator.ts";
 import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 import { env } from "../config/enviroment.ts";
+import { requirePermission } from "../shared/middleware/validate-role-manage-user.middleware.ts";
 
 
 export class UserRoutes implements IRoutes {
@@ -48,7 +49,7 @@ export class UserRoutes implements IRoutes {
 
     BuildRoutes(): Router {
 
-        this._router.post('/', validateToken, createUserValidator, validateRequest, this._userController.create.bind(this._userController));
+        this._router.post('/', validateToken, createUserValidator, validateRequest, requirePermission('users.create'), this._userController.create.bind(this._userController));
         this._router.get('/me', validateToken, this._userController.me.bind(this._userController));
         this._router.post('/filtered', validateToken, getUsersValidator, validateRequest, this._userController.getUsers.bind(this._userController));
         this._router.post('/login', loginValidator, validateRequest, this._userController.login.bind(this._userController));

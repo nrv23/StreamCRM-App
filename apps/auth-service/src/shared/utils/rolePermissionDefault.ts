@@ -47,7 +47,6 @@ export const ROLE_PERMISSION_POLICY = {
             'reports.create',
             'notifications.read',
             'users.read',
-            'users.create',
             'users.update_status',
             'roles.read',
         ],

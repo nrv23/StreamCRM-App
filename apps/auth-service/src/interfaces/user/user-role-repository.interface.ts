@@ -6,4 +6,6 @@ export interface IUserRoleRepository {
     save(user_id: number, role_Ids: number[]): Promise<void>;
     getRolesByUserId(user_id: number): Promise<GetUserRolesResponse[]>;
     replaceUserRoles(user_id: number, role_ids: number[]): Promise<void>;
+    getRoleByName(name: string): Promise<GetUserRolesResponse | undefined>;
+
 }

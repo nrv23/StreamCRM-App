@@ -32,12 +32,17 @@ export class UserService {
 
     }
     createUser(dto: CreateUserDto, user_id: number, ip_address: string, user_agent: string): Promise<CreateUserReponse> {
-
-        return this.unitOfWork.execute(async ({ userRoles, users, events, rolePermissions, auditLogs }) => {
+        // aqio solamente entran los superadmin
+        return this.unitOfWork.execute(async ({ userRoles, users, events, auditLogs }) => {
 
             // validar que exista por email 
             const currentUser = await users.findbyEmail(dto.email);
+
             if (currentUser) throw ErrorFactory.build(ApiErrorCode.USER_EMAIL_DUPLICATED, 'User already exists');
+
+            const role = await userRoles.getRoleByName(dto.role!);
+
+            if (!role) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'Role is not found or inactive');
 
             const newUser = await users.save({
                 external_id: dto.external_id,
@@ -48,11 +53,7 @@ export class UserService {
             });
 
             await Promise.all([
-                userRoles.save(newUser.id, [ROLE_PERMISSION_POLICY.viewer.roleId]),
-                rolePermissions.save({
-                    roleId: ROLE_PERMISSION_POLICY.viewer.roleId,
-                    permissionIds: ROLE_PERMISSION_POLICY.viewer.permissions
-                }),
+                userRoles.save(newUser.id, [role.id]),
                 events.save({
                     event_id: newUser.external_id,
                     event_name: CREATE_USER,
@@ -66,7 +67,8 @@ export class UserService {
                         last_name: newUser.last_name,
                         status: UserStatus.active, // cambiar a un status enum
                         event: CREATE_USER,
-                        user_id
+                        user_id,
+                        roles: role
                     },
                     headers: {
                         source: env.service_name,
@@ -80,7 +82,10 @@ export class UserService {
                     action: CREATE_USER,
                     user_id,
                     old_values: {},
-                    new_values: newUser,
+                    new_values: {
+                        ...newUser,
+                        roles: role
+                    },
                     ip_address,
                     user_agent
                 })

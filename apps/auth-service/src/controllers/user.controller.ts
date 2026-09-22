@@ -21,7 +21,7 @@ export class UserController {
 
     async create(req: Request, res: Response) {
 
-        const { email, first_name, last_name, password } = req.body;
+        const { email, first_name, last_name, password, role } = req.body;
         const { ip_address, user_agent } = req.requestDataInfo;
         const { id } = req.user;
         const userData: CreateUserDto = {
@@ -29,7 +29,8 @@ export class UserController {
             email,
             first_name,
             last_name,
-            password
+            password,
+            role
         }
 
         const dataResponse = await this.userService.createUser(userData, id, ip_address, user_agent);
