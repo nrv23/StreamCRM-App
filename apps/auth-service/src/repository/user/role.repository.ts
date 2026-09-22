@@ -69,9 +69,17 @@ export class RoleRepository implements IRoleRepository {
         return response;
     }
 
-    async getRoleById(role_id: number): Promise<GetRoleByIdResponse | undefined> {
-        const sql = 'select id, name, description, is_system from roles where id = $1';
-        const [response] = await this._db.query<GetRoleByIdResponse>(sql, [role_id]);
+    async getRole(role_id: number, user_id: number): Promise<GetRoleByIdResponse | undefined> {
+        const sql = `
+        
+            select r.id, r.name, r.description, r.is_system 
+            from roles r 
+            inner join user_roles ur on ur.role_id = r.id
+            inner join users u on u.id = ur.user_id
+            where r.id = $1
+            and u.id = $2
+        `;
+        const [response] = await this._db.query<GetRoleByIdResponse>(sql, [role_id, user_id]);
         return response;
     }
 }

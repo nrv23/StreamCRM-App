@@ -27,6 +27,14 @@ export class RolePermissionRepository implements IRolePermissionRepository {
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
     }
+
+    async deleteRolePermissionsByRoleId(role_id: number): Promise<void> {
+        const sql = `
+            DELETE FROM role_permissions WHERE role_id = $1;
+        `;
+        await this._db.query(sql, [role_id]);
+    }
+
     async hasAllPermissions(dto: ValidateAllPermissionsDto): Promise<boolean> {
 
         const sql = `
@@ -47,14 +55,14 @@ export class RolePermissionRepository implements IRolePermissionRepository {
                     WHERE ur.user_id = $2
                     AND ur.status = $3
                     AND r.status = $4
-                    and r.is_system is false
+                    and p.is_delegable is true -- el permiso puede delegarse a otro rol
                     AND p.code = incoming.code
                 )
             ) AS "hasAllPermissions";
         
         `;
 
-        const [response] = await this._db.query<hasAllPermissionsResponse>(sql, [dto.permissions, dto.user_id, dto.status, dto.status]);
+        const [response] = await this._db.query<hasAllPermissionsResponse>(sql, [JSON.stringify(dto.permissions), dto.user_id, dto.status, dto.status]);
         if (!response) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
         return response.hasAllPermissions;
     }

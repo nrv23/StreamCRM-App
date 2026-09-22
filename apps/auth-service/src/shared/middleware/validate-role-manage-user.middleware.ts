@@ -41,7 +41,8 @@ export function requirePermission(permissionCode: string) {
             if (!allowed) {
                 throw ErrorFactory.build(
                     ApiErrorCode.FORBIDDEN,
-                    `Missing required permission: ${permissionCode}`
+                    // `Missing required permission: ${permissionCode}`
+                    'Unauthorized for this action'
                 );
             }
         });

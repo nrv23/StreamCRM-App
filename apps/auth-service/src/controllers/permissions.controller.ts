@@ -28,13 +28,13 @@ export class PermissionsController {
     async setNewPermissions(req: Request, res: Response) {
 
         const { id } = req.user;
-        const { userid } = req.params;
+        const { user_id } = req.params;
         const { role_id, permissions, status } = req.body;
         const { ip_address, user_agent } = req.requestDataInfo;
 
         await this._permissionsService.setNewPermissions({
-            user_id: id,
-            update_user_id: +userid!,
+            user_id: +id,
+            update_user_id: +user_id!,
             role_id: +role_id!,
             permissions,
             status,

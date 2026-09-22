@@ -35,7 +35,7 @@ export class PermissionsRoutes implements IRoutes {
     BuildRoutes(): Router {
 
         this._router.get('/', validateToken, this._permissionsController.getAllPermissions.bind(this._permissionsController));
-        this._router.patch('/:userid', validateToken, SetNewPermissionsValidator, validateRequest, requirePermission("roles.manage"), this._permissionsController.setNewPermissions.bind(this._permissionsController));
+        this._router.patch('/:user_id', validateToken, SetNewPermissionsValidator, validateRequest, requirePermission("roles.manage"), this._permissionsController.setNewPermissions.bind(this._permissionsController));
 
         return this._router;
     }

@@ -2,7 +2,7 @@ import { body, param } from "express-validator";
 import { RoleStatus } from "../../enum/RoleStatus.enum.ts";
 
 export const SetNewPermissionsValidator = [
-    param("userid")
+    param("user_id")
         .exists().withMessage("El parámetro userid es obligatorio")
         .isInt({ min: 1 }).withMessage("El id debe ser un número entero positivo")
         .toInt(),

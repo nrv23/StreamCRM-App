@@ -10,4 +10,5 @@ export interface IRolePermissionRepository {
     getPermissionsByRoleIdAndUserId(user_id: number): Promise<GetPermisssionsResponse[]>;
     hasAllowedPermission(user_id: number, permission_code: string, status: RoleStatus): Promise<Boolean>;
     hasAllPermissions(dto: ValidateAllPermissionsDto): Promise<boolean>;
+    deleteRolePermissionsByRoleId(role_id: number): Promise<void>;
 }
