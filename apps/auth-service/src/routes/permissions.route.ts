@@ -6,6 +6,9 @@ import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 import { env } from "../config/enviroment.ts";
 import { PermissionsService } from "../services/permissions.service.ts";
 import { PermissionsController } from "../controllers/permissions.controller.ts";
+import { SetNewPermissionsValidator } from "../validators/permission/set-new-permissions.validator.ts";
+import { validateRequest } from "../shared/middleware/validate-errors.middleware.ts";
+import { requirePermission } from "../shared/middleware/validate-role-manage-user.middleware.ts";
 
 
 export class PermissionsRoutes implements IRoutes {
@@ -32,6 +35,7 @@ export class PermissionsRoutes implements IRoutes {
     BuildRoutes(): Router {
 
         this._router.get('/', validateToken, this._permissionsController.getAllPermissions.bind(this._permissionsController));
+        this._router.patch('/:userid', validateToken, SetNewPermissionsValidator, validateRequest, requirePermission("roles.manage"), this._permissionsController.setNewPermissions.bind(this._permissionsController));
 
         return this._router;
     }

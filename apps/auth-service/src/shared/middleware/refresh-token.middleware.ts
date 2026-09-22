@@ -6,8 +6,15 @@ import { Pbkdf2PasswordHasher } from '../utils/passwordHash.ts';
 import { TokenManager } from '../utils/tokenManager.ts';
 import { ApiErrorCode } from '../../enum/ErrorCodes.enum.ts';
 import { ErrorFactory } from '../factory/error-factory.ts';
+import { env } from '../../config/enviroment.ts';
+import { WinstonLogger } from '../utils/winstonLogger.ts';
 
-const userService = new UserService(new UnitOfWork(), new Pbkdf2PasswordHasher(), new TokenManager());
+const userService = new UserService(new UnitOfWork(), new Pbkdf2PasswordHasher(), new TokenManager(), WinstonLogger.getInstance(
+  env.elastic_search_url,
+  'auth-module',
+  'debug',
+  env.index_elastic_search_name
+));
 
 export async function refreshTokenMiddleware(req: Request, res: Response, next: NextFunction) {
   const refreshToken = req.cookies['refresh_token'];

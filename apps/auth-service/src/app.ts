@@ -32,7 +32,7 @@ export function createApp(): Application {
     app.get("/health", (_req, res) => {
         res.json({
             success: true,
-            service: "customer-service",
+            service: "auth-service",
             status: "ok",
         });
     });

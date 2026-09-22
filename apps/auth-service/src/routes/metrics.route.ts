@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { IRoutes } from "../interfaces/routes.interface.js";
-import { UnitOfWork } from "../config/unitOfWork.js";
 import { MetricsController } from "../controllers/metrics.controller.ts";
 import MetricsService from "../services/metrics.service.ts";
 
