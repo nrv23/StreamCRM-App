@@ -131,7 +131,7 @@ export class UserService {
                 event: GET_ME,
                 entity_id: currentUser.id,
                 method: 'POST',
-                route: 'api/v1/me',
+                route: 'api/v1/users/me',
                 created_at: new Date().toISOString(),
                 payload: {
                     user: response.user,
@@ -177,7 +177,7 @@ export class UserService {
                 service: env.service_name,
                 event: GET_USERS,
                 method: 'POST',
-                route: 'api/v1/filtered',
+                route: 'api/v1/users/filtered',
                 created_at: new Date().toISOString(),
                 payload: {
                     users: JSON.stringify(response.data),
@@ -270,7 +270,7 @@ export class UserService {
                 event: LOGIN_USER,
                 entity_id: currentUser.id,
                 method: 'POST',
-                route: 'api/v1/login',
+                route: 'api/v1/users/login',
                 created_at: new Date().toISOString(),
                 payload: {
                     user: response.user,
@@ -379,7 +379,7 @@ export class UserService {
                 service: env.service_name,
                 event: LOGOUT_USER,
                 method: 'POST',
-                route: 'api/v1/logout',
+                route: 'api/v1/users/logout',
                 created_at: new Date().toISOString(),
 
             };
