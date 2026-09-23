@@ -40,8 +40,8 @@ export function createApp(): Application {
     app.use(new MetricsController(new MetricsService()).metricsCounter);
     app.use(new MetricsRoutes().BuildRoutes())
     app.use('/api/v1/users', new UserRoutes().BuildRoutes());
-    app.use('/v1/permissions', new PermissionsRoutes().BuildRoutes());
-    app.use('/v1/roles', new RolesRoutes().BuildRoutes());
+    app.use('/api/v1/permissions', new PermissionsRoutes().BuildRoutes());
+    app.use('/api/v1/roles', new RolesRoutes().BuildRoutes());
     app.use(notFoundRouteHandler); // ruta no encontrada
     app.use(errorHandler); // manejador de errores generico
 

@@ -8,7 +8,9 @@ import { ErrorFactory } from "../shared/factory/error-factory.ts";
 import { ApiErrorCode } from "../enum/ErrorCodes.enum.ts";
 import { UserStatus } from "../enum/UserStatus.enum.ts";
 import { EntityType } from "../enum/EntityType.enum.ts";
-import { SET_USER_ROLES } from "../shared/types/events.type.ts";
+import { CREATE_ROLE, SET_USER_ROLES } from "../shared/types/events.type.ts";
+import { CreateRoleResponse } from "../interfaces/user/create-role-response.interface.ts";
+
 
 export class RolesService {
 
@@ -33,7 +35,7 @@ export class RolesService {
         return roles;
     }
 
-    async setNewRoles(dto: ValidateRolesDto) {
+    async setNewRoles(dto: ValidateRolesDto): Promise<void> {
         return this._unitOfWork.execute(async ({ roles, users, userRoles, auditLogs }) => {
 
             const searchUser = await users.findbyId(dto.user_id);
@@ -89,8 +91,83 @@ export class RolesService {
         });
     }
 
-    createRole(roleName: string, permissionCodes: string[]) {
+    async createRole(roleName: string,
+        permissionCodes: string[],
+        description: string,
+        is_system: boolean,
+        ip_address: string,
+        user_agent: string,
+        user_id: number
+    ): Promise<CreateRoleResponse> {
+
+        return this._unitOfWork.execute(async ({ roles, rolePermissions, permissions, auditLogs }) => {
 
 
+            const role = await roles.getRoleByName(roleName);
+
+            if (role) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'Role already exists');
+
+            const hasDelegablePermissions = await permissions.hasDelegablePermissions({
+                permissions: permissionCodes.map(permission => ({
+                    code: permission
+                }))
+            });
+
+            if (!hasDelegablePermissions) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'Permission must be exists and are delegable');
+
+            // crear el rol 
+            const newRole = await roles.save({
+                name: roleName,
+                description: description,
+                is_system: is_system
+            });
+            // crear los permisos
+
+            await rolePermissions.save({
+                roleId: newRole.id,
+                permissionIds: permissionCodes
+            });
+            // crear el audito log 
+            auditLogs.save({
+                entity_type: EntityType.ROLE,
+                entity_id: newRole.id,
+                action: CREATE_ROLE,
+                user_id: user_id,
+                old_values: {
+
+                },
+                new_values: {
+                    newRole: JSON.stringify(newRole),
+                    newPermissions: JSON.stringify({
+                        permissions: permissionCodes
+                    })
+                },
+                ip_address: ip_address,
+                user_agent: user_agent
+            })
+            const log: ILogMetadata = {
+                created_at: new Date().toISOString(),
+                method: 'POST',
+                route: '/api/v1/roles/',
+                service: env.service_name,
+                payload: {
+                    newRole: JSON.stringify(newRole),
+                    newPermissions: JSON.stringify({
+                        permissions: permissionCodes
+                    })
+                },
+                event: CREATE_ROLE,
+
+            };
+            this._logger.log('set user roles', log);
+
+            const response: CreateRoleResponse = {
+                role: newRole,
+                permissions: permissionCodes
+            }
+
+
+            return response;
+        });
     }
 }

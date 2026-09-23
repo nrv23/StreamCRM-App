@@ -20,6 +20,7 @@ import { RefreshTokenStatus } from "../enum/RefreshTokenStatus.enum.ts";
 import { IRefreshTokenResponse } from "../interfaces/session/refresh-token-data.interface.ts";
 import { Logger } from "winston";
 import { ILogMetadata } from "../interfaces/iLog.interface.ts";
+import { RoleStatus } from "../enum/RoleStatus.enum.ts";
 
 export class UserService {
 
@@ -33,14 +34,14 @@ export class UserService {
     }
     createUser(dto: CreateUserDto, user_id: number, ip_address: string, user_agent: string): Promise<CreateUserReponse> {
         // aqio solamente entran los superadmin
-        return this.unitOfWork.execute(async ({ userRoles, users, events, auditLogs }) => {
+        return this.unitOfWork.execute(async ({ userRoles, users, events, auditLogs, roles }) => {
 
             // validar que exista por email 
             const currentUser = await users.findbyEmail(dto.email);
 
             if (currentUser) throw ErrorFactory.build(ApiErrorCode.USER_EMAIL_DUPLICATED, 'User already exists');
 
-            const role = await userRoles.getRoleByName(dto.role!);
+            const role = await roles.getRoleByNameAndStatus(dto.role!, RoleStatus.active);
 
             if (!role) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'Role is not found or inactive');
 

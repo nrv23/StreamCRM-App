@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { ApiResponse } from "../shared/types/api-response.ts";
 import { RolesService } from "../services/roles.service.ts";
 import { GetRolesResponse } from "../interfaces/user/get-roles.interface.ts";
+import { ROLE_PERMISSION_POLICY } from '../shared/utils/rolePermissionDefault.ts';
+import { CreateRoleResponse } from '../interfaces/user/create-role-response.interface.ts';
 
 export class RolesController {
 
@@ -47,6 +49,29 @@ export class RolesController {
         }
 
         res.status(200).json(response);
+        return;
+    }
+
+    async createRole(req: Request, res: Response) {
+
+        const { id: user_id } = req.user;
+        const { role, permissions, description } = req.body;
+        const { ip_address, user_agent } = req.requestDataInfo;
+        const is_system = Object.keys(ROLE_PERMISSION_POLICY).includes(role);
+
+        const data = await this._rolesService.createRole(
+            role, permissions, description, is_system, ip_address, user_agent, user_id
+        );
+
+        const response: ApiResponse<CreateRoleResponse> = {
+            success: true,
+            response: {
+                message: "Role creado con exito",
+                details: data
+            }
+        }
+
+        res.status(201).json(response);
         return;
     }
 }

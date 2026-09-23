@@ -9,6 +9,8 @@ export const GET_ME = "user.get_me";
 export const GET_USERS = "user.get_users"
 export const SET_USER_ROLES = 'user.set_roles';
 export const SET_USER_PERMISSIONS = 'user.set_permissions';
+
+export const CREATE_ROLE = 'role.create';
 // db events
 export const DB_CONNECTED = "db_connected";
 

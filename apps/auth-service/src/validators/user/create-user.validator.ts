@@ -26,5 +26,5 @@ export const createUserValidator = [
         .matches(/^[a-zA-Z0-9\-_&^*(%^$#=]+$/).withMessage('La contraseña solo puede contener caracteres alfanuméricos y estos especiales: --_&^*(%^$#='),
     body('role')
         .isString().withMessage('El rol debe ser una cadena de texto')
-        .isLength({ min: 6, max: 30 }).withMessage('El rol debe tener entre 6 y 10')
+        .isLength({ min: 5, max: 10 }).withMessage('El rol debe tener entre 5 y 10')
 ];

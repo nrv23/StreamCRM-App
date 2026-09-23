@@ -3,11 +3,13 @@ import { ValidateRolesDto } from "../../dto/permission/validate-roles.dto.ts";
 import { CreateRoleDto } from "../../dto/user/create-role.dto.ts";
 import { Role } from "../../entity/user/Role.entity.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
+import { RoleStatus } from "../../enum/RoleStatus.enum.ts";
 import { IDatabase } from "../../interfaces/database.interface.ts";
 import { GetRolesResponse } from "../../interfaces/user/get-roles.interface.ts";
 import { IRoleRepository } from "../../interfaces/user/role-reposiitory.interface.ts";
 import { ValidateRolesResponse } from "../../interfaces/user/validate-roles.interface.ts";
 import { ErrorFactory } from "../../shared/factory/error-factory.ts";
+import { GetUserRolesResponse } from "./user_role.repository.ts";
 
 export type validateUserRolesMatch = {
     matches: boolean
@@ -19,6 +21,8 @@ export type GetRoleByIdResponse = {
     description: string;
     is_system: boolean;
 }
+
+
 
 export class RoleRepository implements IRoleRepository {
 
@@ -82,4 +86,34 @@ export class RoleRepository implements IRoleRepository {
         const [response] = await this._db.query<GetRoleByIdResponse>(sql, [role_id, user_id]);
         return response;
     }
+
+    async getRoleByName(name: string): Promise<GetUserRolesResponse | undefined> {
+        const sql = `
+                select 
+                    r.id,
+                    r.name as role,
+                    r.description
+                from roles r 
+                where  r.name = $1;
+            `;
+
+        const [response] = await this._db.query<GetUserRolesResponse>(sql, [name]);
+        return response;
+    }
+
+    async getRoleByNameAndStatus(name: string, status: RoleStatus): Promise<GetUserRolesResponse | undefined> {
+        const sql = `
+                select 
+                    r.id,
+                    r.name as role,
+                    r.description
+                from roles r 
+                where  r.name = $1
+                AND r.status = $2;
+            `;
+
+        const [response] = await this._db.query<GetUserRolesResponse>(sql, [name, status]);
+        return response;
+    }
+
 }

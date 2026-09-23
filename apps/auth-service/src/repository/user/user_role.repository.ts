@@ -14,22 +14,7 @@ export class UserRoleRepository implements IUserRoleRepository {
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
     }
-    async getRoleByName(name: string): Promise<GetUserRolesResponse | undefined> {
-        const sql = `
-            select 
-                r.id,
-                r.name as role,
-                r.description
-            from roles r 
-            join user_roles ur on r.id = ur.role_id 
-            where  r.name = $1
-            AND ur.status = $2
-            AND r.status = $3;
-        `;
 
-        const [response] = await this._db.query<GetUserRolesResponse>(sql, [name, RoleStatus.active, RoleStatus.active]);
-        return response;
-    }
 
     async replaceUserRoles(user_id: number, role_ids: number[]): Promise<void> {
         // Llamamos a la función de Postgres que hace el DELETE + INSERT
