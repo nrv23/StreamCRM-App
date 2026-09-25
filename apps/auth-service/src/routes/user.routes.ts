@@ -63,6 +63,9 @@ export class UserRoutes implements IRoutes {
         this._router.post('/logout', logoutValidator, validateRequest, this._userController.logout.bind(this._userController));
         this._router.patch('/status/:id', validateToken, SetStatusUserValidator, validateRequest, this._userController.setStatus.bind(this._userController));
 
+        // routes para valiar y reenviar el 2fa
+
+
         return this._router;
     }
 }

@@ -12,6 +12,7 @@ export type GetCodeAuthenticatorDataResponse = {
     authcode: string;
     status: string;
     attempts: number;
+    expired: boolean;
 };
 
 export type SetStatusCodeAuthenticatorReponse = {
@@ -41,6 +42,7 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
     }
+
     async isEnabledTwoFactorAuthenticator(user_id: number): Promise<IsEnabledTwoFactorAuthenticator> {
         const sql = 'select two_factor_enabled as "isEnabled" from users where id = $1 ';
         const [response] = await this._db.query<IsEnabledTwoFactorAuthenticator>(sql, [user_id]);
@@ -87,23 +89,28 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
             dto.purpose,
             dto.status,
             dto.expires_at
-
         ]);
 
         if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error trying to create auth code');
         return response;
     }
-    async getCodeAuthenticatorData(external_id: string, user_id: number): Promise<GetCodeAuthenticatorDataResponse | undefined> {
+    async getCodeAuthenticatorData(external_id: string, user_id: number, purpose: AuthCodePurpose): Promise<GetCodeAuthenticatorDataResponse | undefined> {
 
         const sql = `
-            select au.code_hash as authcode, au.status, au.attempts
+            select au.code_hash as authcode, au.status, au.attempts, (
+                case
+                    when au.expires_at <= now() then true
+                    else false
+                end
+            ) as "expired"
             from auth_codes au
             inner join users u on u.id = au.user_id
             where au.external_id = $1
             and u.id = $2
+            and au.purpose = $3
         `;
 
-        const [response] = await this._db.query<GetCodeAuthenticatorDataResponse>(sql, [external_id, user_id]);
+        const [response] = await this._db.query<GetCodeAuthenticatorDataResponse>(sql, [external_id, user_id, purpose]);
         return response;
 
     }
@@ -141,6 +148,15 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
         const sql = 'update users set two_factor_locked =  true, two_factor_locked_at = now(), two_factor_lock_reason = $1 where id = $2 returning id';
         const [response] = await this._db.query<SetStatusCodeAuthenticatorReponse>(sql, [reason, user_id]);
         if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error trying to lock 2fa ');
+    }
+
+    async enableTwoFactorAuthenticator(user_id: number): Promise<void> {
+        const sql = `
+            update users set two_factor_locked =  null, two_factor_locked_at = null, two_factor_lock_reason = null, two_factor_enabled = true 
+            where id = $1 returning id;
+          `;
+        const [response] = await this._db.query<SetStatusCodeAuthenticatorReponse>(sql, [user_id]);
+        if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error trying to enable 2fa ');
     }
 
     async hasAnyAuthCodeByPurposeAndUserIdAndStatus(user_id: number, purpose: AuthCodePurpose, status: AuthCodeStatus): Promise<HasAnyAuthCodeByPurposeAndUserIdAndStatusResponse> {

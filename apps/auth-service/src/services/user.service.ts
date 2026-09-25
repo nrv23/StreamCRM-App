@@ -215,22 +215,22 @@ export class UserService {
 
         const response = await dobleFactorAuth.saveCodeAuthenticator(newAuthCodeBody);
 
-        /*       const log: ILogMetadata = {
-                   service: env.service_name,
-                   event: NEW_AUTH_CODE,
-                   entity_id: response.id,
-                   method: 'POST',
-                   route: 'api/v1/users/login',
-                   created_at: new Date().toISOString(),
-                   payload: {
-                       auth_code_external_id: external_id,
-                       status: AuthCodeStatus.active,
-                       purpose: AuthCodePurpose.login_2fa,
-                       channel: AuthCodeChannel.email,
-                       user_id
-                   }
-               };
-               this._logger.info('getting code authenticator', log); */
+        const log: ILogMetadata = {
+            service: env.service_name,
+            event: NEW_AUTH_CODE,
+            entity_id: response.id,
+            method: 'POST',
+            route: 'api/v1/users/login',
+            created_at: new Date().toISOString(),
+            payload: {
+                auth_code_external_id: external_id,
+                status: AuthCodeStatus.active,
+                purpose: AuthCodePurpose.login_2fa,
+                channel: AuthCodeChannel.email,
+                user_id
+            }
+        };
+        this._logger.info('getting code authenticator', log);
 
 
         return { external_id, authcode, authcodeid: response.id }
@@ -321,21 +321,21 @@ export class UserService {
                     permissions: permissions.map(permission => permission.code)
                 }
 
-                /* const log: ILogMetadata = {
-                     service: env.service_name,
-                     event: LOGIN_USER,
-                     entity_id: currentUser.id,
-                     method: 'POST',
-                     route: 'api/v1/users/login',
-                     created_at: new Date().toISOString(),
-                     payload: {
-                         user: response.user,
-                         roles: JSON.stringify(response.roles),
-                         permissions: JSON.stringify(response.permissions)
-                     }
-                 };
- 
-                 this._logger.info('login user', log);*/
+                const log: ILogMetadata = {
+                    service: env.service_name,
+                    event: LOGIN_USER,
+                    entity_id: currentUser.id,
+                    method: 'POST',
+                    route: 'api/v1/users/login',
+                    created_at: new Date().toISOString(),
+                    payload: {
+                        user: response.user,
+                        roles: JSON.stringify(response.roles),
+                        permissions: JSON.stringify(response.permissions)
+                    }
+                };
+
+                this._logger.info('login user', log);
                 return response;
 
             }
@@ -523,5 +523,46 @@ export class UserService {
                 })
             ])
         })
+    }
+
+    async verifyTwoFactorAuthenticate(
+        challeneg_id: string, authcode: string, ip_address: string, user_agent: string, user_id: number
+    ) {
+        return this.unitOfWork.execute(async ({ users, dobleFactorAuth }) => {
+
+            const currentUser = await users.findbyId(user_id);
+            if (!currentUser) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'User not exists');
+            if (currentUser.status === UserStatus.blocked) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'User  account is blocked');
+            if (currentUser.status === UserStatus.inactive) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'User account is inactive');
+            //delete currentUser.password;
+
+            const currentAuthCode = await dobleFactorAuth.getCodeAuthenticatorData(challeneg_id, user_id, AuthCodePurpose.login_2fa);
+
+            if (!currentAuthCode) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Invalid auth code');
+            if (currentAuthCode?.status !== AuthCodeStatus.active) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Auth code is not available');
+            if (currentAuthCode.expired) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Auth code expired');
+
+
+            if (!(await this.secretHasher.verify(authcode, currentAuthCode.authcode))) {
+                // si en 3 intentos falla el codigo, revokarlo y bloquear el uso el 2fa
+
+                await dobleFactorAuth.setAttemps(user_id, challeneg_id);
+
+                if (currentAuthCode.attempts >= 3) { // inhabilitar el 2fa y revokar el codigo actual
+
+                    await Promise.all([
+                        dobleFactorAuth.setStatusCodeAuthenticator(challeneg_id, user_id, AuthCodeStatus.revoked),
+                        dobleFactorAuth.lockTwoFactorAuthenticator('maximo de intentos fallidos', user_id)
+                    ])
+                }
+                // guardar log
+                // retornar respuesta
+            }
+
+            // el codigo se pasa a usado, se guarda el log, se crea token con access token, sesion y devuelve respuesta
+
+            await Promise.all
+
+        });
     }
 }

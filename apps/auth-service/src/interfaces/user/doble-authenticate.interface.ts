@@ -9,10 +9,11 @@ export interface IDobleAuthenticateRepositpry {
 
     getNewCodeAuthenticator(): Promise<GetNewCodeAuthenticator>;
     saveCodeAuthenticator(dto: CreateAuthCodeDto): Promise<AuthCode>;
-    getCodeAuthenticatorData(external_id: string, user_id: number): Promise<GetCodeAuthenticatorDataResponse | undefined>;
+    getCodeAuthenticatorData(external_id: string, user_id: number, purpose: AuthCodePurpose): Promise<GetCodeAuthenticatorDataResponse | undefined>;
     setStatusCodeAuthenticator(external_id: string, user_id: number, status: AuthCodeStatus): Promise<void>;
     setAttemps(user_id: number, external_id: string): Promise<void>;
     lockTwoFactorAuthenticator(reason: string, user_id: number): Promise<void>;
+    enableTwoFactorAuthenticator(user_id: number): Promise<void>;
     isEnabledTwoFactorAuthenticator(user_id: number): Promise<IsEnabledTwoFactorAuthenticator>;
     isLockedTwoFactorAuthenticator(user_id: number): Promise<IsLockedTwoFactorAuthenticator>;
     hasAnyAuthCodeByPurposeAndUserIdAndStatus(user_id: number, purpose: AuthCodePurpose, status: AuthCodeStatus): Promise<HasAnyAuthCodeByPurposeAndUserIdAndStatusResponse>;
