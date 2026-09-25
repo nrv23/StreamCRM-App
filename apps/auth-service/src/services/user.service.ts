@@ -28,6 +28,7 @@ import { AuthCodeStatus } from "../enum/AuthCodeStatus.enum.ts";
 import { AuthCodePurpose } from "../enum/AuthCodePurpose.enum.ts";
 import { AuthCodeChannel } from "../enum/AuthCodeChannel.enum.ts";
 import { ISecretHasher } from "../interfaces/user/auhtcode-hash.interface.ts";
+import { LockAuthCodeReasons } from "../enum/LockAuthCodeReasons.enum.ts";
 
 export class UserService {
 
@@ -365,7 +366,8 @@ export class UserService {
 
             const response: AuthCodeDataResponse = {
                 challeneg_id: external_id,
-                requires_2fa: true
+                requires_2fa: true,
+                auth_code: authcode
             };
 
             return response;
@@ -526,43 +528,77 @@ export class UserService {
     }
 
     async verifyTwoFactorAuthenticate(
-        challeneg_id: string, authcode: string, ip_address: string, user_agent: string, user_id: number
+        challenge_id: string, auth_code: string, ip_address: string, user_agent: string
     ) {
-        return this.unitOfWork.execute(async ({ users, dobleFactorAuth }) => {
+        const dataResponse = await this.unitOfWork.execute(async ({ users, dobleFactorAuth }) => {
 
-            const currentUser = await users.findbyId(user_id);
-            if (!currentUser) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'User not exists');
-            if (currentUser.status === UserStatus.blocked) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'User  account is blocked');
-            if (currentUser.status === UserStatus.inactive) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'User account is inactive');
-            //delete currentUser.password;
-
-            const currentAuthCode = await dobleFactorAuth.getCodeAuthenticatorData(challeneg_id, user_id, AuthCodePurpose.login_2fa);
+            const currentAuthCode = await dobleFactorAuth.getCodeAuthenticatorData(challenge_id, AuthCodePurpose.login_2fa);
 
             if (!currentAuthCode) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Invalid auth code');
-            if (currentAuthCode?.status !== AuthCodeStatus.active) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Auth code is not available');
-            if (currentAuthCode.expired) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Auth code expired');
+            if (currentAuthCode.status !== AuthCodeStatus.active) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Auth code is not available');
 
-
-            if (!(await this.secretHasher.verify(authcode, currentAuthCode.authcode))) {
-                // si en 3 intentos falla el codigo, revokarlo y bloquear el uso el 2fa
-
-                await dobleFactorAuth.setAttemps(user_id, challeneg_id);
-
-                if (currentAuthCode.attempts >= 3) { // inhabilitar el 2fa y revokar el codigo actual
-
-                    await Promise.all([
-                        dobleFactorAuth.setStatusCodeAuthenticator(challeneg_id, user_id, AuthCodeStatus.revoked),
-                        dobleFactorAuth.lockTwoFactorAuthenticator('maximo de intentos fallidos', user_id)
-                    ])
-                }
-                // guardar log
-                // retornar respuesta
+            if (currentAuthCode.expired) {
+                // marcar codigo como vencido y confirmar en bd
+                await dobleFactorAuth.setStatusCodeAuthenticator(challenge_id, currentAuthCode.user_id, AuthCodeStatus.expired);
+                return { success: false, expired: true, maxAttempsFailed: false, attemptsLeft: 0 };
             }
+
+            const currentUser = await users.findbyId(currentAuthCode.user_id);
+            if (!currentUser) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'User not exists');
+            if (currentUser.status === UserStatus.blocked) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'User account is blocked');
+            if (currentUser.status === UserStatus.inactive) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'User account is inactive');
+
+            const isValidCode = await this.secretHasher.verify(auth_code, currentAuthCode.authcode);
+
+            if (!isValidCode) {
+                // si en 3 intentos falla el codigo, revocarlo y bloquear el uso del 2fa
+                await dobleFactorAuth.setAttemps(currentUser.id, challenge_id);
+                const totalAttempts = (currentAuthCode.attempts ?? 0) + 1;
+
+                if (totalAttempts >= 3) { // inhabilitar el 2fa y revocar el codigo actual
+                    await Promise.all([
+                        dobleFactorAuth.setStatusCodeAuthenticator(challenge_id, currentUser.id, AuthCodeStatus.revoked),
+                        dobleFactorAuth.lockTwoFactorAuthenticator(LockAuthCodeReasons.maxFailureAttemps, currentUser.id)
+                    ]);
+
+                    return { success: false, expired: false, maxAttempsFailed: true, attemptsLeft: 0 };
+                }
+
+                return {
+                    success: false,
+                    expired: false,
+                    maxAttempsFailed: false,
+                    attemptsLeft: 3 - totalAttempts
+                };
+            }
+
+            // codigo correcto: se pasa a usado
+            await dobleFactorAuth.setStatusCodeAuthenticator(challenge_id, currentUser.id, AuthCodeStatus.used);
+
+
 
             // el codigo se pasa a usado, se guarda el log, se crea token con access token, sesion y devuelve respuesta
 
-            await Promise.all
 
+            return {
+                success: true,
+                expired: false,
+                maxAttempsFailed: false,
+                attemptsLeft: 0,
+                user: currentUser
+            };
         });
+
+        if (!dataResponse.success) {
+            if (dataResponse.expired) {
+                throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Auth code expired');
+            }
+            if (dataResponse.maxAttempsFailed) {
+                throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Numero maximo de intentos fallidos. 2fa deshabilitado');
+            }
+            throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, `Intento fallido. Le quedan ${dataResponse.attemptsLeft} intentos posibles`);
+        }
+
+        return dataResponse;
     }
 }

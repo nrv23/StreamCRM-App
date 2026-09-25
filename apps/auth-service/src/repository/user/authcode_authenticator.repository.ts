@@ -13,6 +13,7 @@ export type GetCodeAuthenticatorDataResponse = {
     status: string;
     attempts: number;
     expired: boolean;
+    user_id: number;
 };
 
 export type SetStatusCodeAuthenticatorReponse = {
@@ -94,7 +95,7 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
         if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error trying to create auth code');
         return response;
     }
-    async getCodeAuthenticatorData(external_id: string, user_id: number, purpose: AuthCodePurpose): Promise<GetCodeAuthenticatorDataResponse | undefined> {
+    async getCodeAuthenticatorData(external_id: string, purpose: AuthCodePurpose): Promise<GetCodeAuthenticatorDataResponse | undefined> {
 
         const sql = `
             select au.code_hash as authcode, au.status, au.attempts, (
@@ -102,15 +103,15 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
                     when au.expires_at <= now() then true
                     else false
                 end
-            ) as "expired"
+            ) as "expired",
+            au.user_id
             from auth_codes au
             inner join users u on u.id = au.user_id
             where au.external_id = $1
-            and u.id = $2
-            and au.purpose = $3
+            and au.purpose = $2
         `;
 
-        const [response] = await this._db.query<GetCodeAuthenticatorDataResponse>(sql, [external_id, user_id, purpose]);
+        const [response] = await this._db.query<GetCodeAuthenticatorDataResponse>(sql, [external_id, purpose]);
         return response;
 
     }
@@ -119,16 +120,16 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
         let sql: string;
         switch (status) {
             case AuthCodeStatus.active:
-                sql = 'Update auth_codes set estado = $1, revoked_at=null, used_at= null where user_id = $2 and external_id = $3 returning id;';
+                sql = 'Update auth_codes set status = $1, revoked_at=null, used_at= null where user_id = $2 and external_id = $3 returning id;';
                 break;
             case AuthCodeStatus.used:
-                sql = 'Update auth_codes set estado = $1, revoked_at=null, used_at= now() where user_id = $2 and external_id = $3 returning id;';
+                sql = 'Update auth_codes set status = $1, revoked_at=null, used_at= now() where user_id = $2 and external_id = $3 returning id;';
                 break;
             case AuthCodeStatus.revoked:
-                sql = 'Update auth_codes set estado = $1, revoked_at=now(), used_at= null where user_id = $2 and external_id = $3 returning id;';
+                sql = 'Update auth_codes set status = $1, revoked_at=now(), used_at= null where user_id = $2 and external_id = $3 returning id;';
                 break;
             case AuthCodeStatus.expired:
-                sql = 'Update auth_codes set estado = $1, revoked_at=null, used_at= null where user_id = $2 and external_id = $3 returning id;';
+                sql = 'Update auth_codes set status = $1, revoked_at=null, used_at= null where user_id = $2 and external_id = $3 returning id;';
                 break;
             default:
                 throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, `AuthCodeStatus: ${status} not implemented`);
@@ -138,7 +139,7 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
         if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error trying to set status authcode');
     }
     async setAttemps(user_id: number, external_id: string): Promise<void> {
-        const sql = 'update auth_codes set attemps = attemps + 1 where user_id = $1 and external_id = $2 returning id';
+        const sql = 'update auth_codes set attempts = (attempts + 1) where user_id = $1 and external_id = $2 returning id';
         const [response] = await this._db.query<SetStatusCodeAuthenticatorReponse>(sql, [user_id, external_id]);
         if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error trying to set status authcode');
     }

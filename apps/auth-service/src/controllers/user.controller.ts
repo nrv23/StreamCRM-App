@@ -191,5 +191,22 @@ export class UserController {
         };
 
         res.status(200).json(response);
+        return;
+    }
+
+    async verifyAuthCodeAuthenticator(req: Request, res: Response) {
+
+        const { user_agent, ip_address } = req.requestDataInfo;
+        const { challenge_id, auth_code } = req.body;
+
+        const data = await this.userService.verifyTwoFactorAuthenticate(challenge_id, auth_code, ip_address, user_agent);
+        const response: ApiResponse<null> = {
+            success: true,
+            response: {
+                message: "Se ha actualizado el estado del usuario"
+            }
+        };
+        res.status(200).json(response);
+        return;
     }
 } 
