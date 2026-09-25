@@ -10,11 +10,14 @@ import { env } from '../config/enviroment.ts';
 import { IPaginationResponse } from '../interfaces/pagination.interface.ts';
 import { LoginDataResponse } from '../interfaces/user/login-data.interface.ts';
 import { IRefreshTokenResponse } from '../interfaces/session/refresh-token-data.interface.ts';
+import { AuthCodeDataResponse } from '../interfaces/user/authcode-data.interface.ts';
+import { InterfaceValidatorData } from '../shared/utils/interface-validator.ts';
 
 export class UserController {
 
     constructor(
-        private userService: UserService
+        private userService: UserService,
+        private interfaceValidator: InterfaceValidatorData
     ) {
 
     }
@@ -105,23 +108,24 @@ export class UserController {
         const { user_agent, ip_address } = req.requestDataInfo;
         const { email, password } = req.body;
 
-        const data = await this.userService.login({
+        const data: LoginDataResponse | AuthCodeDataResponse = await this.userService.login({
             user_agent,
             ip_address,
             email,
             password
         });
 
-        res.cookie('refresh_token', data.refresh_token, {
-            httpOnly: true,
-            secure: env.node_env === 'production',
-            sameSite: 'strict',
-            path: '/api/v1/users/refresh-token',
-            maxAge: env.session_ttl_days * 24 * 60 * 60 * 1000
-        });
+        if (this.interfaceValidator.isLoginResponseData(data)) {
+            res.cookie('refresh_token', data.refresh_token, {
+                httpOnly: true,
+                secure: env.node_env === 'production',
+                sameSite: 'strict',
+                path: '/api/v1/users/refresh-token',
+                maxAge: env.session_ttl_days * 24 * 60 * 60 * 1000
+            });
+        }
 
-
-        const response: ApiResponse<LoginDataResponse> = {
+        const response: ApiResponse<LoginDataResponse | AuthCodeDataResponse> = {
             success: true,
             response: {
                 details: data

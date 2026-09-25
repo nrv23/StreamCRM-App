@@ -2,7 +2,7 @@ import { UnitOfWork } from "../config/unitOfWork.ts";
 import { CreateUserDto } from "../dto/user/create-user.dto.ts";
 import { IPasswordHasher } from "../interfaces/password-hasher.interface.ts";
 import { ROLE_PERMISSION_POLICY } from "../shared/utils/rolePermissionDefault.ts";
-import { CHANGE_USER_STATUS, CREATE_USER, GET_ME, GET_USERS, LOGIN_USER, LOGOUT_USER } from "../shared/types/events.type.ts";
+import { CHANGE_USER_STATUS, CREATE_USER, GET_ME, GET_USERS, LOGIN_USER, LOGOUT_USER, NEW_AUTH_CODE } from "../shared/types/events.type.ts";
 import { env } from "../config/enviroment.ts";
 import { EntityType } from "../enum/EntityType.enum.ts";
 import { UserStatus } from "../enum/UserStatus.enum.ts";
@@ -21,6 +21,12 @@ import { IRefreshTokenResponse } from "../interfaces/session/refresh-token-data.
 import { Logger } from "winston";
 import { ILogMetadata } from "../interfaces/iLog.interface.ts";
 import { RoleStatus } from "../enum/RoleStatus.enum.ts";
+import { AuthCodeDataResponse } from "../interfaces/user/authcode-data.interface.ts";
+import { CreateAuthCodeDto } from "../dto/user/create-auth-code.dto.ts";
+import { IDobleAuthenticateRepositpry } from "../interfaces/user/doble-authenticate.interface.ts";
+import { AuthCodeStatus } from "../enum/AuthCodeStatus.enum.ts";
+import { AuthCodePurpose } from "../enum/AuthCodePurpose.enum.ts";
+import { AuthCodeChannel } from "../enum/AuthCodeChannel.enum.ts";
 
 export class UserService {
 
@@ -191,9 +197,28 @@ export class UserService {
         });
     }
 
-    async login(dto: LoginDto): Promise<LoginDataResponse> {
+    private async createAuthCode(user_id: number, dobleFactorAuth: IDobleAuthenticateRepositpry) {
+        const authcode_expires_at = new Date(Date.now() + 15 * 60 * 1000);
+        const external_id = randomUUID();
+        const { authcode } = await dobleFactorAuth.getNewCodeAuthenticator(user_id, AuthCodePurpose.login_2fa);
+        const newAuthCodeBody: CreateAuthCodeDto = {
+            external_id,
+            user_id,
+            expires_at: authcode_expires_at,
+            status: AuthCodeStatus.active,
+            purpose: AuthCodePurpose.login_2fa,
+            channel: AuthCodeChannel.email,
+            code_hash: await this.passwordHasher.hash(authcode)
+        }
 
-        return await this.unitOfWork.execute(async ({ users, userRoles, rolePermissions, sessions, refreshTokens, auditLogs }) => {
+        await dobleFactorAuth.saveCodeAuthenticator(newAuthCodeBody);
+
+        return { external_id, authcode }
+    }
+
+    async login(dto: LoginDto): Promise<LoginDataResponse | AuthCodeDataResponse> {
+
+        return await this.unitOfWork.execute(async ({ users, userRoles, rolePermissions, sessions, refreshTokens, auditLogs, dobleFactorAuth }) => {
 
             const currentUser = await users.findbyEmail(dto.email);
 
@@ -204,82 +229,132 @@ export class UserService {
             const isValidPass = await this.passwordHasher.verify(dto.password, currentUser.password!.toString());
 
             if (!isValidPass) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'Invalid authentication credentials');
+            // debe preguntar si 2fa esta habilitado, sino lo esta genera el login, siempre y cuando no exista un bloqueo.
 
-            const session_id = randomUUID();
-            const session_expires_at = new Date(
-                Date.now() + env.session_ttl_days * 24 * 60 * 60 * 1000
-            );
-            const token_expires_at = Math.floor(Date.now() / 1000) + 15 * 60;
-            const refresh_token = this.tokenManager.refreshToken();
-            // crear el token de sesion
-
-            // crear el registro de la session en la tabla sesiones para trazabilidad e historicos.
-
-            delete currentUser.password;
-
-            const [roles, permissions, token, _, __] = await Promise.all([
-                userRoles.getRolesByUserId(currentUser.id),
-                rolePermissions.getPermissionsByRoleIdAndUserId(currentUser.id),
-                this.tokenManager.sign({
-                    sid: session_id,
-                    uid: currentUser.id,
-                    sub: currentUser.external_id
-                }),
-                sessions.save({
-                    user_id: currentUser.id,
-                    user_agent: dto.user_agent,
-                    ip_address: dto.ip_address,
-                    session_id,
-                    expires_at: session_expires_at
-                }),
-                refreshTokens.save({
-                    user_id: currentUser.id,
-                    expires_at: session_expires_at,
-                    session_id,
-                    token_hash: refresh_token
-                }),
-                auditLogs.save({
-                    entity_type: EntityType.USER,
-                    entity_id: currentUser.id,
-                    action: LOGIN_USER,
-                    user_id: currentUser.id,
-                    old_values: {
-                        email: dto.email,
-                        password: "xxxxxxxxxxxxxxxxxx"
-                    },
-                    new_values: {
-
-                    },
-                    user_agent: dto.user_agent,
-                    ip_address: dto.ip_address,
-                })
+            // si el 2fa esta habilitado sin bloqueo entonces genera el codigo y retorna external id con el codigo.
+            const [{ isEnabled }, { isLocked }] = await Promise.all([
+                dobleFactorAuth.isEnabledTwoFactorAuthenticator(currentUser.id),
+                dobleFactorAuth.isLockedTwoFactorAuthenticator(currentUser.id)
             ]);
 
+            if (isLocked) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Two factor authentication is locked/unavailable');
 
-            const response: LoginDataResponse = {
-                access_token: token,
-                refresh_token,
-                expires_at: token_expires_at,
-                user: currentUser,
-                roles,
-                permissions: permissions.map(permission => permission.code)
+            if (!isEnabled) {
+
+                const session_id = randomUUID();
+                const session_expires_at = new Date(
+                    Date.now() + env.session_ttl_days * 24 * 60 * 60 * 1000
+                );
+                const token_expires_at = Math.floor(Date.now() / 1000) + 15 * 60;
+                const refresh_token = this.tokenManager.refreshToken();
+                // crear el token de sesion
+
+                // crear el registro de la session en la tabla sesiones para trazabilidad e historicos.
+
+                delete currentUser.password;
+
+                const [roles, permissions, token, _, __] = await Promise.all([
+                    userRoles.getRolesByUserId(currentUser.id),
+                    rolePermissions.getPermissionsByRoleIdAndUserId(currentUser.id),
+                    this.tokenManager.sign({
+                        sid: session_id,
+                        uid: currentUser.id,
+                        sub: currentUser.external_id
+                    }),
+                    sessions.save({
+                        user_id: currentUser.id,
+                        user_agent: dto.user_agent,
+                        ip_address: dto.ip_address,
+                        session_id,
+                        expires_at: session_expires_at
+                    }),
+                    refreshTokens.save({
+                        user_id: currentUser.id,
+                        expires_at: session_expires_at,
+                        session_id,
+                        token_hash: refresh_token
+                    }),
+                    auditLogs.save({
+                        entity_type: EntityType.USER,
+                        entity_id: currentUser.id,
+                        action: LOGIN_USER,
+                        user_id: currentUser.id,
+                        old_values: {
+                            email: dto.email,
+                            password: "xxxxxxxxxxxxxxxxxx"
+                        },
+                        new_values: {
+
+                        },
+                        user_agent: dto.user_agent,
+                        ip_address: dto.ip_address,
+                    })
+                ]);
+
+
+                const response: LoginDataResponse = {
+                    access_token: token,
+                    refresh_token,
+                    expires_at: token_expires_at,
+                    user: currentUser,
+                    roles,
+                    permissions: permissions.map(permission => permission.code)
+                }
+
+                const log: ILogMetadata = {
+                    service: env.service_name,
+                    event: LOGIN_USER,
+                    entity_id: currentUser.id,
+                    method: 'POST',
+                    route: 'api/v1/users/login',
+                    created_at: new Date().toISOString(),
+                    payload: {
+                        user: response.user,
+                        roles: JSON.stringify(response.roles),
+                        permissions: JSON.stringify(response.permissions)
+                    }
+                };
+
+                this._logger.info('login user', log);
+                return response;
+
             }
+
+            // generar codigo y external id
+
+            const { external_id, authcode } = await this.createAuthCode(currentUser.id, dobleFactorAuth);
+            await auditLogs.save({
+                entity_type: EntityType.USER,
+                entity_id: currentUser.id,
+                action: NEW_AUTH_CODE,
+                user_id: currentUser.id,
+                old_values: {
+                },
+                new_values: {
+                    auth_code_external_id: external_id,
+                    authcode
+                },
+                user_agent: dto.user_agent,
+                ip_address: dto.ip_address,
+            })
+
 
             const log: ILogMetadata = {
                 service: env.service_name,
-                event: LOGIN_USER,
+                event: NEW_AUTH_CODE,
                 entity_id: currentUser.id,
                 method: 'POST',
                 route: 'api/v1/users/login',
                 created_at: new Date().toISOString(),
                 payload: {
-                    user: response.user,
-                    roles: JSON.stringify(response.roles),
-                    permissions: JSON.stringify(response.permissions)
+                    auth_code_external_id: external_id
                 }
             };
-
-            this._logger.info('login user', log);
+            this._logger.info('getting code authenticator', log);
+            const response: AuthCodeDataResponse = {
+                external_id,
+                requires_2fa: true
+            };
 
             return response;
         })

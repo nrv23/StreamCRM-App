@@ -22,17 +22,32 @@ export type GetNewCodeAuthenticator = {
     authcode: string;
 }
 
+export type IsEnabledTwoFactorAuthenticator = {
+    isEnabled: boolean
+}
+
+export type IsLockedTwoFactorAuthenticator = {
+
+    isLocked: boolean;
+}
+
 export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateRepositpry {
 
     private _db: IDatabase;
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
     }
-    isEnabledTwoFactorAuthenticator(user_id: number): Promise<boolean> {
-        throw new Error("Method not implemented.");
+    async isEnabledTwoFactorAuthenticator(user_id: number): Promise<IsEnabledTwoFactorAuthenticator> {
+        const sql = 'select two_factor_enabled as "isEnabled" from users where id = $1 ';
+        const [response] = await this._db.query<IsEnabledTwoFactorAuthenticator>(sql, [user_id]);
+        if (!response) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
+        return response;
     }
-    isLockedTwoFactorAuthenticator(user_id: number): Promise<boolean> {
-        throw new Error("Method not implemented.");
+    async isLockedTwoFactorAuthenticator(user_id: number): Promise<IsLockedTwoFactorAuthenticator> {
+        const sql = 'select two_factor_locked as "isLocked" from users where id = $1 ';
+        const [response] = await this._db.query<IsLockedTwoFactorAuthenticator>(sql, [user_id]);
+        if (!response) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
+        return response;
     }
     async getNewCodeAuthenticator(user_id: number, purpose: AuthCodePurpose): Promise<GetNewCodeAuthenticator> {
 

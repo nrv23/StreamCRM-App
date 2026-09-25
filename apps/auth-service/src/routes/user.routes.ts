@@ -17,6 +17,7 @@ import { SetStatusUserValidator } from "../validators/user/set-status.validator.
 import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 import { env } from "../config/enviroment.ts";
 import { requirePermission } from "../shared/middleware/validate-role-manage-user.middleware.ts";
+import { InterfaceValidatorData } from "../shared/utils/interface-validator.ts";
 
 
 export class UserRoutes implements IRoutes {
@@ -43,7 +44,7 @@ export class UserRoutes implements IRoutes {
                 'debug',
                 env.index_elastic_search_name
             ));
-        this._userController = new UserController(this._userService);
+        this._userController = new UserController(this._userService, new InterfaceValidatorData());
         this._router = Router()
     }
 
