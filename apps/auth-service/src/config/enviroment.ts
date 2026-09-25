@@ -53,8 +53,8 @@ const validatedEnv = cleanEnv(process.env, {
     }),
     REFRESH_TOKEN_TTL_DAYS: num({ default: 7 }),
     SESSION_TTL_DAYS: num({ default: 7 }),
-    JWT_SECRET: str() // vEnyvIANeCb6nyDR4MTVUdvfNS6mBETDmx2pn8dBeGvq4SloLXcFpq_UsY0H7zrvFomsRIWwMdn0FqLeC0YNpQ
-
+    JWT_SECRET: str(), // vEnyvIANeCb6nyDR4MTVUdvfNS6mBETDmx2pn8dBeGvq4SloLXcFpq_UsY0H7zrvFomsRIWwMdn0FqLeC0YNpQ
+    TWO_FACTOR_HMAC_SECRET: str()
 
 });
 
@@ -93,5 +93,6 @@ export const env: IEnvConfig = {
     access_token_ttl: validatedEnv.ACCESS_TOKEN_TTL as NonNullable<SignOptions['expiresIn']>,
     refresh_token_ttl_days: validatedEnv.REFRESH_TOKEN_TTL_DAYS,
     session_ttl_days: validatedEnv.SESSION_TTL_DAYS,
-    jwt_secret: validatedEnv.JWT_SECRET
+    jwt_secret: validatedEnv.JWT_SECRET,
+    two_factor_hmac_secret: validatedEnv.TWO_FACTOR_HMAC_SECRET
 };

@@ -5,7 +5,7 @@ export interface ILogMetadata {
     service: string;
     event?: string;
     event_id?: string;
-    entity_id?: number;
+    entity_id?: BigInt | number;
     method?: string;
     route?: string;
     payload?: JsonObject;

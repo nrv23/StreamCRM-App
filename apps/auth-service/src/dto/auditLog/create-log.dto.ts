@@ -3,7 +3,7 @@ import { JsonObject } from "../event/create-event.dto.ts";
 
 export interface CreateLogDto {
     entity_type: string;
-    entity_id: number;
+    entity_id: BigInt | number;
     action: string;
     user_id: number;
     old_values?: JsonObject;

@@ -27,6 +27,7 @@ import { IDobleAuthenticateRepositpry } from "../interfaces/user/doble-authentic
 import { AuthCodeStatus } from "../enum/AuthCodeStatus.enum.ts";
 import { AuthCodePurpose } from "../enum/AuthCodePurpose.enum.ts";
 import { AuthCodeChannel } from "../enum/AuthCodeChannel.enum.ts";
+import { ISecretHasher } from "../interfaces/user/auhtcode-hash.interface.ts";
 
 export class UserService {
 
@@ -34,6 +35,7 @@ export class UserService {
         private unitOfWork: UnitOfWork,
         private passwordHasher: IPasswordHasher,
         private tokenManager: ITokenManager,
+        private secretHasher: ISecretHasher,
         private _logger: Logger
     ) {
 
@@ -200,7 +202,7 @@ export class UserService {
     private async createAuthCode(user_id: number, dobleFactorAuth: IDobleAuthenticateRepositpry) {
         const authcode_expires_at = new Date(Date.now() + 15 * 60 * 1000);
         const external_id = randomUUID();
-        const { authcode } = await dobleFactorAuth.getNewCodeAuthenticator(user_id, AuthCodePurpose.login_2fa);
+        const { authcode } = await dobleFactorAuth.getNewCodeAuthenticator();
         const newAuthCodeBody: CreateAuthCodeDto = {
             external_id,
             user_id,
@@ -208,12 +210,30 @@ export class UserService {
             status: AuthCodeStatus.active,
             purpose: AuthCodePurpose.login_2fa,
             channel: AuthCodeChannel.email,
-            code_hash: await this.passwordHasher.hash(authcode)
+            code_hash: await this.secretHasher.hash(authcode)
         }
 
-        await dobleFactorAuth.saveCodeAuthenticator(newAuthCodeBody);
+        const response = await dobleFactorAuth.saveCodeAuthenticator(newAuthCodeBody);
 
-        return { external_id, authcode }
+        /*       const log: ILogMetadata = {
+                   service: env.service_name,
+                   event: NEW_AUTH_CODE,
+                   entity_id: response.id,
+                   method: 'POST',
+                   route: 'api/v1/users/login',
+                   created_at: new Date().toISOString(),
+                   payload: {
+                       auth_code_external_id: external_id,
+                       status: AuthCodeStatus.active,
+                       purpose: AuthCodePurpose.login_2fa,
+                       channel: AuthCodeChannel.email,
+                       user_id
+                   }
+               };
+               this._logger.info('getting code authenticator', log); */
+
+
+        return { external_id, authcode, authcodeid: response.id }
     }
 
     async login(dto: LoginDto): Promise<LoginDataResponse | AuthCodeDataResponse> {
@@ -301,58 +321,50 @@ export class UserService {
                     permissions: permissions.map(permission => permission.code)
                 }
 
-                const log: ILogMetadata = {
-                    service: env.service_name,
-                    event: LOGIN_USER,
-                    entity_id: currentUser.id,
-                    method: 'POST',
-                    route: 'api/v1/users/login',
-                    created_at: new Date().toISOString(),
-                    payload: {
-                        user: response.user,
-                        roles: JSON.stringify(response.roles),
-                        permissions: JSON.stringify(response.permissions)
-                    }
-                };
-
-                this._logger.info('login user', log);
+                /* const log: ILogMetadata = {
+                     service: env.service_name,
+                     event: LOGIN_USER,
+                     entity_id: currentUser.id,
+                     method: 'POST',
+                     route: 'api/v1/users/login',
+                     created_at: new Date().toISOString(),
+                     payload: {
+                         user: response.user,
+                         roles: JSON.stringify(response.roles),
+                         permissions: JSON.stringify(response.permissions)
+                     }
+                 };
+ 
+                 this._logger.info('login user', log);*/
                 return response;
 
             }
 
-            // generar codigo y external id
+            const { hasAny } = await dobleFactorAuth.hasAnyAuthCodeByPurposeAndUserIdAndStatus(currentUser.id, AuthCodePurpose.login_2fa, AuthCodeStatus.active);
 
-            const { external_id, authcode } = await this.createAuthCode(currentUser.id, dobleFactorAuth);
+            if (+hasAny) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'The current user has already auth code autenticator active');
+
+            const { external_id, authcode, authcodeid } = await this.createAuthCode(currentUser.id, dobleFactorAuth);
             await auditLogs.save({
-                entity_type: EntityType.USER,
-                entity_id: currentUser.id,
+                entity_type: EntityType.AUTHCODE,
+                entity_id: authcodeid,
                 action: NEW_AUTH_CODE,
                 user_id: currentUser.id,
                 old_values: {
                 },
                 new_values: {
                     auth_code_external_id: external_id,
-                    authcode
+                    authcode,
+                    status: AuthCodeStatus.active,
+                    purpose: AuthCodePurpose.login_2fa,
+                    channel: AuthCodeChannel.email,
                 },
                 user_agent: dto.user_agent,
                 ip_address: dto.ip_address,
             })
 
-
-            const log: ILogMetadata = {
-                service: env.service_name,
-                event: NEW_AUTH_CODE,
-                entity_id: currentUser.id,
-                method: 'POST',
-                route: 'api/v1/users/login',
-                created_at: new Date().toISOString(),
-                payload: {
-                    auth_code_external_id: external_id
-                }
-            };
-            this._logger.info('getting code authenticator', log);
             const response: AuthCodeDataResponse = {
-                external_id,
+                challeneg_id: external_id,
                 requires_2fa: true
             };
 

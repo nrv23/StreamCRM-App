@@ -18,6 +18,8 @@ import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 import { env } from "../config/enviroment.ts";
 import { requirePermission } from "../shared/middleware/validate-role-manage-user.middleware.ts";
 import { InterfaceValidatorData } from "../shared/utils/interface-validator.ts";
+import { ISecretHasher } from "../interfaces/user/auhtcode-hash.interface.ts";
+import { HmacSecretHasher } from "../shared/utils/authCodeHash.ts";
 
 
 export class UserRoutes implements IRoutes {
@@ -27,6 +29,7 @@ export class UserRoutes implements IRoutes {
     private readonly _userService: UserService;
     private readonly _passwordHasher: Pbkdf2PasswordHasher;
     private readonly _tokenManager: TokenManager;
+    private readonly _secretHasher: ISecretHasher;
     private _router: Router;
     constructor(
 
@@ -34,10 +37,12 @@ export class UserRoutes implements IRoutes {
         this._passwordHasher = new Pbkdf2PasswordHasher();
         this._unitOfWork = new UnitOfWork();
         this._tokenManager = new TokenManager();
+        this._secretHasher = new HmacSecretHasher(env.two_factor_hmac_secret)
         this._userService = new UserService(
             this._unitOfWork,
             this._passwordHasher,
             this._tokenManager,
+            this._secretHasher,
             WinstonLogger.getInstance(
                 env.elastic_search_url,
                 'auth-module',

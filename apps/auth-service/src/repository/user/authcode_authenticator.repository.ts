@@ -31,6 +31,10 @@ export type IsLockedTwoFactorAuthenticator = {
     isLocked: boolean;
 }
 
+export type HasAnyAuthCodeByPurposeAndUserIdAndStatusResponse = {
+    hasAny: number;
+}
+
 export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateRepositpry {
 
     private _db: IDatabase;
@@ -49,10 +53,10 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
         if (!response) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
         return response;
     }
-    async getNewCodeAuthenticator(user_id: number, purpose: AuthCodePurpose): Promise<GetNewCodeAuthenticator> {
+    async getNewCodeAuthenticator(): Promise<GetNewCodeAuthenticator> {
 
-        const sql = 'select generate_auth_user_code($1,$2) as authcode;';
-        const [response] = await this._db.query<GetNewCodeAuthenticator>(sql, [user_id, purpose]);
+        const sql = 'select generate_auth_user_code() as authcode;';
+        const [response] = await this._db.query<GetNewCodeAuthenticator>(sql, []);
         if (!response || !response.authcode) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error getting new auth code');
         return response;
 
@@ -137,6 +141,14 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
         const sql = 'update users set two_factor_locked =  true, two_factor_locked_at = now(), two_factor_lock_reason = $1 where id = $2 returning id';
         const [response] = await this._db.query<SetStatusCodeAuthenticatorReponse>(sql, [reason, user_id]);
         if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error trying to lock 2fa ');
+    }
+
+    async hasAnyAuthCodeByPurposeAndUserIdAndStatus(user_id: number, purpose: AuthCodePurpose, status: AuthCodeStatus): Promise<HasAnyAuthCodeByPurposeAndUserIdAndStatusResponse> {
+
+        const sql = 'select count(1) as "hasAny" from auth_codes where user_id = $1 and purpose = $2 and status = $3';
+        const [response] = await this._db.query<HasAnyAuthCodeByPurposeAndUserIdAndStatusResponse>(sql, [user_id, purpose, status]);
+        if (!response || typeof response.hasAny === "undefined") throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
+        return response;
     }
 
 }

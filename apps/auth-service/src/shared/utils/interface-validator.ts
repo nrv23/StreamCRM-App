@@ -17,8 +17,8 @@ export class InterfaceValidatorData {
         return (
             typeof obj === 'object' &&
             obj !== null &&
-            'external_id' in obj &&
-            typeof (obj as AuthCodeDataResponse).external_id === 'string'
+            'challeneg_id' in obj &&
+            typeof (obj as AuthCodeDataResponse).challeneg_id === 'string'
         );
     }
 }

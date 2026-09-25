@@ -35,5 +35,6 @@ export interface IEnvConfig {
     refresh_token_ttl_days: number;
     session_ttl_days: number;
     jwt_secret: string;
+    two_factor_hmac_secret: string;
 }
 
