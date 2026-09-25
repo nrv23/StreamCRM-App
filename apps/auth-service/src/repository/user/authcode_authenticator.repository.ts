@@ -1,6 +1,7 @@
 import { databaseInstance } from "../../config/query.ts";
 import { CreateAuthCodeDto } from "../../dto/user/create-auth-code.dto.ts";
 import { AuthCode } from "../../entity/AuthCode.entity.ts";
+import { AuthCodePurpose } from "../../enum/AuthCodePurpose.enum.ts";
 import { AuthCodeStatus } from "../../enum/AuthCodeStatus.enum.ts";
 import { ApiErrorCode } from "../../enum/ErrorCodes.enum.ts";
 import { IDatabase } from "../../interfaces/database.interface.ts";
@@ -17,11 +18,29 @@ export type SetStatusCodeAuthenticatorReponse = {
     id: number;
 }
 
-export class _2FAuthenticatorRepository implements IDobleAuthenticateRepositpry {
+export type GetNewCodeAuthenticator = {
+    authcode: string;
+}
+
+export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateRepositpry {
 
     private _db: IDatabase;
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
+    }
+    isEnabledTwoFactorAuthenticator(user_id: number): Promise<boolean> {
+        throw new Error("Method not implemented.");
+    }
+    isLockedTwoFactorAuthenticator(user_id: number): Promise<boolean> {
+        throw new Error("Method not implemented.");
+    }
+    async getNewCodeAuthenticator(user_id: number, purpose: AuthCodePurpose): Promise<GetNewCodeAuthenticator> {
+
+        const sql = 'select generate_auth_user_code($1,$2) as authcode;';
+        const [response] = await this._db.query<GetNewCodeAuthenticator>(sql, [user_id, purpose]);
+        if (!response || !response.authcode) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error getting new auth code');
+        return response;
+
     }
 
     async saveCodeAuthenticator(dto: CreateAuthCodeDto): Promise<AuthCode> {
