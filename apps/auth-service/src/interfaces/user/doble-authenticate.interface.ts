@@ -9,5 +9,6 @@ export interface IDobleAuthenticateRepositpry {
     saveCodeAuthenticator(dto: CreateAuthCodeDto): Promise<AuthCode>;
     getCodeAuthenticatorData(external_id: string, user_id: number): Promise<GetCodeAuthenticatorDataResponse | undefined>;
     setStatusCodeAuthenticator(external_id: string, user_id: number, status: AuthCodeStatus): Promise<void>;
-    setAttemps(): Promise<void>
+    setAttemps(user_id: number, external_id: string): Promise<void>;
+    lockTwoFactorAuthenticator(reason: string, user_id: number): Promise<void>;
 }

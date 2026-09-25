@@ -8,12 +8,13 @@ import { IDobleAuthenticateRepositpry } from "../../interfaces/user/doble-authen
 import { ErrorFactory } from "../../shared/factory/error-factory.ts";
 
 export type GetCodeAuthenticatorDataResponse = {
-
-
+    authcode: string;
+    status: string;
+    attempts: number;
 };
 
 export type SetStatusCodeAuthenticatorReponse = {
-
+    id: number;
 }
 
 export class _2FAuthenticatorRepository implements IDobleAuthenticateRepositpry {
@@ -57,41 +58,51 @@ export class _2FAuthenticatorRepository implements IDobleAuthenticateRepositpry 
     async getCodeAuthenticatorData(external_id: string, user_id: number): Promise<GetCodeAuthenticatorDataResponse | undefined> {
 
         const sql = `
-        
-        select au.code_hash as authcode, au.status
-        from auth_codes au
-        inner join users u on u.id = au.user_id
-        where au.external_id = $1
-        and u.id = $2
+            select au.code_hash as authcode, au.status, au.attempts
+            from auth_codes au
+            inner join users u on u.id = au.user_id
+            where au.external_id = $1
+            and u.id = $2
         `;
 
         const [response] = await this._db.query<GetCodeAuthenticatorDataResponse>(sql, [external_id, user_id]);
         return response;
 
     }
-    setStatusCodeAuthenticator(external_id: string, user_id: number, status: AuthCodeStatus): Promise<void> {
+    async setStatusCodeAuthenticator(external_id: string, user_id: number, status: AuthCodeStatus): Promise<void> {
 
         let sql: string;
         switch (status) {
             case AuthCodeStatus.active:
-                sql = 'Update auth_codes set estado = $1, revoked_at=null, used_at= null where user_id = $3 and external_id = $4 returning id;';
+                sql = 'Update auth_codes set estado = $1, revoked_at=null, used_at= null where user_id = $2 and external_id = $3 returning id;';
                 break;
             case AuthCodeStatus.used:
-                sql = 'Update auth_codes set estado = $1, revoked_at=null, used_at= now() where user_id = $3 and external_id = $4 returning id;';
+                sql = 'Update auth_codes set estado = $1, revoked_at=null, used_at= now() where user_id = $2 and external_id = $3 returning id;';
                 break;
             case AuthCodeStatus.revoked:
-                sql = 'Update auth_codes set estado = $1, revoked_at=now(), used_at= null where user_id = $3 and external_id = $4 returning id;';
+                sql = 'Update auth_codes set estado = $1, revoked_at=now(), used_at= null where user_id = $2 and external_id = $3 returning id;';
                 break;
             case AuthCodeStatus.expired:
-                sql = 'Update auth_codes set estado = $1, revoked_at=null, used_at= null where user_id = $3 and external_id = $4 returning id;';
+                sql = 'Update auth_codes set estado = $1, revoked_at=null, used_at= null where user_id = $2 and external_id = $3 returning id;';
                 break;
             default:
                 throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, `AuthCodeStatus: ${status} not implemented`);
         }
 
-        const [response] = await this._db.query
+        const [response] = await this._db.query<SetStatusCodeAuthenticatorReponse>(sql, [status, user_id, external_id]);
+        if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error trying to set status authcode');
     }
-    setAttemps(): Promise<void> {
-        throw new Error("Method not implemented.");
+    async setAttemps(user_id: number, external_id: string): Promise<void> {
+        const sql = 'update auth_codes set attemps = attemps + 1 where user_id = $1 and external_id = $2 returning id';
+        const [response] = await this._db.query<SetStatusCodeAuthenticatorReponse>(sql, [user_id, external_id]);
+        if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error trying to set status authcode');
     }
+
+    async lockTwoFactorAuthenticator(reason: string, user_id: number): Promise<void> {
+
+        const sql = 'update users set two_factor_locked =  true, two_factor_locked_at = now(), two_factor_lock_reason = $1 where id = $2 returning id';
+        const [response] = await this._db.query<SetStatusCodeAuthenticatorReponse>(sql, [reason, user_id]);
+        if (!response || !response.id) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR, 'There was an error trying to lock 2fa ');
+    }
+
 }
