@@ -12,6 +12,7 @@ import { LoginDataResponse } from '../interfaces/user/login-data.interface.ts';
 import { IRefreshTokenResponse } from '../interfaces/session/refresh-token-data.interface.ts';
 import { AuthCodeDataResponse } from '../interfaces/user/authcode-data.interface.ts';
 import { InterfaceValidatorData } from '../shared/utils/interface-validator.ts';
+import { VerifyTwoFactorAuthenticateResponse } from '../interfaces/user/verify-two-factor-response.interface.ts';
 
 export class UserController {
 
@@ -200,10 +201,11 @@ export class UserController {
         const { challenge_id, auth_code } = req.body;
 
         const data = await this.userService.verifyTwoFactorAuthenticate(challenge_id, auth_code, ip_address, user_agent);
-        const response: ApiResponse<null> = {
+        const response: ApiResponse<VerifyTwoFactorAuthenticateResponse> = {
             success: true,
             response: {
-                message: "Se ha actualizado el estado del usuario"
+                message: "Verificacion exitosa",
+                details: data
             }
         };
         res.status(200).json(response);

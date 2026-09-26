@@ -10,7 +10,7 @@ import { ErrorFactory } from "../shared/factory/error-factory.ts";
 import { ApiErrorCode } from "../enum/ErrorCodes.enum.ts";
 import { IUserDataResponse } from "../interfaces/user/user-data.interface.ts";
 import { IUserDataPaginatedDto } from "../interfaces/user/user-data-paginated.interface.ts";
-import { CreateUserReponse, UserWithAccessResponse } from "../repository/user/user.repository.ts";
+import { CreateUserReponse, GetUserResponse, UserWithAccessResponse } from "../repository/user/user.repository.ts";
 import { IPaginationResponse } from "../interfaces/pagination.interface.ts";
 import { LoginDto } from "../dto/user/login.dto.ts";
 import { randomUUID } from "node:crypto";
@@ -29,6 +29,11 @@ import { AuthCodePurpose } from "../enum/AuthCodePurpose.enum.ts";
 import { AuthCodeChannel } from "../enum/AuthCodeChannel.enum.ts";
 import { ISecretHasher } from "../interfaces/user/auhtcode-hash.interface.ts";
 import { LockAuthCodeReasons } from "../enum/LockAuthCodeReasons.enum.ts";
+import { IUserRoleRepository } from "../interfaces/user/user-role-repository.interface.ts";
+import { IRolePermissionRepository } from "../interfaces/permission/role-permission.interface.ts";
+import { ISessionRepository } from "../interfaces/session/session-repository.interface.ts";
+import { IRefreshTokenRepository } from "../interfaces/session/refresh-token-repository.interface.ts";
+import { VerifyTwoFactorAuthenticateResponse } from "../interfaces/user/verify-two-factor-response.interface.ts";
 
 export class UserService {
 
@@ -237,6 +242,57 @@ export class UserService {
         return { external_id, authcode, authcodeid: response.id }
     }
 
+    private async createSession(
+        currentUser: GetUserResponse,
+        ip_address: string,
+        user_agent: string,
+        userRoles: IUserRoleRepository,
+        rolePermissions: IRolePermissionRepository,
+        sessions: ISessionRepository,
+        refreshTokens: IRefreshTokenRepository
+    ): Promise<LoginDataResponse> {
+        const session_id = randomUUID();
+        const session_expires_at = new Date(
+            Date.now() + env.session_ttl_days * 24 * 60 * 60 * 1000
+        );
+        const token_expires_at = Math.floor(Date.now() / 1000) + 15 * 60;
+        const refresh_token = this.tokenManager.refreshToken();
+
+        delete currentUser.password;
+
+        const [roles, permissions, token, _, __] = await Promise.all([
+            userRoles.getRolesByUserId(currentUser.id),
+            rolePermissions.getPermissionsByRoleIdAndUserId(currentUser.id),
+            this.tokenManager.sign({
+                sid: session_id,
+                uid: currentUser.id,
+                sub: currentUser.external_id
+            }),
+            sessions.save({
+                user_id: currentUser.id,
+                user_agent,
+                ip_address,
+                session_id,
+                expires_at: session_expires_at
+            }),
+            refreshTokens.save({
+                user_id: currentUser.id,
+                expires_at: session_expires_at,
+                session_id,
+                token_hash: refresh_token
+            })
+        ]);
+
+        return {
+            access_token: token,
+            refresh_token,
+            expires_at: token_expires_at,
+            user: currentUser,
+            roles,
+            permissions: permissions.map(permission => permission.code)
+        };
+    }
+
     async login(dto: LoginDto): Promise<LoginDataResponse | AuthCodeDataResponse> {
 
         return await this.unitOfWork.execute(async ({ users, userRoles, rolePermissions, sessions, refreshTokens, auditLogs, dobleFactorAuth }) => {
@@ -262,65 +318,31 @@ export class UserService {
 
             if (!isEnabled) {
 
-                const session_id = randomUUID();
-                const session_expires_at = new Date(
-                    Date.now() + env.session_ttl_days * 24 * 60 * 60 * 1000
+                const sessionData = await this.createSession(
+                    currentUser,
+                    dto.ip_address,
+                    dto.user_agent,
+                    userRoles,
+                    rolePermissions,
+                    sessions,
+                    refreshTokens
                 );
-                const token_expires_at = Math.floor(Date.now() / 1000) + 15 * 60;
-                const refresh_token = this.tokenManager.refreshToken();
-                // crear el token de sesion
 
-                // crear el registro de la session en la tabla sesiones para trazabilidad e historicos.
+                await auditLogs.save({
+                    entity_type: EntityType.USER,
+                    entity_id: currentUser.id,
+                    action: LOGIN_USER,
+                    user_id: currentUser.id,
+                    old_values: {
+                        email: dto.email,
+                        password: "xxxxxxxxxxxxxxxxxx"
+                    },
+                    new_values: {
 
-                delete currentUser.password;
-
-                const [roles, permissions, token, _, __] = await Promise.all([
-                    userRoles.getRolesByUserId(currentUser.id),
-                    rolePermissions.getPermissionsByRoleIdAndUserId(currentUser.id),
-                    this.tokenManager.sign({
-                        sid: session_id,
-                        uid: currentUser.id,
-                        sub: currentUser.external_id
-                    }),
-                    sessions.save({
-                        user_id: currentUser.id,
-                        user_agent: dto.user_agent,
-                        ip_address: dto.ip_address,
-                        session_id,
-                        expires_at: session_expires_at
-                    }),
-                    refreshTokens.save({
-                        user_id: currentUser.id,
-                        expires_at: session_expires_at,
-                        session_id,
-                        token_hash: refresh_token
-                    }),
-                    auditLogs.save({
-                        entity_type: EntityType.USER,
-                        entity_id: currentUser.id,
-                        action: LOGIN_USER,
-                        user_id: currentUser.id,
-                        old_values: {
-                            email: dto.email,
-                            password: "xxxxxxxxxxxxxxxxxx"
-                        },
-                        new_values: {
-
-                        },
-                        user_agent: dto.user_agent,
-                        ip_address: dto.ip_address,
-                    })
-                ]);
-
-
-                const response: LoginDataResponse = {
-                    access_token: token,
-                    refresh_token,
-                    expires_at: token_expires_at,
-                    user: currentUser,
-                    roles,
-                    permissions: permissions.map(permission => permission.code)
-                }
+                    },
+                    user_agent: dto.user_agent,
+                    ip_address: dto.ip_address,
+                });
 
                 const log: ILogMetadata = {
                     service: env.service_name,
@@ -330,14 +352,14 @@ export class UserService {
                     route: 'api/v1/users/login',
                     created_at: new Date().toISOString(),
                     payload: {
-                        user: response.user,
-                        roles: JSON.stringify(response.roles),
-                        permissions: JSON.stringify(response.permissions)
+                        user: sessionData.user,
+                        roles: JSON.stringify(sessionData.roles),
+                        permissions: JSON.stringify(sessionData.permissions)
                     }
                 };
 
                 this._logger.info('login user', log);
-                return response;
+                return sessionData;
 
             }
 
@@ -529,8 +551,9 @@ export class UserService {
 
     async verifyTwoFactorAuthenticate(
         challenge_id: string, auth_code: string, ip_address: string, user_agent: string
-    ) {
-        const dataResponse = await this.unitOfWork.execute(async ({ users, dobleFactorAuth }) => {
+    ): Promise<VerifyTwoFactorAuthenticateResponse> {
+        const dataResponse = await this.unitOfWork.execute(async ({ users, dobleFactorAuth, userRoles, rolePermissions, sessions, refreshTokens }) => {
+            let response: VerifyTwoFactorAuthenticateResponse;
 
             const currentAuthCode = await dobleFactorAuth.getCodeAuthenticatorData(challenge_id, AuthCodePurpose.login_2fa);
 
@@ -540,7 +563,8 @@ export class UserService {
             if (currentAuthCode.expired) {
                 // marcar codigo como vencido y confirmar en bd
                 await dobleFactorAuth.setStatusCodeAuthenticator(challenge_id, currentAuthCode.user_id, AuthCodeStatus.expired);
-                return { success: false, expired: true, maxAttempsFailed: false, attemptsLeft: 0 };
+                response = { success: false, expired: true, maxAttempsFailed: false, attemptsLeft: 0 };
+                return response;
             }
 
             const currentUser = await users.findbyId(currentAuthCode.user_id);
@@ -564,12 +588,14 @@ export class UserService {
                     return { success: false, expired: false, maxAttempsFailed: true, attemptsLeft: 0 };
                 }
 
-                return {
+                response = {
                     success: false,
                     expired: false,
                     maxAttempsFailed: false,
                     attemptsLeft: 3 - totalAttempts
                 };
+
+                return response;
             }
 
             // codigo correcto: se pasa a usado
@@ -578,15 +604,25 @@ export class UserService {
 
 
             // el codigo se pasa a usado, se guarda el log, se crea token con access token, sesion y devuelve respuesta
+            const sessionData = await this.createSession(
+                currentUser,
+                ip_address,
+                user_agent,
+                userRoles,
+                rolePermissions,
+                sessions,
+                refreshTokens
+            );
 
-
-            return {
+            response = {
                 success: true,
                 expired: false,
                 maxAttempsFailed: false,
                 attemptsLeft: 0,
-                user: currentUser
+                loginData: sessionData
             };
+
+            return response;
         });
 
         if (!dataResponse.success) {
