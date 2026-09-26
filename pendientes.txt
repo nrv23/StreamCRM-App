@@ -12,3 +12,5 @@ OpenTelemetry
 agregar funciones de postgresql en buscadores de notification service
 Pendiente en auth service crear endpoint para actualizar permisos de usuario
 agregar los roles completos con sus permisos en la bd
+
+agregar en auth service los eventos para rabbitmq para notificacion service y gateway
