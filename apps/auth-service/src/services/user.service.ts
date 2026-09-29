@@ -34,6 +34,7 @@ import { IRolePermissionRepository } from "../interfaces/permission/role-permiss
 import { ISessionRepository } from "../interfaces/session/session-repository.interface.ts";
 import { IRefreshTokenRepository } from "../interfaces/session/refresh-token-repository.interface.ts";
 import { VerifyTwoFactorAuthenticateResponse } from "../interfaces/user/verify-two-factor-response.interface.ts";
+import { RegenerateTowFactorAuthenticateResponse } from "../interfaces/user/regenerate-two-factor-authenticate.interface.ts";
 
 export class UserService {
 
@@ -667,18 +668,33 @@ export class UserService {
 
     async regenerateTwoFactorAuthenticate(
         challenge_id: string, ip_address: string, user_agent: string
-    ) {
+    ): Promise<RegenerateTowFactorAuthenticateResponse> {
 
         return await this.unitOfWork.execute(async ({
             dobleFactorAuth, users, events, auditLogs
         }) => {
 
             const currentAuthCode = await dobleFactorAuth.getCodeAuthenticatorData(challenge_id, AuthCodePurpose.login_2fa);
-            if (!currentAuthCode) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Invalid challengeId');
-            if (currentAuthCode.status !== AuthCodeStatus.active) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'ChallengeId expired');
 
+            if (!currentAuthCode) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Invalid challengeId');
+            // consultar a chatgpt este parte si debe estar activo y no expirado
+            if (currentAuthCode.status !== AuthCodeStatus.active) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'ChallengeId expired');
+            if (currentAuthCode.expired) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'challengeId is not available');
+            // -----------------------------------------------------------------
             const currentUser = await users.findbyId(currentAuthCode.user_id);
             if (!currentUser) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Invalid challengeId');
+
+            const [{ isEnabled }, { isLocked }] = await Promise.all([
+                dobleFactorAuth.isEnabledTwoFactorAuthenticator(currentUser.id),
+                dobleFactorAuth.isLockedTwoFactorAuthenticator(currentUser.id)
+            ]);
+
+            if (!isEnabled) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Two Factor authenticator is not enable');
+            if (isLocked) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Two Factor authenticator is locked');
+
+            // revoko el actual
+
+            await dobleFactorAuth.setStatusCodeAuthenticator(challenge_id, currentUser.id, AuthCodeStatus.revoked);
 
             const { authcodeid, authcode, external_id } = await this.createAuthCode(currentUser.id, dobleFactorAuth); // crea notificacion listen/notify postgres
 
@@ -724,7 +740,13 @@ export class UserService {
                         version: env.api_version,
                     },
                 }),
-            ])
+            ]);
+
+            const response: RegenerateTowFactorAuthenticateResponse = {
+                external_id
+            };
+
+            return response;
         })
     }
 }

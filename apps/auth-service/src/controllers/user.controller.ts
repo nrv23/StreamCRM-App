@@ -13,6 +13,7 @@ import { IRefreshTokenResponse } from '../interfaces/session/refresh-token-data.
 import { AuthCodeDataResponse } from '../interfaces/user/authcode-data.interface.ts';
 import { InterfaceValidatorData } from '../shared/utils/interface-validator.ts';
 import { VerifyTwoFactorAuthenticateResponse } from '../interfaces/user/verify-two-factor-response.interface.ts';
+import { RegenerateTowFactorAuthenticateResponse } from '../interfaces/user/regenerate-two-factor-authenticate.interface.ts';
 
 export class UserController {
 
@@ -217,14 +218,15 @@ export class UserController {
         const { user_agent, ip_address } = req.requestDataInfo;
         const { challenge_id } = req.body;
 
-        await this.userService.regenerateTwoFactorAuthenticate(challenge_id, ip_address, user_agent);
-        const response: ApiResponse<null> = {
+        const data = await this.userService.regenerateTwoFactorAuthenticate(challenge_id, ip_address, user_agent);
+        const response: ApiResponse<RegenerateTowFactorAuthenticateResponse> = {
             success: true,
             response: {
-                message: "Se ha enviado un codigo de autenticacion al correo asociado"
+                message: "Se ha enviado un codigo de autenticacion al correo asociado",
+                details: data
             }
         };
-        res.status(200).json(response);
+        res.status(201).json(response);
         return;
     }
 } 
