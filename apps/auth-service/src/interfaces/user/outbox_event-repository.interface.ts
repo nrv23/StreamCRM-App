@@ -12,4 +12,5 @@ export interface IOutboxEventsRepository {
         eventId: string,
         error: string,
     ): Promise<void>;
+    markAsProcessing(eventId: string): Promise<void>;
 }
