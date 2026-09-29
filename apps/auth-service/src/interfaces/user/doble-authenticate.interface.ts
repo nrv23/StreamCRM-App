@@ -17,4 +17,5 @@ export interface IDobleAuthenticateRepositpry {
     isEnabledTwoFactorAuthenticator(user_id: number): Promise<IsEnabledTwoFactorAuthenticator>;
     isLockedTwoFactorAuthenticator(user_id: number): Promise<IsLockedTwoFactorAuthenticator>;
     hasAnyAuthCodeByPurposeAndUserIdAndStatus(user_id: number, purpose: AuthCodePurpose, status: AuthCodeStatus): Promise<HasAnyAuthCodeByPurposeAndUserIdAndStatusResponse>;
+    revokeAllActiveAuthCodesByUserId(user_id: number): Promise<void>;
 }

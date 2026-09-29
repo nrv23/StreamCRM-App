@@ -21,6 +21,7 @@ import { InterfaceValidatorData } from "../shared/utils/interface-validator.ts";
 import { ISecretHasher } from "../interfaces/user/auhtcode-hash.interface.ts";
 import { HmacSecretHasher } from "../shared/utils/authCodeHash.ts";
 import { verifyAuthCodeAuthenticatorValidator } from "../validators/auth/verify-auth-code.validator.ts";
+import { regenerateAuthCodeAuthenticatorValidator } from "../validators/auth/regenerate-auth-code.validator.ts";
 
 
 export class UserRoutes implements IRoutes {
@@ -64,8 +65,9 @@ export class UserRoutes implements IRoutes {
         this._router.post('/logout', logoutValidator, validateRequest, this._userController.logout.bind(this._userController));
         this._router.patch('/status/:id', validateToken, SetStatusUserValidator, validateRequest, this._userController.setStatus.bind(this._userController));
 
-        // routes para valiar y reenviar el 2fa
+        // routes para valiar y reenviar el 2fa 
         this._router.post('/2fa/verify', verifyAuthCodeAuthenticatorValidator, validateRequest, this._userController.verifyAuthCodeAuthenticator.bind(this._userController));
+        this._router.post('/2fa/resend', regenerateAuthCodeAuthenticatorValidator, validateRequest, this._userController.regenerateAuthCodeAuthenticator.bind(this._userController));
 
         return this._router;
     }

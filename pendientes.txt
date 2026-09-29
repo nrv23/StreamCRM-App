@@ -15,3 +15,5 @@ agregar los roles completos con sus permisos en la bd
 
 agregar en auth service los eventos para rabbitmq para notificacion service y gateway
 revisar el modulo RBAC 
+en el metood logout revokar codigos 2fa activos por usuario logueado
+terminar el resend

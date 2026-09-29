@@ -44,6 +44,7 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
         this._db = db ?? databaseInstance;
     }
 
+
     async isEnabledTwoFactorAuthenticator(user_id: number): Promise<IsEnabledTwoFactorAuthenticator> {
         const sql = 'select two_factor_enabled as "isEnabled" from users where id = $1 ';
         const [response] = await this._db.query<IsEnabledTwoFactorAuthenticator>(sql, [user_id]);
@@ -166,6 +167,11 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
         const [response] = await this._db.query<HasAnyAuthCodeByPurposeAndUserIdAndStatusResponse>(sql, [user_id, purpose, status]);
         if (!response || typeof response.hasAny === "undefined") throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
         return response;
+    }
+
+    async revokeAllActiveAuthCodesByUserId(user_id: number): Promise<void> {
+        const sql = 'update auth_codes set status = $1, revoked_at = now() where user_id = $2 and status = $3';
+        await this._db.query(sql, [AuthCodeStatus.revoked, user_id, AuthCodeStatus.active])
     }
 
 }

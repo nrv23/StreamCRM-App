@@ -211,4 +211,20 @@ export class UserController {
         res.status(200).json(response);
         return;
     }
+
+    async regenerateAuthCodeAuthenticator(req: Request, res: Response) {
+
+        const { user_agent, ip_address } = req.requestDataInfo;
+        const { challenge_id } = req.body;
+
+        await this.userService.regenerateTwoFactorAuthenticate(challenge_id, ip_address, user_agent);
+        const response: ApiResponse<null> = {
+            success: true,
+            response: {
+                message: "Se ha enviado un codigo de autenticacion al correo asociado"
+            }
+        };
+        res.status(200).json(response);
+        return;
+    }
 } 

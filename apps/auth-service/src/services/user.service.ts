@@ -295,7 +295,7 @@ export class UserService {
 
     async login(dto: LoginDto): Promise<LoginDataResponse | AuthCodeDataResponse> {
 
-        return await this.unitOfWork.execute(async ({ users, userRoles, rolePermissions, sessions, refreshTokens, auditLogs, dobleFactorAuth }) => {
+        return await this.unitOfWork.execute(async ({ users, userRoles, rolePermissions, sessions, refreshTokens, auditLogs, dobleFactorAuth, events }) => {
 
             const currentUser = await users.findbyEmail(dto.email);
 
@@ -368,24 +368,50 @@ export class UserService {
             if (+hasAny) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'The current user has already auth code autenticator active');
 
             const { external_id, authcode, authcodeid } = await this.createAuthCode(currentUser.id, dobleFactorAuth);
-            await auditLogs.save({
-                entity_type: EntityType.AUTHCODE,
-                entity_id: authcodeid,
-                action: NEW_AUTH_CODE,
-                user_id: currentUser.id,
-                old_values: {
-                },
-                new_values: {
-                    auth_code_external_id: external_id,
-                    authcode,
-                    status: AuthCodeStatus.active,
-                    purpose: AuthCodePurpose.login_2fa,
-                    channel: AuthCodeChannel.email,
-                },
-                user_agent: dto.user_agent,
-                ip_address: dto.ip_address,
-            })
+            const event_id = randomUUID();
+            await Promise.all([
+                auditLogs.save({
+                    entity_type: EntityType.AUTHCODE,
+                    entity_id: authcodeid,
+                    action: NEW_AUTH_CODE,
+                    user_id: currentUser.id,
+                    old_values: {
+                    },
+                    new_values: {
+                        auth_code_external_id: external_id,
+                        authcode,
+                        status: AuthCodeStatus.active,
+                        purpose: AuthCodePurpose.login_2fa,
+                        channel: AuthCodeChannel.email,
+                    },
+                    user_agent: dto.user_agent,
+                    ip_address: dto.ip_address,
+                }),
+                events.save({
+                    event_id,
+                    event_name: LOGIN_USER,
+                    aggregate_id: currentUser.id,
+                    aggregate_type: EntityType.USER,
 
+                    payload: {
+                        firstName: currentUser.first_name,
+                        lastName: currentUser.last_name,
+                        email: currentUser.email,
+                        phone: null,
+                        user_id: currentUser.id,
+                        event: LOGIN_USER,
+                        twoFactorPurpose: AuthCodePurpose.login_2fa,
+                        status: currentUser.status!,
+                        channel: AuthCodeChannel.email,
+                        authcode
+                    },
+
+                    headers: {
+                        source: env.service_name,
+                        version: env.api_version,
+                    },
+                }),
+            ])
             const response: AuthCodeDataResponse = {
                 challeneg_id: external_id,
                 requires_2fa: true,
@@ -457,7 +483,7 @@ export class UserService {
     }
 
     async logout(refreshToken: string, ip_address: string, user_agent: string) {
-        return await this.unitOfWork.execute(async ({ refreshTokens, sessions, auditLogs }) => {
+        return await this.unitOfWork.execute(async ({ refreshTokens, sessions, auditLogs, dobleFactorAuth }) => {
 
             const currentRefreshToken = await refreshTokens.getCurrentRefreshToken(refreshToken);
             if (!currentRefreshToken) throw ErrorFactory.build(ApiErrorCode.BAD_REQUEST, 'Invalid refresh token');
@@ -470,6 +496,7 @@ export class UserService {
             await Promise.all([
                 refreshTokens.revoke(refreshToken, RefreshTokenStatus.revoked),
                 sessions.revoke(currentSession.session_id),
+                dobleFactorAuth.revokeAllActiveAuthCodesByUserId(currentRefreshToken.user_id),
                 auditLogs.save({
                     entity_type: EntityType.USER,
                     entity_id: currentRefreshToken.user_id,
@@ -601,8 +628,6 @@ export class UserService {
             // codigo correcto: se pasa a usado
             await dobleFactorAuth.setStatusCodeAuthenticator(challenge_id, currentUser.id, AuthCodeStatus.used);
 
-
-
             // el codigo se pasa a usado, se guarda el log, se crea token con access token, sesion y devuelve respuesta
             const sessionData = await this.createSession(
                 currentUser,
@@ -636,5 +661,70 @@ export class UserService {
         }
 
         return dataResponse;
+    }
+
+    // generar nuevo 2fa
+
+    async regenerateTwoFactorAuthenticate(
+        challenge_id: string, ip_address: string, user_agent: string
+    ) {
+
+        return await this.unitOfWork.execute(async ({
+            dobleFactorAuth, users, events, auditLogs
+        }) => {
+
+            const currentAuthCode = await dobleFactorAuth.getCodeAuthenticatorData(challenge_id, AuthCodePurpose.login_2fa);
+            if (!currentAuthCode) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Invalid challengeId');
+            if (currentAuthCode.status !== AuthCodeStatus.active) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'ChallengeId expired');
+
+            const currentUser = await users.findbyId(currentAuthCode.user_id);
+            if (!currentUser) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Invalid challengeId');
+
+            const { authcodeid, authcode, external_id } = await this.createAuthCode(currentUser.id, dobleFactorAuth); // crea notificacion listen/notify postgres
+
+            await Promise.all([
+                auditLogs.save({
+                    entity_type: EntityType.AUTHCODE,
+                    entity_id: authcodeid,
+                    action: NEW_AUTH_CODE,
+                    user_id: currentUser.id,
+                    old_values: {
+                    },
+                    new_values: {
+                        auth_code_external_id: external_id,
+                        authcode,
+                        status: AuthCodeStatus.active,
+                        purpose: AuthCodePurpose.login_2fa,
+                        channel: AuthCodeChannel.email,
+                    },
+                    user_agent: user_agent,
+                    ip_address: ip_address,
+                }),
+                events.save({
+                    event_id: external_id,
+                    event_name: LOGIN_USER,
+                    aggregate_id: currentUser.id,
+                    aggregate_type: EntityType.USER,
+
+                    payload: {
+                        firstName: currentUser.first_name,
+                        lastName: currentUser.last_name,
+                        email: currentUser.email,
+                        phone: null,
+                        user_id: currentUser.id,
+                        event: LOGIN_USER,
+                        twoFactorPurpose: AuthCodePurpose.login_2fa,
+                        status: currentUser.status!,
+                        channel: AuthCodeChannel.email,
+                        authcode
+                    },
+
+                    headers: {
+                        source: env.service_name,
+                        version: env.api_version,
+                    },
+                }),
+            ])
+        })
     }
 }
