@@ -2,7 +2,7 @@ import { UnitOfWork } from "../config/unitOfWork.ts";
 import { CreateUserDto } from "../dto/user/create-user.dto.ts";
 import { IPasswordHasher } from "../interfaces/password-hasher.interface.ts";
 import { ROLE_PERMISSION_POLICY } from "../shared/utils/rolePermissionDefault.ts";
-import { CHANGE_USER_STATUS, CREATE_USER, GET_ME, GET_USERS, LOGIN_USER, LOGOUT_USER, NEW_AUTH_CODE } from "../shared/types/events.type.ts";
+import { AUTH_OUTBOX_EVENTS, CHANGE_USER_STATUS, CREATE_USER, GET_ME, GET_USERS, LOGIN_USER, LOGOUT_USER, NEW_AUTH_CODE } from "../shared/types/events.type.ts";
 import { env } from "../config/enviroment.ts";
 import { EntityType } from "../enum/EntityType.enum.ts";
 import { UserStatus } from "../enum/UserStatus.enum.ts";
@@ -35,6 +35,7 @@ import { ISessionRepository } from "../interfaces/session/session-repository.int
 import { IRefreshTokenRepository } from "../interfaces/session/refresh-token-repository.interface.ts";
 import { VerifyTwoFactorAuthenticateResponse } from "../interfaces/user/verify-two-factor-response.interface.ts";
 import { RegenerateTowFactorAuthenticateResponse } from "../interfaces/user/regenerate-two-factor-authenticate.interface.ts";
+import { createEventDto } from "../dto/event/create-event.dto.ts";
 
 export class UserService {
 
@@ -369,7 +370,29 @@ export class UserService {
             if (+hasAny) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'The current user has already auth code autenticator active');
 
             const { external_id, authcode, authcodeid } = await this.createAuthCode(currentUser.id, dobleFactorAuth);
-            const event_id = randomUUID();
+            // const event_id = randomUUID();
+            const event: createEventDto = {
+                event_id: external_id,
+                event_name: LOGIN_USER,
+                aggregate_id: authcodeid,
+                aggregate_type: EntityType.AUTHCODE,
+                payload: {
+                    firstName: currentUser.first_name,
+                    lastName: currentUser.last_name,
+                    email: currentUser.email,
+                    phone: null,
+                    user_id: currentUser.id,
+                    event: LOGIN_USER,
+                    twoFactorPurpose: AuthCodePurpose.login_2fa,
+                    status: currentUser.status!,
+                    channel: AuthCodeChannel.email,
+                    authcode
+                },
+                headers: {
+                    source: env.service_name,
+                    version: env.api_version,
+                },
+            }
             await Promise.all([
                 auditLogs.save({
                     entity_type: EntityType.AUTHCODE,
@@ -388,31 +411,9 @@ export class UserService {
                     user_agent: dto.user_agent,
                     ip_address: dto.ip_address,
                 }),
-                events.save({
-                    event_id,
-                    event_name: LOGIN_USER,
-                    aggregate_id: currentUser.id,
-                    aggregate_type: EntityType.USER,
-
-                    payload: {
-                        firstName: currentUser.first_name,
-                        lastName: currentUser.last_name,
-                        email: currentUser.email,
-                        phone: null,
-                        user_id: currentUser.id,
-                        event: LOGIN_USER,
-                        twoFactorPurpose: AuthCodePurpose.login_2fa,
-                        status: currentUser.status!,
-                        channel: AuthCodeChannel.email,
-                        authcode
-                    },
-
-                    headers: {
-                        source: env.service_name,
-                        version: env.api_version,
-                    },
-                }),
-            ])
+                events.save(event),
+                dobleFactorAuth.notify(event, AUTH_OUTBOX_EVENTS)
+            ]);
             const response: AuthCodeDataResponse = {
                 challeneg_id: external_id,
                 requires_2fa: true,
@@ -697,7 +698,30 @@ export class UserService {
             await dobleFactorAuth.setStatusCodeAuthenticator(challenge_id, currentUser.id, AuthCodeStatus.revoked);
 
             const { authcodeid, authcode, external_id } = await this.createAuthCode(currentUser.id, dobleFactorAuth); // crea notificacion listen/notify postgres
+            const event: createEventDto = {
+                event_id: external_id,
+                event_name: LOGIN_USER,
+                aggregate_id: authcodeid,
+                aggregate_type: EntityType.AUTHCODE,
 
+                payload: {
+                    firstName: currentUser.first_name,
+                    lastName: currentUser.last_name,
+                    email: currentUser.email,
+                    phone: null,
+                    user_id: currentUser.id,
+                    event: LOGIN_USER,
+                    twoFactorPurpose: AuthCodePurpose.login_2fa,
+                    status: currentUser.status!,
+                    channel: AuthCodeChannel.email,
+                    authcode
+                },
+
+                headers: {
+                    source: env.service_name,
+                    version: env.api_version,
+                },
+            };
             await Promise.all([
                 auditLogs.save({
                     entity_type: EntityType.AUTHCODE,
@@ -716,30 +740,8 @@ export class UserService {
                     user_agent: user_agent,
                     ip_address: ip_address,
                 }),
-                events.save({
-                    event_id: external_id,
-                    event_name: LOGIN_USER,
-                    aggregate_id: currentUser.id,
-                    aggregate_type: EntityType.USER,
-
-                    payload: {
-                        firstName: currentUser.first_name,
-                        lastName: currentUser.last_name,
-                        email: currentUser.email,
-                        phone: null,
-                        user_id: currentUser.id,
-                        event: LOGIN_USER,
-                        twoFactorPurpose: AuthCodePurpose.login_2fa,
-                        status: currentUser.status!,
-                        channel: AuthCodeChannel.email,
-                        authcode
-                    },
-
-                    headers: {
-                        source: env.service_name,
-                        version: env.api_version,
-                    },
-                }),
+                events.save(event),
+                dobleFactorAuth.notify(event, AUTH_OUTBOX_EVENTS)
             ]);
 
             const response: RegenerateTowFactorAuthenticateResponse = {

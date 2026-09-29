@@ -1,4 +1,5 @@
 import { databaseInstance } from "../../config/query.ts";
+import { createEventDto } from "../../dto/event/create-event.dto.ts";
 import { CreateAuthCodeDto } from "../../dto/user/create-auth-code.dto.ts";
 import { AuthCode } from "../../entity/AuthCode.entity.ts";
 import { AuthCodePurpose } from "../../enum/AuthCodePurpose.enum.ts";
@@ -43,7 +44,6 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
     }
-
 
     async isEnabledTwoFactorAuthenticator(user_id: number): Promise<IsEnabledTwoFactorAuthenticator> {
         const sql = 'select two_factor_enabled as "isEnabled" from users where id = $1 ';
@@ -172,6 +172,16 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
     async revokeAllActiveAuthCodesByUserId(user_id: number): Promise<void> {
         const sql = 'update auth_codes set status = $1, revoked_at = now() where user_id = $2 and status = $3';
         await this._db.query(sql, [AuthCodeStatus.revoked, user_id, AuthCodeStatus.active])
+    }
+
+    async notify(dto: createEventDto, event: string): Promise<void> {
+        const sql = `
+            SELECT pg_notify(
+                $1,
+                $2
+            );
+       `;
+        await this._db.query(sql, [event, dto]);
     }
 
 }

@@ -11,3 +11,19 @@ git for-each-ref --sort=-committerdate refs/heads/ \
   No se puede reutilizar conexiones de rabbitmq de un main process a un worker thread o child process.
   Cada uno tiene su contexto de procesamiento e instancia propia
 
+
+flujo de login:
+
+si 2fa no hablitado:
+ retornar response del login con token, access token y sesion 
+Si 2fa bloqueado:
+  mostrar mensaje de error 
+si 2fa enable 
+  devolver challengeid y codigo 
+endpoint de verificar
+ vieirifca y envia notificacion
+ marca como usado el challengeid
+endpoint de resend
+ revoka el challengeid actual
+ crea uno nuevo
+ retorna solo challengeid

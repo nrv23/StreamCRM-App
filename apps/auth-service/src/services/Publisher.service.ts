@@ -17,9 +17,10 @@ export class PublishPendingEventsUseCase {
         if (!events.length) return false;
         for (const event of events) {
             try {
+
                 await this._eventPublisher.publish(event);
                 await this._outboxRepository.markAsPublished(
-                    event.id,
+                    event.id!,
                 );
             } catch (error) {
                 const message =

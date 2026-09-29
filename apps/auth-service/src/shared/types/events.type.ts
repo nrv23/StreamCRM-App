@@ -15,4 +15,7 @@ export const CREATE_ROLE = 'role.create';
 // db events
 export const DB_CONNECTED = "db_connected";
 
+// auth constant events
+
+export const AUTH_OUTBOX_EVENTS = 'auth_outbox_events';
 

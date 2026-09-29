@@ -8,7 +8,8 @@ import { env }
 import { PublishPendingEventsUseCase }
     from "../../services/Publisher.service.js";
 import { RabbitEventPublisher } from "../../publisher/RabbitEvent.publisher.ts";
-import { rabbitMQClient } from "../../config/raabbitmq.ts";
+import { rabbitMQClient } from "../../config/rabbitmqClient.ts";
+
 //import './consumer/consumer-bootstrap.ts';
 
 

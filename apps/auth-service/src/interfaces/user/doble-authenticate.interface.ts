@@ -1,3 +1,4 @@
+import { createEventDto } from "../../dto/event/create-event.dto.ts";
 import { CreateAuthCodeDto } from "../../dto/user/create-auth-code.dto.ts";
 import { AuthCode } from "../../entity/AuthCode.entity.ts";
 import { AuthCodePurpose } from "../../enum/AuthCodePurpose.enum.ts";
@@ -18,4 +19,5 @@ export interface IDobleAuthenticateRepositpry {
     isLockedTwoFactorAuthenticator(user_id: number): Promise<IsLockedTwoFactorAuthenticator>;
     hasAnyAuthCodeByPurposeAndUserIdAndStatus(user_id: number, purpose: AuthCodePurpose, status: AuthCodeStatus): Promise<HasAnyAuthCodeByPurposeAndUserIdAndStatusResponse>;
     revokeAllActiveAuthCodesByUserId(user_id: number): Promise<void>;
+    notify(dto: createEventDto, event: string): Promise<void>;
 }
