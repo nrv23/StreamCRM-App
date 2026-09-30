@@ -38,7 +38,7 @@ export class OutboxEventRepository implements IOutboxEventsRepository {
             `outbox_events with id ${eventId} not found`
         );
     }
-    async markAsPublished(eventId: number): Promise<void> {
+    async markAsPublished(eventId: string): Promise<void> {
 
         const query = `
             update outbox_events set status = $1, published_at = now(), last_error = null,

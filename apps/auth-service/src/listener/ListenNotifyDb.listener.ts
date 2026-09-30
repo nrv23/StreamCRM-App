@@ -53,7 +53,7 @@ export class ListenNotifyDb implements IListenNotify<createEventDto> {
                     created_at: new Date().toISOString(), // crear un enum
                 })
 
-                await this._outboxEventRepository.markAsPublished(event.id!);
+                await this._outboxEventRepository.markAsPublished(event.event_id);
 
             } catch (error) {
                 const errMessage = error instanceof Error ? error.message : String(error);
