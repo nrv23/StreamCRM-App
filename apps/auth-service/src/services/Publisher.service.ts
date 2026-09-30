@@ -18,6 +18,9 @@ export class PublishPendingEventsUseCase {
         for (const event of events) {
             try {
 
+                await this._outboxRepository.markAsProcessing(
+                    event.event_id,
+                );
                 await this._eventPublisher.publish(event);
                 await this._outboxRepository.markAsPublished(
                     event.event_id,
