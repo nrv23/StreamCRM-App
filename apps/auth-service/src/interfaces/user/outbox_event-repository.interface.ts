@@ -6,10 +6,11 @@ export interface IOutboxEventsRepository {
     save(event: createEventDto): Promise<OutBoxEvent>;
     findPending(limit: number): Promise<OutBoxEvent[]>;
     markAsPublished(
-        eventId: number,
+        eventId: string,
     ): Promise<void>;
     markAsFailed(
         eventId: string,
         error: string,
     ): Promise<void>;
+    markAsProcessing(eventId: string): Promise<void>;
 }

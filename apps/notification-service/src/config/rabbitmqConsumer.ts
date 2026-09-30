@@ -84,6 +84,11 @@ export class RabbitMQConsumer {
             'customer.#'
         );
 
+        await this.channel.bindQueue(
+            this.queueName,
+            this._exchange,
+            'user.#'
+        );
 
         // cola dql 
 

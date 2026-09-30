@@ -54,7 +54,8 @@ const validatedEnv = cleanEnv(process.env, {
         default: '12345'
     }),
     REDIS_USERNAME: str(),
-    REDIS_MAX_RETRIES_PER_REQUEST: num()
+    REDIS_MAX_RETRIES_PER_REQUEST: num(),
+    MAIL_SEND_API_KEY: str()
 });
 
 export const env: IEnvConfig = {
@@ -100,5 +101,8 @@ export const env: IEnvConfig = {
         redis_username: validatedEnv.REDIS_USERNAME,
         redis_password: validatedEnv.REDIS_PASSWORD,
         redis_max_retries_per_request: validatedEnv.REDIS_MAX_RETRIES_PER_REQUEST
+    },
+    mailsend: {
+        api_key: validatedEnv.MAIL_SEND_API_KEY
     }
 };

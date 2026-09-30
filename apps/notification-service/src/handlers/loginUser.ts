@@ -1,0 +1,55 @@
+import { CreateNotificationDto } from "../dto/notifications/create-notification.dto.ts";
+import { RabbitEventDto } from "../dto/outboxEvents/rabbitEvent.dto.ts";
+import { BaseNotificationEventHandler, CreateNotificationBodyDataResponse } from "./baseNotificationEventHandler.ts";
+import { NotificationCommand } from "../enum/Notification-Command.enum.ts";
+import { INotificationCommand } from "../interfaces/notification-command.interface.ts";
+import { NotificationStatus } from "../enum/notification-status.enum.ts";
+import { NotificationType } from "../enum/notification-type.enum.ts";
+import { UnitOfWork } from "../config/unitOfWork.ts";
+import { ISocketPublisher } from "../interfaces/publisher/SocketPublisher.interface.ts";
+import { IRedisEmitter } from "../interfaces/publisher/RedisEmitter.publisher.ts";
+
+export class LoginUserHandler extends BaseNotificationEventHandler<RabbitEventDto> {
+
+    // AQUÍ INYECTAS TUS DEPENDENCIAS
+    constructor(
+        public unitOfWork: UnitOfWork,
+        public emitter: IRedisEmitter,
+        public limit: number
+
+    ) {
+        // Y se las pasas a la clase base, para que ella pueda guardar en BD
+        super(unitOfWork, limit, emitter)
+    }
+
+    // Ya NO necesitas escribir el método handle() aquí, porque lo heredas del padre.
+    // Solo te preocupas por definir QUÉ se va a guardar:
+    protected createNotification(event: RabbitEventDto): CreateNotificationDto {
+        return {
+            external_id: event.external_id,
+            eventId: event.event_id,
+            eventName: event.event_name,
+            userId: +event.payload.user_id!,
+            title: 'StreamCRM - 2FA Code',
+            message: `Authentication code:  <b>${event.payload.authcode} </b>`,
+            type: NotificationType.INFO,
+            status: NotificationStatus.PENDING,
+            metadata: event.payload
+        };
+    }
+
+    protected createNotificationDeliveryBody(event: RabbitEventDto, notification_id: number): CreateNotificationBodyDataResponse[] {
+        const newNotificationDeliveries: CreateNotificationBodyDataResponse[] = [];
+        if (event.payload.email) newNotificationDeliveries.push({
+            notification_id,
+            channel: NotificationCommand.EMAIL
+        });
+
+        if (event.payload.phone) newNotificationDeliveries.push({
+            notification_id,
+            channel: NotificationCommand.SMS
+        });
+
+        return newNotificationDeliveries;
+    }
+}

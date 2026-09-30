@@ -44,6 +44,7 @@ export class RabbitMQClient {
 
         const options: Options.Publish = {
             persistent: true,
+            mandatory: true,
             contentType: 'application/json',
             contentEncoding: 'utf-8',
             timestamp: Date.now(),
@@ -237,6 +238,17 @@ export class RabbitMQClient {
                 console.error(
                     '[RabbitMQ] Channel error:',
                     error.message,
+                );
+            });
+
+            channel.on('return', (message) => {
+                console.error(
+                    '[RabbitMQ] Message could not be routed:',
+                    {
+                        exchange: message.fields.exchange,
+                        routingKey: message.fields.routingKey,
+                        payload: message.content.toString('utf8'),
+                    },
                 );
             });
 

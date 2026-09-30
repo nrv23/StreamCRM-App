@@ -27,3 +27,7 @@ export const NOTIFICATION_CREATED = "notification-created";
 // sockets 
 
 export const SOCKET_EMMIT = "socket-emmit";
+
+// users
+
+export const LOGIN_USER = "user.logged_in"

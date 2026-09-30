@@ -5,6 +5,7 @@ import { EventPublisher } from "../interfaces/publisher/EventPublisher.interface
 import { IListenNotify } from "../interfaces/user/listen-notification.interface.ts";
 import { IDobleAuthenticateRepositpry } from "../interfaces/user/doble-authenticate.interface.ts";
 import { IOutboxEventsRepository } from "../interfaces/user/outbox_event-repository.interface.ts";
+import { StatusEvent } from "../enum/StatusEvent.enum.ts";
 
 
 
@@ -30,31 +31,34 @@ export class ListenNotifyDb implements IListenNotify<createEventDto> {
 
         this._client.on('notification', async data => {
 
+            if (!data.payload) return;
+            console.log("Nueva notificacion", data.payload);
+
+
+            const event = JSON.parse(data.payload) as createEventDto;
+            console.log({ event })
+
             try {
+                await this._outboxEventRepository.markAsProcessing(event.event_id);
+                await this._outBoxListener.publish({
+                    event_id: event.event_id,
+                    event_name: event.event_name,
+                    aggregate_id: event.aggregate_id,
+                    aggregate_type: event.aggregate_type,
+                    headers: event.headers,
+                    payload: event.payload,
+                    status: StatusEvent.pending,
+                    retry_count: 0, // crear un enum
+                    error_message: '', // crear un enum
+                    created_at: new Date().toISOString(), // crear un enum
+                })
 
-                if (!data.payload) return;
-                console.log("Nueva notificacion", data.payload);
+                await this._outboxEventRepository.markAsPublished(event.event_id);
 
-
-                const event = JSON.parse(data.payload) as createEventDto;
-                console.log({ event })
-
-                /*    this._outBoxListener.publish({
-                        event_id: event.event_id,
-                        event_name: event.event_name,
-                        aggregate_id: event.aggregate_id,
-                        aggregate_type: event.aggregate_type,
-                        headers: event.headers,
-                        payload: event.payload,
-                        status: 'pending',
-                        retry_count: 0, // crear un enum
-                        error_message: '', // crear un enum
-                        created_at: new Date().toISOString(), // crear un enum
-                    })
-                    */
-                //await this._outboxEventRepository.markAsPublished()
             } catch (error) {
-                //await this._outboxEventRepository.markAsFailed()
+                const errMessage = error instanceof Error ? error.message : String(error);
+                console.log({ errMessage });
+                await this._outboxEventRepository.markAsFailed(event.event_id, errMessage)
             }
         });
     }

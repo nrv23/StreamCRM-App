@@ -7,6 +7,7 @@ import {
     CREATE_CUSTOMER,
     CREATE_TAG,
     DELETE_CUSTOMER,
+    LOGIN_USER,
     UPDATE_CUSTOMER
 } from "../shared/types/events.type..ts";
 import { CreateCustomerHandler } from "./createCustomer.handler.ts";
@@ -19,6 +20,7 @@ import { WinstonLogger } from "../shared/utils/winstonLogger.ts";
 import { env } from "../config/enviroment.ts";
 import { RedisEmitter } from "../publisher/RedisEmitter.publisher.ts";
 import { RedisBootstrap } from "../config/redis.ts";
+import { LoginUserHandler } from "./loginUser.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,5 +66,10 @@ export const handlers = new Map<string, IntegrationEventHandler<RabbitEventDto>>
         CREATE_TAG,
         new CreateTagHandler(unitOfWork, redisEmitter, limit),
     ],
+    // eventos de usuario
+    [
+        LOGIN_USER,
+        new LoginUserHandler(unitOfWork, redisEmitter, limit)
+    ]
 ]);
 

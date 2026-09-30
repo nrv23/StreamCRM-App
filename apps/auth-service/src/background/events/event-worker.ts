@@ -9,6 +9,9 @@ import { PublishPendingEventsUseCase }
     from "../../services/Publisher.service.js";
 import { RabbitEventPublisher } from "../../publisher/RabbitEvent.publisher.ts";
 import { rabbitMQClient } from "../../config/rabbitmqClient.ts";
+import { Client } from "pg";
+import { ListenNotifyDb } from "../../listener/ListenNotifyDb.listener.ts";
+import { AUTH_OUTBOX_EVENTS } from "../../shared/types/events.type.ts";
 
 //import './consumer/consumer-bootstrap.ts';
 
@@ -105,6 +108,21 @@ async function startWorker(): Promise<void> {
             env.interval_worker_execution_time ?? 5000,
             Number(pagination_record_events_limit),
         );
+
+        const listener = new ListenNotifyDb(new Client({
+            host: env.db.host,
+            port: env.db.port,
+            database: env.db.database,
+            user: env.db.user,
+            password: env.db.password,
+            connectionTimeoutMillis: 5_000,
+            query_timeout: 60_000,
+        }), new RabbitEventPublisher(),
+            new OutboxEventRepository()
+        )
+
+        await listener.connect();
+        await listener.listen(AUTH_OUTBOX_EVENTS);
 
         worker.start();
     } catch (error) {

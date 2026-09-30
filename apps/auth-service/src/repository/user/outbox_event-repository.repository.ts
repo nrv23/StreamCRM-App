@@ -9,9 +9,6 @@ import { StatusEvent } from "../../enum/StatusEvent.enum.ts";
 
 export class OutboxEventRepository implements IOutboxEventsRepository {
     /*
-
-        Sí, viejo. Para ese markAs genérico yo gestionaría los campos así:
-
         Cuando pasa a published:
         status = 'published'
         published_at = now()
@@ -29,11 +26,24 @@ export class OutboxEventRepository implements IOutboxEventsRepository {
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
     }
-    async markAsPublished(eventId: number): Promise<void> {
+    async markAsProcessing(eventId: string): Promise<void> {
+        const query = `
+            update outbox_events set status = $1, published_at = null, 
+            last_error = null, error_message = null
+            where event_id = $2
+            RETURNING id;
+        `;
+        const [response] = await this._db.query(query, [StatusEvent.processing, eventId]);
+        if (!response) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR,
+            `outbox_events with id ${eventId} not found`
+        );
+    }
+    async markAsPublished(eventId: string): Promise<void> {
 
         const query = `
-            update outbox_events set status = $1, published_at = now(), last_error = null, retry_count = 0
-            where id = $2
+            update outbox_events set status = $1, published_at = now(), last_error = null,
+            retry_count = 0, error_message = null
+            where event_id = $2
             RETURNING id;
         `;
         const [response] = await this._db.query(query, [StatusEvent.published, eventId]);
@@ -54,7 +64,8 @@ export class OutboxEventRepository implements IOutboxEventsRepository {
                     ELSE 'pending'
                 END,
                 retry_count = retry_count + 1,
-                last_error = $1,
+                last_error = now(),
+                error_message = $1,
                 published_at = null
             WHERE event_id = $2
             returning id;
@@ -67,15 +78,16 @@ export class OutboxEventRepository implements IOutboxEventsRepository {
     }
 
     async save(event: createEventDto): Promise<OutBoxEvent> {
-
-        const [outBoxEventResponse] = await this._db.query<OutBoxEvent>(`
+        const sql = `
             Insert into outbox_events(
                 event_id,event_name,aggregate_id,aggregate_type,payload,headers
             )
             values($1,$2,$3,$4,$5::jsonb,$6::jsonb)
             RETURNING id, event_id,event_name,aggregate_id,aggregate_type,payload,headers;
-        `, [event.event_id, event.event_name, event.aggregate_id, event.aggregate_type, event.payload, event.headers]);
-
+        `;
+        const [outBoxEventResponse] = await this._db.query<OutBoxEvent>(sql,
+            [event.event_id, event.event_name, event.aggregate_id, event.aggregate_type, event.payload, event.headers]
+        );
         if (!outBoxEventResponse) throw ErrorFactory.build(
             ApiErrorCode.CONFLICT_ERROR,
             "Event was not inserted"
@@ -105,6 +117,4 @@ export class OutboxEventRepository implements IOutboxEventsRepository {
         const response = await this._db.query<OutBoxEvent>(sql, [limit]);
         return response;
     }
-
-
 }

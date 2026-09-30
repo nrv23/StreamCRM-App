@@ -376,6 +376,7 @@ export class UserService {
                 event_name: LOGIN_USER,
                 aggregate_id: authcodeid,
                 aggregate_type: EntityType.AUTHCODE,
+
                 payload: {
                     firstName: currentUser.first_name,
                     lastName: currentUser.last_name,
@@ -388,11 +389,12 @@ export class UserService {
                     channel: AuthCodeChannel.email,
                     authcode
                 },
+
                 headers: {
                     source: env.service_name,
                     version: env.api_version,
                 },
-            }
+            };
             await Promise.all([
                 auditLogs.save({
                     entity_type: EntityType.AUTHCODE,
@@ -414,6 +416,7 @@ export class UserService {
                 events.save(event),
                 dobleFactorAuth.notify(event, AUTH_OUTBOX_EVENTS)
             ]);
+
             const response: AuthCodeDataResponse = {
                 challeneg_id: external_id,
                 requires_2fa: true,
@@ -722,6 +725,7 @@ export class UserService {
                     version: env.api_version,
                 },
             };
+
             await Promise.all([
                 auditLogs.save({
                     entity_type: EntityType.AUTHCODE,
