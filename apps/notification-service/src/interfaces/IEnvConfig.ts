@@ -1,3 +1,4 @@
+import { OAuth2 } from "nodemailer/lib/smtp-connection/index.js";
 
 
 export interface IEnvConfig {
@@ -20,14 +21,17 @@ export interface IEnvConfig {
     rabbitmq_password: string;
     rabbitmq_vhost: string;
     nodemailer: {
-        host: string;
-        port: number;
-        secure: boolean;
+        host: string,
+        port: number,
+        secure: boolean,
         auth: {
-            user: string;
-            pass: string;
-        };
-        from: string;
+            type: OAuth2,
+            user: string,
+            client_id: string,
+            client_secret: string,
+            refresh_token: string
+        },
+        from: string
     };
     sms: {
         api_key: string;
@@ -43,7 +47,4 @@ export interface IEnvConfig {
     }
     elastic_search_url: string;
     index_elastic_search_name: string;
-    mailsend: {
-        api_key: string;
-    }
 }
