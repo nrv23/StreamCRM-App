@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import { IEnvConfig } from "../interfaces/IEnvConfig.js";
 import { bool, cleanEnv, num, str } from 'envalid';
+import { OAuth2 } from "nodemailer/lib/smtp-connection/index.js";
 
 dotenv.config();
 
@@ -34,10 +35,17 @@ const validatedEnv = cleanEnv(process.env, {
     //datos de cliente para conexion a servidor de envio de correos
     SMTP_HOST: str({ default: 'smtp.gmail.com' }),
     SMTP_PORT: num({ default: 587 }),
-    SMTP_SECURE: bool({ default: false }),
+    SMTP_SECURE: bool({}),
     SMTP_USER: str({ default: '' }),
     SMTP_PASS: str({ default: '' }),
     SMTP_FROM: str({ default: '' }),
+    GMAIL_SERVICE_TYPE: str({
+        default: "OAuth2"
+    }),
+    GMAIL_USER: str(),
+    GMAIL_CLIENT_ID: str(),
+    GMAIL_CLIENT_SECRET: str(),
+    GMAIL_REFRESH_TOKEN: str(),
     SMS_API_KEY: str(),
     SMS_API_SECRET: str(),
     ELASTIC_SEARCH_URL: str({
@@ -55,7 +63,6 @@ const validatedEnv = cleanEnv(process.env, {
     }),
     REDIS_USERNAME: str(),
     REDIS_MAX_RETRIES_PER_REQUEST: num(),
-    MAIL_SEND_API_KEY: str()
 });
 
 export const env: IEnvConfig = {
@@ -84,9 +91,13 @@ export const env: IEnvConfig = {
         port: validatedEnv.SMTP_PORT,
         secure: validatedEnv.SMTP_SECURE,
         auth: {
-            user: validatedEnv.SMTP_USER,
-            pass: validatedEnv.SMTP_PASS,
+            type: validatedEnv.GMAIL_SERVICE_TYPE as OAuth2,
+            user: validatedEnv.GMAIL_USER,
+            client_id: validatedEnv.GMAIL_CLIENT_ID,
+            client_secret: validatedEnv.GMAIL_CLIENT_SECRET,
+            refresh_token: validatedEnv.GMAIL_REFRESH_TOKEN,
         },
+
         from: validatedEnv.SMTP_FROM,
     },
     sms: {
@@ -102,7 +113,5 @@ export const env: IEnvConfig = {
         redis_password: validatedEnv.REDIS_PASSWORD,
         redis_max_retries_per_request: validatedEnv.REDIS_MAX_RETRIES_PER_REQUEST
     },
-    mailsend: {
-        api_key: validatedEnv.MAIL_SEND_API_KEY
-    }
+
 };

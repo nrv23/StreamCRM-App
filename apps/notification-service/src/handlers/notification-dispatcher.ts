@@ -4,7 +4,7 @@ import { INotificationCommand } from "../interfaces/notification-command.interfa
 import { INotificationResponse } from "../interfaces/notification/notification-response.interface.ts";
 import { INotificationSender } from "../interfaces/sender/sender.interface.ts";
 import { EmailSender } from "../sender/email.sender.ts";
-import { MailSendSender } from "../sender/mailSend.sender.ts";
+
 import { SmsSender } from "../sender/sms.sender.ts";
 import { CircuitBreaker } from "../shared/utils/circuit-breaker.ts";
 
@@ -16,7 +16,7 @@ export class NotificationDispatcher implements INotificationDispatcher {
     private _breakers: Map<NotificationCommand, CircuitBreaker> = new Map();
     constructor(
         // private _emailSender: EmailSender,
-        private _maildSendSender: MailSendSender,
+        private _maildSendSender: EmailSender,
         private _smsSender: SmsSender
         // private readonly pushSender: IPushSender
     ) {
