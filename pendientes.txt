@@ -20,3 +20,4 @@ terminar el resend
 
 en Auth service si el login es sin 2fa validar antrs que tenga una sesion abierta ya sea por ip y user_id
 en Auth service si el login es con 2fa, luego de meter user/pass enviar por correo el auth code
+revisar el listen/notify, que el payload no reviente por tamanño
