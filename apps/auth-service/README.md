@@ -31,10 +31,11 @@ Servicio centralizado de **Autenticación, Autorización y Gestión de Identidad
 
 ## ✨ Características Principales
 
-- **Autenticación Robusta y Gestión de Sesiones**: Hashing criptográfico de contraseñas con PBKDF2 (`node:crypto`), emisión de **Access Tokens (JWT)** de corta duración (15 min) y **Refresh Tokens** persistidos en base de datos con rotación automática, revocación de sesiones concurrentes y almacenamiento en cookies `HttpOnly` seguras.
+- **Autenticación Robusta y Control de Sesiones por IP**: Hashing criptográfico de contraseñas con PBKDF2 (`node:crypto`), emisión de **Access Tokens (JWT)** de corta duración (15 min) y **Refresh Tokens** persistidos en base de datos con rotación automática, almacenamiento en cookies `HttpOnly` seguras y **control de sesión única activa por IP y usuario** (`isUserHasActiveSessionByUserIdAndIpAddress`) que valida únicamente sesiones vigentes (`revoked_at IS NULL AND expires_at > NOW()`) para evitar duplicidad o abusos por dispositivo.
 - **Autenticación en Dos Pasos (2FA / OTP)**:
   - Generación de códigos numéricos de 6 dígitos mediante procedimiento almacenado en PostgreSQL (`generate_auth_user_code()`).
   - Hashing criptográfico del OTP con **HMAC-SHA256** (`HmacSecretHasher`) y validación en tiempo constante (`crypto.timingSafeEqual`) para evitar ataques de temporización (*Timing Attacks*).
+  - **Protección Anti-Spam y Throttling de Códigos OTP**: Validación activa de códigos no expirados (`hasAnyAuthCodeByPurposeAndUserIdAndStatus`), impidiendo la generación de nuevos desafíos mientras exista un código vigente (`expires_at > NOW()`), evitando el spam o generación descontrolada.
   - Ventana de expiración de 15 minutos por código de desafío (`challenge_id`).
   - Protección activa contra fuerza bruta: limitación estricta a 3 intentos fallidos con bloqueo automático del 2FA del usuario (`two_factor_locked = true`).
   - Flujo de reenvío controlado (`/2fa/resend`) que revoca códigos previos y emite nuevos desafíos.
@@ -178,36 +179,49 @@ sequenceDiagram
     Ctrl->>Svc: login(dto)
     Svc->>UOW: Buscar usuario & verificar password (PBKDF2)
     UOW-->>Svc: Credenciales válidas
-    Svc->>UOW: ¿Tiene 2FA habilitado? (two_factor_enabled)
-    
-    alt 2FA está deshabilitado
-        Svc->>UOW: Crear sesión, tokens y audit_log
-        Svc-->>Ctrl: LoginData (access_token, refresh_token)
-        Ctrl-->>User: 200 OK (Tokens y perfil)
-    else 2FA está habilitado
-        Svc->>UOW: Generar código OTP 6 dígitos (generate_auth_user_code)
-        Svc->>Hasher: hash(authcode, secretKey) -> HMAC-SHA256
-        
-        Note over Svc,UOW: Transacción Unit of Work:
-        Svc->>UOW: INSERT auth_codes (challenge_id, code_hash, expires_at: 15m)
-        Svc->>UOW: INSERT audit_logs (action: user.create.auth_code)
-        Svc->>UOW: INSERT outbox_events (event: user.logged_in, status: pending)
-        Svc->>UOW: SELECT pg_notify('auth_outbox_events', payload)
-        UOW-->>Svc: Commit Exitoso
-        
-        Svc-->>Ctrl: { challenge_id, requires_2fa: true }
-        Ctrl-->>User: 200 OK { challenge_id, requires_2fa: true }
 
-        par Despacho asíncrono en tiempo real
-            UOW-->>Worker: NOTIFY auth_outbox_events (Push instantáneo)
-            Worker->>UOW: UPDATE outbox_events SET status = 'processing'
-            Worker->>Rabbit: publish('user.logged_in', payload con authcode)
-            Rabbit-->>Worker: Broker Confirm (Ack)
-            Worker->>UOW: UPDATE outbox_events SET status = 'published'
-            
-            Rabbit->>NotifSvc: Consumir mensaje de cola 'notification-service'
-            NotifSvc->>NotifSvc: EventDispatcher procesa evento
-            NotifSvc-->>User: 📧 Enviar email con código de 6 dígitos
+    Svc->>UOW: Validar sesión activa por IP (isUserHasActiveSessionByUserIdAndIpAddress)
+    alt Ya tiene sesión activa vigente en esa IP
+        Svc-->>Ctrl: Error 401: Usuario ya tiene sesión activa para este dispositivo
+        Ctrl-->>User: 401 Unauthorized
+    else No tiene sesión activa en esa IP
+        Svc->>UOW: Consultar estado 2FA (isEnabled, isLocked)
+        
+        alt 2FA está deshabilitado
+            Svc->>UOW: Crear sesión, tokens y audit_log
+            Svc-->>Ctrl: LoginData (access_token, refresh_token)
+            Ctrl-->>User: 200 OK (Tokens y perfil)
+        else 2FA está habilitado
+            Svc->>UOW: Validar si existe código 2FA activo vigente (hasAnyAuthCode)
+            alt Ya existe código activo vigente
+                Svc-->>Ctrl: Error 401: Ya cuenta con un código de autenticación activo
+                Ctrl-->>User: 401 Unauthorized
+            else No hay código activo
+                Svc->>UOW: Generar código OTP 6 dígitos (generate_auth_user_code)
+                Svc->>Hasher: hash(authcode, secretKey) -> HMAC-SHA256
+                
+                Note over Svc,UOW: Transacción Unit of Work:
+                Svc->>UOW: INSERT auth_codes (challenge_id, code_hash, expires_at: 15m)
+                Svc->>UOW: INSERT audit_logs (action: user.create.auth_code)
+                Svc->>UOW: INSERT outbox_events (event: user.logged_in, status: pending)
+                Svc->>UOW: SELECT pg_notify('auth_outbox_events', payload)
+                UOW-->>Svc: Commit Exitoso
+                
+                Svc-->>Ctrl: { challenge_id, requires_2fa: true }
+                Ctrl-->>User: 200 OK { challenge_id, requires_2fa: true }
+
+                par Despacho asíncrono en tiempo real
+                    UOW-->>Worker: NOTIFY auth_outbox_events (Push instantáneo)
+                    Worker->>UOW: UPDATE outbox_events SET status = 'processing'
+                    Worker->>Rabbit: publish('user.logged_in', payload con authcode)
+                    Rabbit-->>Worker: Broker Confirm (Ack)
+                    Worker->>UOW: UPDATE outbox_events SET status = 'published'
+                    
+                    Rabbit->>NotifSvc: Consumir mensaje de cola 'notification-service'
+                    NotifSvc->>NotifSvc: EventDispatcher procesa evento
+                    NotifSvc-->>User: 📧 Enviar email con código de 6 dígitos
+                end
+            end
         end
     end
 ```
@@ -444,6 +458,10 @@ apps/auth-service/src/
    - Middleware reutilizable `requirePermission(code)` que valida dinámicamente si el rol asignado al usuario en base de datos contiene activo el código de permiso solicitado.
 9. **Token Rotation & Session Management**:
    - Rotación continua de Refresh Tokens en cada ciclo de refresco, revocación de tokens obsoletos e invalidación automática de sesiones.
+10. **IP-Bound Single Active Session Policy**:
+    - Validación transaccional en `auth_sessions` (`isUserHasActiveSessionByUserIdAndIpAddress`) comprobando únicamente registros vigentes (`revoked_at IS NULL AND expires_at > NOW()`) para evitar múltiples sesiones abiertas en un mismo dispositivo/IP.
+11. **Anti-Spam OTP Throttling Policy**:
+    - Control de emisión de códigos 2FA (`hasAnyAuthCodeByPurposeAndUserIdAndStatus`) que restringe la creación de nuevos desafíos mientras exista un código previo en estado activo y vigente en tiempo (`expires_at > NOW()`).
 
 ---
 
@@ -582,6 +600,28 @@ stateDiagram-v2
         "roles": [{ "id": 1, "name": "admin" }],
         "permissions": ["customers.read", "customers.create", "users.read"]
       }
+    }
+  }
+  ```
+
+- **Respuesta de Error por Sesión Activa Existente en la Misma IP (401 Unauthorized)**:
+  ```json
+  {
+    "success": false,
+    "error": {
+      "code": "UNAUTHORIZED",
+      "message": "El usuario actual ya tiene una sesion activa para este dispositivo. Si desea iniciar sesión nuevamente, cierre su sesion actual"
+    }
+  }
+  ```
+
+- **Respuesta de Error por Código 2FA Activo Pendiente (401 Unauthorized)**:
+  ```json
+  {
+    "success": false,
+    "error": {
+      "code": "UNAUTHORIZED",
+      "message": "The current user has already auth code autenticator active"
     }
   }
   ```
