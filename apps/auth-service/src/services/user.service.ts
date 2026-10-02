@@ -309,6 +309,9 @@ export class UserService {
 
             if (!isValidPass) throw ErrorFactory.build(ApiErrorCode.NOT_FOUND, 'Invalid authentication credentials');
             // debe preguntar si 2fa esta habilitado, sino lo esta genera el login, siempre y cuando no exista un bloqueo.
+            const hasAnySessionActiveByTheSameIpAddress = await sessions.isUserHasActiveSessionByUserIdAndIpAddress(currentUser.id, dto.ip_address)
+            if (hasAnySessionActiveByTheSameIpAddress) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED,
+                'El usuario actual ya tiene una sesion activa para este dispositivo. Si desea iniciar sesión nuevamente, cierre su sesion actual');
 
             // si el 2fa esta habilitado sin bloqueo entonces genera el codigo y retorna external id con el codigo.
             const [{ isEnabled }, { isLocked }] = await Promise.all([
@@ -320,10 +323,7 @@ export class UserService {
 
             if (!isEnabled) {
 
-                const hasAnySessionActiveByTheSameIpAddress = await sessions.isUserHasActiveSessionByUserIdAndIpAddress(currentUser.id, dto.ip_address)
 
-                if (hasAnySessionActiveByTheSameIpAddress) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED,
-                    'El usuario actual ya tiene una sesion activa para este dispositivo. Si desea iniciar sesion nuevente, cierre su sesion actual');
 
                 const sessionData = await this.createSession(
                     currentUser,

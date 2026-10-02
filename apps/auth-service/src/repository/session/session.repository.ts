@@ -36,10 +36,19 @@ export class SessionRepository implements ISessionRepository {
 
     async isUserHasActiveSessionByUserIdAndIpAddress(user_id: number, ip_address: string): Promise<boolean> {
 
-        const sql = 'Select count(1) as "hasActiveSession" from  auth_sessions where user_id = $1 and ip_address = $2::inet and status = $3';
+        const sql = `
+            SELECT count(1) as "hasActiveSession" 
+            FROM auth_sessions 
+            WHERE user_id = $1 
+            AND ip_address = $2::inet 
+            AND status = $3 
+            AND revoked_at IS NULL 
+            AND expires_at > NOW();
+`
+            ;
         const [response] = await this._db.query<UserHasActiveSessionByUserIdAndIpAddress>(sql, [user_id, ip_address, SessionStatus.active]);
         if (!response) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
-        return Boolean(response.hasActiveSession > 0);
+        return Number(response.hasActiveSession) > 0;
     }
 
     async revoke(session_id: string): Promise<void> {

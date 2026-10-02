@@ -163,7 +163,16 @@ export class AuthCodeAuthenticatorRepository implements IDobleAuthenticateReposi
 
     async hasAnyAuthCodeByPurposeAndUserIdAndStatus(user_id: number, purpose: AuthCodePurpose, status: AuthCodeStatus): Promise<HasAnyAuthCodeByPurposeAndUserIdAndStatusResponse> {
 
-        const sql = 'select count(1) as "hasAny" from auth_codes where user_id = $1 and purpose = $2 and status = $3';
+        const sql = `
+            SELECT count(1) as "hasAny" 
+            FROM auth_codes 
+            WHERE user_id = $1 
+            AND purpose = $2 
+            AND status = $3 
+            AND revoked_at IS NULL 
+            AND expires_at > NOW();
+
+        `;
         const [response] = await this._db.query<HasAnyAuthCodeByPurposeAndUserIdAndStatusResponse>(sql, [user_id, purpose, status]);
         if (!response || typeof response.hasAny === "undefined") throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
         return response;
