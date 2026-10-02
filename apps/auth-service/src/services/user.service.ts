@@ -2,7 +2,7 @@ import { UnitOfWork } from "../config/unitOfWork.ts";
 import { CreateUserDto } from "../dto/user/create-user.dto.ts";
 import { IPasswordHasher } from "../interfaces/password-hasher.interface.ts";
 import { ROLE_PERMISSION_POLICY } from "../shared/utils/rolePermissionDefault.ts";
-import { AUTH_OUTBOX_EVENTS, CHANGE_USER_STATUS, CREATE_USER, GET_ME, GET_USERS, LOGIN_USER, LOGOUT_USER, NEW_AUTH_CODE } from "../shared/types/events.type.ts";
+import { AUTH_OUTBOX_EVENTS, CHANGE_USER_STATUS, CREATE_USER, GET_ME, GET_USERS, LOGIN_USER, LOGOUT_USER, NEW_AUTH_CODE, RESEND_AUTHCODE_USER } from "../shared/types/events.type.ts";
 import { env } from "../config/enviroment.ts";
 import { EntityType } from "../enum/EntityType.enum.ts";
 import { UserStatus } from "../enum/UserStatus.enum.ts";
@@ -319,6 +319,11 @@ export class UserService {
             if (isLocked) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED, 'Two factor authentication is locked/unavailable');
 
             if (!isEnabled) {
+
+                const hasAnySessionActiveByTheSameIpAddress = await sessions.isUserHasActiveSessionByUserIdAndIpAddress(currentUser.id, dto.ip_address)
+
+                if (hasAnySessionActiveByTheSameIpAddress) throw ErrorFactory.build(ApiErrorCode.UNAUTHORIZED,
+                    'El usuario actual ya tiene una sesion activa para este dispositivo. Si desea iniciar sesion nuevente, cierre su sesion actual');
 
                 const sessionData = await this.createSession(
                     currentUser,
@@ -703,7 +708,7 @@ export class UserService {
             const { authcodeid, authcode, external_id } = await this.createAuthCode(currentUser.id, dobleFactorAuth); // crea notificacion listen/notify postgres
             const event: createEventDto = {
                 event_id: external_id,
-                event_name: LOGIN_USER,
+                event_name: RESEND_AUTHCODE_USER,
                 aggregate_id: authcodeid,
                 aggregate_type: EntityType.AUTHCODE,
 
@@ -713,7 +718,7 @@ export class UserService {
                     email: currentUser.email,
                     phone: null,
                     user_id: currentUser.id,
-                    event: LOGIN_USER,
+                    event: RESEND_AUTHCODE_USER,
                     twoFactorPurpose: AuthCodePurpose.login_2fa,
                     status: currentUser.status!,
                     channel: AuthCodeChannel.email,
@@ -730,7 +735,7 @@ export class UserService {
                 auditLogs.save({
                     entity_type: EntityType.AUTHCODE,
                     entity_id: authcodeid,
-                    action: NEW_AUTH_CODE,
+                    action: RESEND_AUTHCODE_USER,
                     user_id: currentUser.id,
                     old_values: {
                     },

@@ -32,3 +32,4 @@ export const SOCKET_EMMIT = "socket-emmit";
 
 export const LOGIN_USER = "user.logged_in"
 
+export const RESEND_AUTHCODE_USER = "user.resend.auth_code";

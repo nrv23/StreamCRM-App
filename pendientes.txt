@@ -17,3 +17,6 @@ agregar en auth service los eventos para rabbitmq para notificacion service y ga
 revisar el modulo RBAC 
 en el metood logout revokar codigos 2fa activos por usuario logueado
 terminar el resend
+
+en Auth service si el login es sin 2fa validar antrs que tenga una sesion abierta ya sea por ip y user_id
+en Auth service si el login es con 2fa, luego de meter user/pass enviar por correo el auth code

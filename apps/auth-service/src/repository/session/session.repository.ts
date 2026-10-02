@@ -21,11 +21,25 @@ export type RevokeSessionResponse = {
     id: number;
 }
 
+
+export type UserHasActiveSessionByUserIdAndIpAddress = {
+    hasActiveSession: number;
+}
+
 export class SessionRepository implements ISessionRepository {
 
     private _db: IDatabase;
     constructor(db?: IDatabase) {
         this._db = db ?? databaseInstance;
+    }
+
+
+    async isUserHasActiveSessionByUserIdAndIpAddress(user_id: number, ip_address: string): Promise<boolean> {
+
+        const sql = 'Select count(1) as "hasActiveSession" from  auth_sessions where user_id = $1 and ip_address = $2::inet and status = $3';
+        const [response] = await this._db.query<UserHasActiveSessionByUserIdAndIpAddress>(sql, [user_id, ip_address, SessionStatus.active]);
+        if (!response) throw ErrorFactory.build(ApiErrorCode.INTERNAL_SERVER_ERROR);
+        return Boolean(response.hasActiveSession > 0);
     }
 
     async revoke(session_id: string): Promise<void> {

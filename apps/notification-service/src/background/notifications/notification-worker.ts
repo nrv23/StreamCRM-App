@@ -103,6 +103,7 @@ async function startWorker(): Promise<void> {
     const templateEngine = new HandlebarsTemplateEngine(templatesDirectoryPath);
     // 2. Instancias el sender y tu nuevo NotificationDispatcher
     const emailSender = new EmailSender(templateEngine, loggerSenderInstance); // (O la clase real que use nodemailer)
+
     const smsSender = new SmsSender(loggerSenderInstance);
     const dispatcher = new NotificationDispatcher(emailSender, smsSender)
     const unitOfWork = new UnitOfWork()

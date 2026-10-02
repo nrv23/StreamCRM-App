@@ -10,7 +10,7 @@ export const GET_USERS = "user.get_users"
 export const SET_USER_ROLES = 'user.set_roles';
 export const SET_USER_PERMISSIONS = 'user.set_permissions';
 export const NEW_AUTH_CODE = "user.create.auth_code";
-
+export const RESEND_AUTHCODE_USER = "user.resend.auth_code";
 export const CREATE_ROLE = 'role.create';
 // db events
 export const DB_CONNECTED = "db_connected";

@@ -1,7 +1,7 @@
 import { NotificationCommand } from "../../enum/Notification-Command.enum.ts";
 import { INotificationCommand, ISendEmailCommand, ISendSmsCommand } from "../../interfaces/notification-command.interface.ts";
 import { GetNotificationDeliveriesResponse } from "../../repository/notification/notification-delivery-repository.repository.ts";
-import { CREATE_CUSTOMER, LOGIN_USER } from "../types/events.type..ts";
+import { CREATE_CUSTOMER, LOGIN_USER, RESEND_AUTHCODE_USER } from "../types/events.type..ts";
 
 export class SenderBodyFactory {
     static build(notificationDelivery: GetNotificationDeliveriesResponse): INotificationCommand {
@@ -33,7 +33,7 @@ export class SenderBodyFactory {
                     ],
                     channel: NotificationCommand.EMAIL
                 };
-
+            case RESEND_AUTHCODE_USER:
             case LOGIN_USER:
                 return {
                     to: metadata.email?.toString() ?? "",
@@ -51,6 +51,7 @@ export class SenderBodyFactory {
                     ],
                     channel: NotificationCommand.EMAIL
                 };
+
 
             default:
                 throw new Error(`Event ${metadata.event} not implemented for Email in SenderBodyFactory`);
