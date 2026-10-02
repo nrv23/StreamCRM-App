@@ -424,8 +424,7 @@ export class UserService {
 
             const response: AuthCodeDataResponse = {
                 challeneg_id: external_id,
-                requires_2fa: true,
-                auth_code: authcode
+                requires_2fa: true
             };
 
             return response;
