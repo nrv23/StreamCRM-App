@@ -8,6 +8,7 @@ import { INotificationCommand, ISendEmailCommand, ISendSmsCommand } from "../int
 import { GetNotificationDeliveriesResponse } from "../repository/notification/notification-delivery-repository.repository.ts";
 import { ILogMetadata } from "../interfaces/iLog.interface.ts";
 import { env } from "../config/enviroment.ts";
+import { SenderBodyFactory } from "../shared/factory/senderBody.factory.ts";
 
 
 export class ProcessNotificationDeliveryService {
@@ -145,49 +146,7 @@ export class ProcessNotificationDeliveryService {
     }
 
     private createBodySender(notificationDelivery: GetNotificationDeliveriesResponse) {
-        let pendingDelivery: INotificationCommand;
-
-        switch (notificationDelivery.channel) {
-
-            case NotificationCommand.EMAIL: {
-
-                const emailBodySender: ISendEmailCommand = {
-                    to: notificationDelivery.metadata!.email!.toString(),
-                    subject: notificationDelivery.title,
-                    templatePath: 'create-customer.handlebars',
-                    parameters: [
-                        {
-                            placeholder: "firstName",
-                            value: notificationDelivery.metadata!.firstName?.toString()
-                        }, {
-                            placeholder: "lastName",
-                            value: notificationDelivery.metadata!.lastName?.toString()
-                        }, {
-                            placeholder: "email",
-                            value: notificationDelivery.metadata!.email?.toString()
-                        }
-                    ],
-                    channel: NotificationCommand.EMAIL
-                }
-
-                pendingDelivery = emailBodySender;
-
-                break;
-            }
-
-            case NotificationCommand.SMS:
-                const smsBodySender: ISendSmsCommand = {
-                    channel: NotificationCommand.SMS,
-                    text: `Bienvido a Stream CRM ${notificationDelivery.metadata!.firstName?.toString()} ${notificationDelivery.metadata!.lastName?.toString()} `,
-                    phoneNumber: notificationDelivery.metadata!.phone?.toString()!
-                }
-                pendingDelivery = smsBodySender;
-                break;
-            default:
-                throw new Error("Channel not implemented to createBodySender");
-        }
-
-
+        const pendingDelivery: INotificationCommand = SenderBodyFactory.build(notificationDelivery);
         return pendingDelivery;
     }
 }
