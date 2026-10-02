@@ -113,5 +113,4 @@ export const env: IEnvConfig = {
         redis_password: validatedEnv.REDIS_PASSWORD,
         redis_max_retries_per_request: validatedEnv.REDIS_MAX_RETRIES_PER_REQUEST
     },
-
 };

@@ -10,8 +10,6 @@ import { SmsSender } from "../../sender/sms.sender.ts";
 import { env } from "../../config/enviroment.ts";
 import { WinstonLogger } from "../../shared/utils/winstonLogger.ts";
 
-
-
 export class ProcessNotificationWorker {
     private timer?: NodeJS.Timeout;
     private isStopping = false;
@@ -105,7 +103,6 @@ async function startWorker(): Promise<void> {
     const templateEngine = new HandlebarsTemplateEngine(templatesDirectoryPath);
     // 2. Instancias el sender y tu nuevo NotificationDispatcher
     const emailSender = new EmailSender(templateEngine, loggerSenderInstance); // (O la clase real que use nodemailer)
-
     const smsSender = new SmsSender(loggerSenderInstance);
     const dispatcher = new NotificationDispatcher(emailSender, smsSender)
     const unitOfWork = new UnitOfWork()

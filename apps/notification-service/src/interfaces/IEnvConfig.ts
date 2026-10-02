@@ -47,4 +47,5 @@ export interface IEnvConfig {
     }
     elastic_search_url: string;
     index_elastic_search_name: string;
+
 }
